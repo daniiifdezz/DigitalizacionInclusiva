@@ -1,0 +1,78 @@
+-- Tabla local de actividades (subconjunto de la BD remota)
+-- SQLDelight genera automáticamente las clases Kotlin a partir de este fichero
+
+CREATE TABLE IF NOT EXISTS ActividadLocal (
+    id                    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    parcela_id            INTEGER NOT NULL,
+    equipo_id             INTEGER,
+    aplicador_id          INTEGER,
+    fecha_inicio          TEXT    NOT NULL,
+    fecha_fin             TEXT,
+    superficie_tratada    REAL,
+    problema_fitosanitario TEXT,
+    eficacia              TEXT,
+    observaciones         TEXT,
+    sincronizado          INTEGER NOT NULL DEFAULT 0  -- 0 = pendiente, 1 = sincronizado
+);
+
+CREATE TABLE IF NOT EXISTS ParcelaLocal (
+    id                    INTEGER NOT NULL PRIMARY KEY,
+    explotacion_id        INTEGER NOT NULL,
+    orden                 INTEGER,
+    sistema_asesoramiento TEXT,
+    zona_nitratos         INTEGER  -- 0 = false, 1 = true
+);
+
+CREATE TABLE IF NOT EXISTS ProductoLocal (
+    id               INTEGER NOT NULL PRIMARY KEY,
+    nombre_comercial TEXT,
+    materia_activa   TEXT,
+    numero_registro  TEXT
+);
+
+-- ── Queries para ActividadLocal ───────────────────────────────────────────────
+
+selectAllActividades:
+SELECT * FROM ActividadLocal ORDER BY fecha_inicio DESC;
+
+selectActividadById:
+SELECT * FROM ActividadLocal WHERE id = ?;
+
+selectActividadesPendientesSincronizacion:
+SELECT * FROM ActividadLocal WHERE sincronizado = 0;
+
+insertActividad:
+INSERT INTO ActividadLocal (
+    parcela_id, equipo_id, aplicador_id,
+    fecha_inicio, fecha_fin, superficie_tratada,
+    problema_fitosanitario, eficacia, observaciones, sincronizado
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0);
+
+updateActividadSincronizada:
+UPDATE ActividadLocal SET sincronizado = 1 WHERE id = ?;
+
+deleteActividad:
+DELETE FROM ActividadLocal WHERE id = ?;
+
+-- ── Queries para ParcelaLocal ─────────────────────────────────────────────────
+
+selectAllParcelas:
+SELECT * FROM ParcelaLocal ORDER BY orden ASC;
+
+selectParcelaById:
+SELECT * FROM ParcelaLocal WHERE id = ?;
+
+insertOrReplaceParcela:
+INSERT OR REPLACE INTO ParcelaLocal (
+    id, explotacion_id, orden, sistema_asesoramiento, zona_nitratos
+) VALUES (?, ?, ?, ?, ?);
+
+-- ── Queries para ProductoLocal ────────────────────────────────────────────────
+
+selectAllProductos:
+SELECT * FROM ProductoLocal ORDER BY nombre_comercial ASC;
+
+insertOrReplaceProducto:
+INSERT OR REPLACE INTO ProductoLocal (
+    id, nombre_comercial, materia_activa, numero_registro
+) VALUES (?, ?, ?, ?);
