@@ -23,7 +23,7 @@ class ActividadRepository(
     private val api: ActividadApi
 ) {
 
-    // ── Actividades ───────────────────────────────────────────────────────────
+    // Actividades
 
     fun getActividades(): Flow<Result<List<Actividad>>> = flow {
         emit(Result.Loading)
@@ -82,7 +82,7 @@ class ActividadRepository(
         }
     }
 
-    // ── Parcelas ──────────────────────────────────────────────────────────────
+    //Parcelas
 
     fun getParcelas(): Flow<Result<List<Parcela>>> = flow {
         emit(Result.Loading)

@@ -80,7 +80,7 @@ koin-core                     = { module = "io.insert-koin:koin-core",          
 koin-android                  = { module = "io.insert-koin:koin-android",                             version.ref = "koin" }
 koin-compose                  = { module = "io.insert-koin:koin-compose",                             version.ref = "koin" }
 logback-classic               = { module = "ch.qos.logback:logback-classic",                          version.ref = "logback" }
-
+koin-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
 [plugins]
 # ── Existentes (no tocar) ─────────────────────────────────────────────────────
 androidApplication   = { id = "com.android.application",                   version.ref = "agp" }

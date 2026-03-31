@@ -74,6 +74,7 @@ kotlin {
             // Koin — inyección de dependencias
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.koin.viewmodel)
         }
 
         commonTest.dependencies {

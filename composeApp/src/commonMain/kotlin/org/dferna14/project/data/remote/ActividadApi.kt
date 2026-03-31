@@ -61,7 +61,7 @@ data class ProductoDto(
  */
 class ActividadApi(private val client: HttpClient) {
 
-    // ── Actividades ───────────────────────────────────────────────────────────
+    // Actividades
 
     suspend fun getActividades(): List<ActividadDto> =
         client.get("$BASE_URL/api/actividades").body()
@@ -88,7 +88,7 @@ class ActividadApi(private val client: HttpClient) {
         return response.status == HttpStatusCode.NoContent
     }
 
-    // ── Parcelas (solo lectura) ────────────────────────────────────────────────
+    // parcelas --> solo lectura
 
     suspend fun getParcelas(): List<ParcelaDto> =
         client.get("$BASE_URL/api/parcelas").body()
