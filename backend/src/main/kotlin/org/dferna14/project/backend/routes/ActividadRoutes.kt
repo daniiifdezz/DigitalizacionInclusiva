@@ -38,7 +38,7 @@ fun Route.actividadRoutes() {
 
     route("/api/actividades") {
 
-        // ── GET /api/actividades ──────────────────────────────────────────────
+        // GET /api/actividades
         get {
             val actividades = transaction {
                 Actividades.selectAll().map { it.toActividadResponse() }
@@ -46,7 +46,7 @@ fun Route.actividadRoutes() {
             call.respond(actividades)
         }
 
-        // ── GET /api/actividades/{id} ─────────────────────────────────────────
+        // GET /api/actividades/{id}
         get("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
@@ -62,7 +62,7 @@ fun Route.actividadRoutes() {
             else call.respond(actividad)
         }
 
-        // ── POST /api/actividades ─────────────────────────────────────────────
+        // POST /api/actividades
         post {
             val request = call.receive<ActividadRequest>()
 
@@ -93,7 +93,7 @@ fun Route.actividadRoutes() {
             call.respond(HttpStatusCode.Created, creada)
         }
 
-        // ── PUT /api/actividades/{id} ─────────────────────────────────────────
+        // PUT /api/actividades/{id}
         put("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -121,7 +121,7 @@ fun Route.actividadRoutes() {
             else call.respond(HttpStatusCode.OK)
         }
 
-        // ── DELETE /api/actividades/{id} ──────────────────────────────────────
+        // DELETE /api/actividades/{id}
         delete("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
@@ -134,7 +134,7 @@ fun Route.actividadRoutes() {
             else call.respond(HttpStatusCode.NoContent)
         }
 
-        // ── Productos de una actividad ────────────────────────────────────────
+        // Productos de una actividad
         route("{id}/productos") {
 
             get {
@@ -182,7 +182,7 @@ fun Route.actividadRoutes() {
             }
         }
 
-        // ── Semilla tratada de una actividad ──────────────────────────────────
+        // Semilla tratada de una actividad
         route("{id}/semilla") {
 
             get {
@@ -238,7 +238,7 @@ fun Route.actividadRoutes() {
     }
 }
 
-// ── Extensiones de mapeo ResultRow → DTO ─────────────────────────────────────
+// Extensiones de mapeo ResultRow → DTO
 
 private fun ResultRow.toActividadResponse() = ActividadResponse(
     id                    = this[Actividades.id].value,

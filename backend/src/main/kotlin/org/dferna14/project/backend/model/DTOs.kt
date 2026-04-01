@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * Son distintos de las entidades de BD (Exposed) para mantener separación de capas.
  */
 
-// ── Actividad ─────────────────────────────────────────────────────────────────
+// Actividad
 
 @Serializable
 data class ActividadRequest(
@@ -36,7 +36,7 @@ data class ActividadResponse(
     val observaciones        : String?  = null
 )
 
-// ── Producto aplicado ─────────────────────────────────────────────────────────
+// ProductoAPlicado
 
 @Serializable
 data class ActividadProductoRequest(
@@ -52,7 +52,7 @@ data class ActividadProductoResponse(
     val dosis     : Double
 )
 
-// ── Semilla tratada ───────────────────────────────────────────────────────────
+// Semilla tratada
 
 @Serializable
 data class SemillaTratadaRequest(
@@ -77,7 +77,7 @@ data class SemillaTratadaResponse(
     val productoId      : Int?    = null
 )
 
-// ── Fertilización ─────────────────────────────────────────────────────────────
+// Fertilización
 
 @Serializable
 data class FertilizacionRequest(
@@ -108,7 +108,7 @@ data class FertilizacionResponse(
     val observaciones    : String? = null
 )
 
-// ── Parcela (solo lectura desde la app) ───────────────────────────────────────
+// Parcela, solo lectura desde App
 
 @Serializable
 data class ParcelaResponse(
@@ -119,7 +119,7 @@ data class ParcelaResponse(
     val zonaNitratos        : Boolean? = null
 )
 
-// ── Producto (catálogo, solo lectura desde la app) ────────────────────────────
+// Producto catálogo, solo lectura desde la app
 
 @Serializable
 data class ProductoResponse(

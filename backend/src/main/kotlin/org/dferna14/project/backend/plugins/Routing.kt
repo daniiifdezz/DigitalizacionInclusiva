@@ -13,12 +13,12 @@ import org.dferna14.project.backend.routes.parcelaRoutes
 fun Application.configureRouting() {
     routing {
 
-        // ── Health check — útil para verificar que el servidor está activo ────
+        // Health check --> verificar si el servidor esta activo
         get("/health") {
             call.respondText("OK")
         }
 
-        // ── Rutas de la API ───────────────────────────────────────────────────
+        // Rutas de la API
         actividadRoutes()
         parcelaRoutes()
     }

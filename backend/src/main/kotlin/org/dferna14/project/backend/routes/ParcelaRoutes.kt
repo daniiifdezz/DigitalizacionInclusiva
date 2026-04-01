@@ -20,7 +20,7 @@ fun Route.parcelaRoutes() {
 
     route("/api/parcelas") {
 
-        // ── GET /api/parcelas ─────────────────────────────────────────────────
+        // GET /api/parcelas
         get {
             val parcelas = transaction {
                 Parcelas.selectAll().map {
@@ -36,7 +36,7 @@ fun Route.parcelaRoutes() {
             call.respond(parcelas)
         }
 
-        // ── GET /api/parcelas/{id} ────────────────────────────────────────────
+        // GET /api/parcelas/{id}
         get("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)

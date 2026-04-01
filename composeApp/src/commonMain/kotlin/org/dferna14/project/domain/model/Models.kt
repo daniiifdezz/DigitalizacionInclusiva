@@ -23,7 +23,7 @@ data class Producto(
     val numeroRegistro : String? = null
 )
 
-data class Actividad(
+data class  Actividad(
     val id                   : Int           = 0,
     val parcelaId            : Int,
     val equipoId             : Int?     = null,
@@ -57,8 +57,7 @@ data class SemillaTratada(
 )
 
 /**
- * Resultado genérico para operaciones que pueden fallar.
- * Evita el uso de excepciones en la capa de UI.
+ * Wrapper para manejo de estados de carga, exito y error, sin el uso de excepciones
  */
 sealed class Result<out T> {
     data class Success<T>(val data: T) : Result<T>()
