@@ -52,6 +52,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
+
+
             // Coroutines
             implementation(libs.kotlinx.coroutinesCore)
 
@@ -75,6 +77,12 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.viewmodel)
+
+            // NavigationCompose
+            implementation(libs.androidx.navigation.compose)
+
+
+
         }
 
         commonTest.dependencies {
@@ -154,3 +162,8 @@ compose.desktop {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.androidx.savedstate:savedstate:1.3.2")
+    }
+}

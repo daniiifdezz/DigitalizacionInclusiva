@@ -19,7 +19,7 @@ import org.koin.compose.viewmodel.koinViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActividadListSc(
+fun ActividadListadoSc(
     onNuevaActividad: () -> Unit,
     viewModel: ActividadViewModel = koinViewModel()
 ) {
