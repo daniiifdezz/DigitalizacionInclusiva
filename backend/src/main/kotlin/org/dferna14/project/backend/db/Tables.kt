@@ -1,7 +1,7 @@
 package org.dferna14.project.backend.db
 
 import org.jetbrains.exposed.dao.id.IntIdTable
-import org.jetbrains.exposed.sql.kotlin.datetime.date
+import org.jetbrains.exposed.sql.javatime.date
 
 /**
  * Definición de tablas usando IntIdTable (Exposed).

@@ -58,10 +58,21 @@ class ActividadViewModel(
 
     fun crearActividad(actividad: Actividad) {
         viewModelScope.launch {
-            val resultado = repository.crearActividad(actividad)
-            if (resultado is Result.Success) {
-                _operacionExitosa.value = true
-                cargarActividades() // refresca la lista
+            try {
+                val resultado = repository.crearActividad(actividad)
+                when (resultado) {
+                    is Result.Success -> {
+                        _operacionExitosa.value = true
+                        cargarActividades()
+                    }
+                    is Result.Error -> {
+                        println("ERROR al crear: ${resultado.message}")
+                    }
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                println("EXCEPCION al crear: ${e.message}")
+                e.printStackTrace()
             }
         }
     }

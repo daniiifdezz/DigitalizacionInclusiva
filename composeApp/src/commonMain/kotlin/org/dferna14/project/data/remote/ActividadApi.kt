@@ -3,58 +3,58 @@ package org.dferna14.project.data.remote
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
  * DTOs del cliente — espejo de los DTOs del backend.
  * Se definen aquí para no acoplar commonMain al módulo backend.
  */
-
 @Serializable
 data class ActividadDto(
-    val id                   : Int,
-    val parcelaId            : Int,
-    val equipoId             : Int?    = null,
-    val aplicadorId          : Int?    = null,
-    val fechaInicio          : String,
-    val fechaFin             : String? = null,
-    val superficieTratada    : Double? = null,
-    val problemaFitosanitario: String? = null,
-    val eficacia             : String? = null,
-    val observaciones        : String? = null
+    @SerialName("id")                    val id                   : Int,
+    @SerialName("parcelaId")             val parcelaId            : Int,
+    @SerialName("equipoId")              val equipoId             : Int?    = null,
+    @SerialName("aplicadorId")           val aplicadorId          : Int?    = null,
+    @SerialName("fechaInicio")           val fechaInicio          : String,
+    @SerialName("fechaFin")              val fechaFin             : String? = null,
+    @SerialName("superficieTratada")     val superficieTratada    : Double? = null,
+    @SerialName("problemaFitosanitario") val problemaFitosanitario: String? = null,
+    @SerialName("eficacia")              val eficacia             : String? = null,
+    @SerialName("observaciones")         val observaciones        : String? = null
 )
 
 @Serializable
 data class ActividadCreateDto(
-    val parcelaId            : Int,
-    val equipoId             : Int?    = null,
-    val aplicadorId          : Int?    = null,
-    val fechaInicio          : String,
-    val fechaFin             : String? = null,
-    val superficieTratada    : Double? = null,
-    val problemaFitosanitario: String? = null,
-    val eficacia             : String? = null,
-    val observaciones        : String? = null
+    @SerialName("parcelaId")             val parcelaId            : Int,
+    @SerialName("equipoId")              val equipoId             : Int?    = null,
+    @SerialName("aplicadorId")           val aplicadorId          : Int?    = null,
+    @SerialName("fechaInicio")           val fechaInicio          : String,
+    @SerialName("fechaFin")              val fechaFin             : String? = null,
+    @SerialName("superficieTratada")     val superficieTratada    : Double? = null,
+    @SerialName("problemaFitosanitario") val problemaFitosanitario: String? = null,
+    @SerialName("eficacia")              val eficacia             : String? = null,
+    @SerialName("observaciones")         val observaciones        : String? = null
 )
 
 @Serializable
 data class ParcelaDto(
-    val id                   : Int,
-    val explotacionId        : Int,
-    val orden                : Int?     = null,
-    val sistemaAsesoramiento : String?  = null,
-    val zonaNitratos         : Boolean? = null
+    @SerialName("id")                    val id                   : Int,
+    @SerialName("explotacionId")         val explotacionId        : Int,
+    @SerialName("orden")                 val orden                : Int?     = null,
+    @SerialName("sistemaAsesoramiento")  val sistemaAsesoramiento : String?  = null,
+    @SerialName("zonaNitratos")          val zonaNitratos         : Boolean? = null
 )
 
 @Serializable
 data class ProductoDto(
-    val id              : Int,
-    val nombreComercial : String? = null,
-    val materiaActiva   : String? = null,
-    val numeroRegistro  : String? = null
+    @SerialName("id")               val id              : Int,
+    @SerialName("nombreComercial")  val nombreComercial : String? = null,
+    @SerialName("materiaActiva")    val materiaActiva   : String? = null,
+    @SerialName("numeroRegistro")   val numeroRegistro  : String? = null
 )
-
 /**
  * Fuente de datos remota — encapsula todas las llamadas HTTP.
  * El repositorio usa esta clase, nunca HttpClient directamente.
@@ -69,11 +69,14 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun getActividad(id: Int): ActividadDto =
         client.get("$BASE_URL/api/actividades/$id").body()
 
-    suspend fun crearActividad(actividad: ActividadCreateDto): ActividadDto =
-        client.post("$BASE_URL/api/actividades") {
+    suspend fun crearActividad(actividad: ActividadCreateDto): ActividadDto {
+        val response = client.post("$BASE_URL/api/actividades") {
             contentType(ContentType.Application.Json)
             setBody(actividad)
-        }.body()
+        }
+        println("RESPUESTA RAW: ${response.bodyAsText()}")
+        return response.body()
+    }
 
     suspend fun actualizarActividad(id: Int, actividad: ActividadCreateDto): Boolean {
         val response = client.put("$BASE_URL/api/actividades/$id") {

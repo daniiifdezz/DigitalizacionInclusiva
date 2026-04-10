@@ -4,7 +4,6 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.datetime.toKotlinLocalDate
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.ActividadProductos
 import org.dferna14.project.backend.db.SemillasTratadas
@@ -17,7 +16,6 @@ import org.dferna14.project.backend.model.SemillaTratadaResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.time.LocalDate
 
 /**
  * Endpoints REST para el recurso Actividad.
@@ -66,20 +64,20 @@ fun Route.actividadRoutes() {
         post {
             val request = call.receive<ActividadRequest>()
 
+            val fechaInicioLocalDate = java.time.LocalDate.parse(request.fechaInicio)
+            val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
+
             val nuevaId = transaction {
                 Actividades.insertAndGetId {
-                    it[parcelaId]             = request.parcelaId
-                    it[equipoId]              = request.equipoId
-                    it[aplicadorId]           = request.aplicadorId
-                    it[fechaInicio]           = LocalDate.parse(request.fechaInicio)
-                        .toKotlinLocalDate()
-                    it[fechaFin]              = request.fechaFin?.let { f ->
-                        LocalDate.parse(f).toKotlinLocalDate()
-                    }
-                    it[superficieTratada]     = request.superficieTratada
+                    it[parcelaId] = request.parcelaId
+                    it[equipoId] = request.equipoId
+                    it[aplicadorId] = request.aplicadorId
+                    it[Actividades.fechaInicio] = fechaInicioLocalDate
+                    it[fechaFin] = fechaFinLocalDate
+                    it[superficieTratada] = request.superficieTratada
                     it[problemaFitosanitario] = request.problemaFitosanitario
-                    it[eficacia]              = request.eficacia
-                    it[observaciones]         = request.observaciones
+                    it[eficacia] = request.eficacia
+                    it[observaciones] = request.observaciones
                 }.value
             }
 
@@ -99,21 +97,20 @@ fun Route.actividadRoutes() {
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
 
             val request = call.receive<ActividadRequest>()
+            val fechaInicioLocalDate = java.time.LocalDate.parse(request.fechaInicio)
+            val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 
             val filasActualizadas = transaction {
                 Actividades.update({ Actividades.id eq id }) {
-                    it[parcelaId]             = request.parcelaId
-                    it[equipoId]              = request.equipoId
-                    it[aplicadorId]           = request.aplicadorId
-                    it[fechaInicio]           = LocalDate.parse(request.fechaInicio)
-                        .toKotlinLocalDate()
-                    it[fechaFin]              = request.fechaFin?.let { f ->
-                        LocalDate.parse(f).toKotlinLocalDate()
-                    }
-                    it[superficieTratada]     = request.superficieTratada
+                    it[parcelaId]= request.parcelaId
+                    it[equipoId]= request.equipoId
+                    it[aplicadorId]= request.aplicadorId
+                    it[fechaInicio]= fechaInicioLocalDate
+                    it[fechaFin] = fechaFinLocalDate
+                    it[superficieTratada]= request.superficieTratada
                     it[problemaFitosanitario] = request.problemaFitosanitario
-                    it[eficacia]              = request.eficacia
-                    it[observaciones]         = request.observaciones
+                    it[eficacia] = request.eficacia
+                    it[observaciones] = request.observaciones
                 }
             }
 
@@ -205,15 +202,14 @@ fun Route.actividadRoutes() {
                     ?: return@post call.respond(HttpStatusCode.BadRequest)
 
                 val request = call.receive<SemillaTratadaRequest>()
+                val fechaSiembraLocalDate = request.fechaSiembra?.let { java.time.LocalDate.parse(it) }
 
                 val nuevoId = transaction {
                     SemillasTratadas.insertAndGetId {
                         it[SemillasTratadas.actividadId]       = actividadId
                         it[SemillasTratadas.parcelaId]         = request.parcelaId
                         it[SemillasTratadas.aplica]            = request.aplica
-                        it[SemillasTratadas.fechaSiembra]      = request.fechaSiembra?.let { f ->
-                            LocalDate.parse(f).toKotlinLocalDate()
-                        }
+                        it[SemillasTratadas.fechaSiembra]      = fechaSiembraLocalDate
                         it[SemillasTratadas.superficieHa]      = request.superficieHa
                         it[SemillasTratadas.cantidadSemillaKg] = request.cantidadSemillaKg
                         it[SemillasTratadas.productoId]        = request.productoId

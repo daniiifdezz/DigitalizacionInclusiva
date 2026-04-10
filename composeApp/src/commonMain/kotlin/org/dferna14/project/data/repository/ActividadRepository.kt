@@ -64,10 +64,10 @@ class ActividadRepository(
                     observaciones         = actividad.observaciones
                 )
             )
-            Result.Success(
-                actividad.copy(id = dto.id, sincronizado = true)
-            )
+            Result.Success(actividad.copy(id = dto.id, sincronizado = true))
         } catch (e: Exception) {
+            println("EXCEPCION COMPLETA: ${e::class.simpleName}: ${e.message}")
+            e.printStackTrace()
             Result.Error("Error al crear actividad: ${e.message}")
         }
     }

@@ -22,13 +22,12 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
-    implementation(libs.exposed.datetime)
+    implementation("org.jetbrains.exposed:exposed-java-time:0.51.1")
     implementation(libs.postgresql)
     implementation(libs.hikariCP)
 
-    // ── Serialización y fechas ────────────────────────────────────────────────
+    // ── Serialización ─────────────────────────────────────────────────────────
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.datetime)
 
     // ── Logging ───────────────────────────────────────────────────────────────
     implementation(libs.logback.classic)
