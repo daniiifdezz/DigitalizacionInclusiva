@@ -1,39 +1,47 @@
 package org.dferna14.project
 
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import org.dferna14.project.ui.screens.ActividadDetalleSc
 import org.dferna14.project.ui.screens.ActividadListadoSc
+import org.dferna14.project.ui.screens.EditarActividadSc
 import org.dferna14.project.ui.screens.NuevaActividadSc
 import org.dferna14.project.ui.theme.AppTheme
 
 sealed class Screen {
     object Listado : Screen()
     object NuevaActividad : Screen()
+    data class Detalle(val actividadId: Int) : Screen()
+    data class Editar(val actividadId: Int) : Screen()
 }
 
 @Composable
 fun App() {
-    // Empezamos en el listado
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Listado) }
 
-    val platform = remember { getPlatform() }
-    val isDesktop = platform.name.contains("Java", ignoreCase = true)
-
     AppTheme {
-        when (currentScreen) {
+        when (val screen = currentScreen) {
             is Screen.Listado -> {
                 ActividadListadoSc(
-                    onNuevaActividad = {
-                        currentScreen = Screen.NuevaActividad
-                    }
+                    onNuevaActividad = { currentScreen = Screen.NuevaActividad },
+                    onVerDetalle = { id -> currentScreen = Screen.Detalle(id) }
                 )
             }
             is Screen.NuevaActividad -> {
                 NuevaActividadSc(
-                    onVolver = {
-                        currentScreen = Screen.Listado
-                    }
+                    onVolver = { currentScreen = Screen.Listado }
+                )
+            }
+            is Screen.Detalle -> {
+                ActividadDetalleSc(
+                    actividadId = screen.actividadId,
+                    onVolver = { currentScreen = Screen.Listado },
+                    onEditar = { id -> currentScreen = Screen.Editar(id) }
+                )
+            }
+            is Screen.Editar -> {
+                EditarActividadSc(
+                    actividadId = screen.actividadId,
+                    onVolver = { currentScreen = Screen.Listado }
                 )
             }
         }

@@ -78,9 +78,6 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.viewmodel)
 
-            // NavigationCompose
-            implementation(libs.androidx.navigation.compose)
-
 
 
         }

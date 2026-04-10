@@ -3,7 +3,6 @@ package org.dferna14.project.data.remote
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -70,12 +69,10 @@ class ActividadApi(private val client: HttpClient) {
         client.get("$BASE_URL/api/actividades/$id").body()
 
     suspend fun crearActividad(actividad: ActividadCreateDto): ActividadDto {
-        val response = client.post("$BASE_URL/api/actividades") {
+        return client.post("$BASE_URL/api/actividades") {
             contentType(ContentType.Application.Json)
             setBody(actividad)
-        }
-        println("RESPUESTA RAW: ${response.bodyAsText()}")
-        return response.body()
+        }.body()
     }
 
     suspend fun actualizarActividad(id: Int, actividad: ActividadCreateDto): Boolean {

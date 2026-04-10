@@ -11,16 +11,9 @@ import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
 
-/**
- * ViewModel de Actividades.
- * Gestiona el estado de la pantalla y lanza las operaciones de datos.
- * La UI observa los StateFlow y se actualiza automáticamente.
- */
 class ActividadViewModel(
     private val repository: ActividadRepository
 ) : ViewModel() {
-
-    //Estado de la pantalla
 
     private val _actividades = MutableStateFlow<Result<List<Actividad>>>(Result.Loading)
     val actividades: StateFlow<Result<List<Actividad>>> = _actividades.asStateFlow()
@@ -28,17 +21,16 @@ class ActividadViewModel(
     private val _parcelas = MutableStateFlow<Result<List<Parcela>>>(Result.Loading)
     val parcelas: StateFlow<Result<List<Parcela>>> = _parcelas.asStateFlow()
 
+    private val _actividadActual = MutableStateFlow<Result<Actividad>>(Result.Loading)
+    val actividadActual: StateFlow<Result<Actividad>> = _actividadActual.asStateFlow()
+
     private val _operacionExitosa = MutableStateFlow(false)
     val operacionExitosa: StateFlow<Boolean> = _operacionExitosa.asStateFlow()
-
-    //Inicializacion
 
     init {
         cargarActividades()
         cargarParcelas()
     }
-
-    //Acciones
 
     fun cargarActividades() {
         viewModelScope.launch {
@@ -56,23 +48,43 @@ class ActividadViewModel(
         }
     }
 
+    fun cargarActividad(id: Int) {
+        viewModelScope.launch {
+            _actividadActual.value = Result.Loading
+            val resultado = repository.getActividad(id)
+            _actividadActual.value = resultado
+        }
+    }
+
     fun crearActividad(actividad: Actividad) {
         viewModelScope.launch {
-            try {
-                val resultado = repository.crearActividad(actividad)
-                when (resultado) {
-                    is Result.Success -> {
-                        _operacionExitosa.value = true
-                        cargarActividades()
-                    }
-                    is Result.Error -> {
-                        println("ERROR al crear: ${resultado.message}")
-                    }
-                    else -> {}
+            val resultado = repository.crearActividad(actividad)
+            when (resultado) {
+                is Result.Success -> {
+                    _operacionExitosa.value = true
+                    cargarActividades()
                 }
-            } catch (e: Exception) {
-                println("EXCEPCION al crear: ${e.message}")
-                e.printStackTrace()
+                is Result.Error -> {
+                    _operacionExitosa.value = false
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun actualizarActividad(actividad: Actividad) {
+        viewModelScope.launch {
+            val resultado = repository.actualizarActividad(actividad)
+            when (resultado) {
+                is Result.Success -> {
+                    _operacionExitosa.value = true
+                    _actividadActual.value = resultado
+                    cargarActividades()
+                }
+                is Result.Error -> {
+                    _operacionExitosa.value = false
+                }
+                else -> {}
             }
         }
     }
@@ -81,12 +93,16 @@ class ActividadViewModel(
         viewModelScope.launch {
             val resultado = repository.eliminarActividad(id)
             if (resultado is Result.Success) {
-                cargarActividades() // refresh
+                cargarActividades()
             }
         }
     }
 
     fun resetOperacionExitosa() {
         _operacionExitosa.value = false
+    }
+
+    fun limpiarActividadActual() {
+        _actividadActual.value = Result.Loading
     }
 }

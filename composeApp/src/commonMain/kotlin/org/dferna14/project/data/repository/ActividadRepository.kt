@@ -82,6 +82,52 @@ class ActividadRepository(
         }
     }
 
+    suspend fun getActividad(id: Int): Result<Actividad> {
+        return try {
+            val dto = api.getActividad(id)
+            Result.Success(
+                Actividad(
+                    id                    = dto.id,
+                    parcelaId             = dto.parcelaId,
+                    equipoId              = dto.equipoId,
+                    aplicadorId           = dto.aplicadorId,
+                    fechaInicio           = dto.fechaInicio,
+                    fechaFin              = dto.fechaFin,
+                    superficieTratada     = dto.superficieTratada,
+                    problemaFitosanitario = dto.problemaFitosanitario,
+                    eficacia              = dto.eficacia,
+                    observaciones         = dto.observaciones,
+                    sincronizado          = true
+                )
+            )
+        } catch (e: Exception) {
+            Result.Error("Error al obtener actividad: ${e.message}")
+        }
+    }
+
+    suspend fun actualizarActividad(actividad: Actividad): Result<Actividad> {
+        return try {
+            val exito = api.actualizarActividad(
+                actividad.id,
+                ActividadCreateDto(
+                    parcelaId             = actividad.parcelaId,
+                    equipoId              = actividad.equipoId,
+                    aplicadorId           = actividad.aplicadorId,
+                    fechaInicio           = actividad.fechaInicio,
+                    fechaFin              = actividad.fechaFin,
+                    superficieTratada     = actividad.superficieTratada,
+                    problemaFitosanitario = actividad.problemaFitosanitario,
+                    eficacia              = actividad.eficacia,
+                    observaciones         = actividad.observaciones
+                )
+            )
+            if (exito) Result.Success(actividad)
+            else Result.Error("No se pudo actualizar la actividad")
+        } catch (e: Exception) {
+            Result.Error("Error al actualizar actividad: ${e.message}")
+        }
+    }
+
     //Parcelas
 
     fun getParcelas(): Flow<Result<List<Parcela>>> = flow {

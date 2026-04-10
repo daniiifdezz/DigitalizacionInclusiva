@@ -21,6 +21,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ActividadListadoSc(
     onNuevaActividad: () -> Unit,
+    onVerDetalle: (Int) -> Unit,
     viewModel: ActividadViewModel = koinViewModel()
 ) {
     val actividadesState by viewModel.actividades.collectAsState()
@@ -81,6 +82,7 @@ fun ActividadListadoSc(
                             items(estado.data) { actividad ->
                                 ActividadCard(
                                     actividad = actividad,
+                                    onClick = { onVerDetalle(actividad.id) },
                                     onEliminar = { viewModel.eliminarActividad(actividad.id) }
                                 )
                             }
@@ -99,11 +101,13 @@ fun ActividadListadoSc(
 @Composable
 fun ActividadCard(
     actividad: Actividad,
+    onClick: () -> Unit,
     onEliminar: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier
