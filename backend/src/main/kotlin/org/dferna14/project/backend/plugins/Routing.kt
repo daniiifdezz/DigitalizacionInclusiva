@@ -5,6 +5,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.routes.actividadRoutes
 import org.dferna14.project.backend.routes.parcelaRoutes
+import org.dferna14.project.backend.routes.fertilizacionRoutes
+import org.dferna14.project.backend.routes.productoRoutes
 
 /**
  * Registro central de todas las rutas de la API.
@@ -21,5 +23,7 @@ fun Application.configureRouting() {
         // Rutas de la API
         actividadRoutes()
         parcelaRoutes()
+        fertilizacionRoutes()
+        productoRoutes()
     }
 }
