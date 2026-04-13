@@ -20,6 +20,7 @@ fun ActividadDetalleSc(
     actividadId: Int,
     onVolver: () -> Unit,
     onEditar: (Int) -> Unit,
+    onValidar: (Int) -> Unit,
     viewModel: ActividadViewModel = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
@@ -53,28 +54,30 @@ fun ActividadDetalleSc(
                     when (val estado = actividadState) {
                         is Result.Success -> {
                             val act = estado.data
+                            // Solo editable en BORRADOR
                             if (act.estado.esEditable()) {
                                 TextButton(onClick = { onEditar(actividadId) }) {
                                     Text("Editar")
                                 }
-                            }
-                            if (act.estado.puedeEnviar()) {
+                                // Botón enviar a validar (solo en BORRADOR)
                                 Button(
                                     onClick = { viewModel.enviarActividad(actividadId) },
                                     modifier = Modifier.padding(end = 8.dp)
                                 ) {
-                                    Text("Enviar a validar")
+                                    Text("Enviar")
                                 }
                             }
-                            if (act.estado == EstadoActividad.PENDIENTE_VALIDAR) {
+                            // Solo puede ir a pantalla de validación en PENDIENTE_VALIDAR
+                            if (act.estado.puedeValidar()) {
                                 Button(
-                                    onClick = { viewModel.validarActividad(actividadId) },
+                                    onClick = { onValidar(actividadId) },
                                     modifier = Modifier.padding(end = 8.dp)
                                 ) {
                                     Text("Validar")
                                 }
                             }
-                            if (act.estado.esEditable()) {
+                            // Eliminar en BORRADOR y VALIDADA
+                            if (act.estado.esEditable() || act.estado == EstadoActividad.VALIDADA) {
                                 TextButton(onClick = { mostrarDialogoEliminar = true }) {
                                     Text("Eliminar", color = MaterialTheme.colorScheme.error)
                                 }

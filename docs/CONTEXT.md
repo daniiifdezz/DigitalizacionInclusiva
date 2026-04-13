@@ -225,6 +225,35 @@ object Fertilizaciones : IntIdTable("fertilizacion") {
     val tipoFertilizacion = varchar("tipo_fertilizacion", 10).nullable()
     val observaciones     = text("observaciones").nullable()
 }
+
+// Tablas satélite (modelo relacional)
+object ReferenciaSigpac : IntIdTable("referenciasigpac") {
+    val parcelaId = integer("parcela_id").references(Parcelas.id)
+    val provincia = varchar("provincia", 100).nullable()
+    val terminoMunicipal = varchar("termino_municipal", 100).nullable()
+    val codigoAgregado = varchar("codigo_agregado", 50).nullable()
+    val zona = varchar("zona", 50).nullable()
+    val numeroPoligono = varchar("numero_poligono", 20).nullable()
+    val numeroParcela = varchar("numero_parcela", 20).nullable()
+    val numeroRecinto = varchar("numero_recinto", 20).nullable()
+    val usoSigpac = varchar("uso_sigpac", 20).nullable()
+    val superficieHa = double("superficie_ha").nullable()
+}
+
+object DatosAgronomicos : IntIdTable("datosagronomicos") {
+    val parcelaId = integer("parcela_id").references(Parcelas.id)
+    val especieVariedad = varchar("especie_variedad", 200).nullable()
+    val ecoregimenPractica = varchar("ecoregimen_practica", 50).nullable()
+    val secanoRegadio = varchar("secano_regadio", 20).nullable()
+    val cultivo = varchar("cultivo", 100).nullable()
+    val fechaInicio = date("fecha_inicio").nullable()
+    val fechaFin = date("fecha_fin").nullable()
+    val aireLibreProtegido = varchar("aire_libre_protegido", 50).nullable()
+}
+
+object DatosMedioambientales : IntIdTable("datosmedioambientales") {
+    val parcelaId = integer("parcela_id").references(Parcelas.id)
+}
 ```
 
 ---
@@ -236,17 +265,20 @@ object Fertilizaciones : IntIdTable("fertilizacion") {
 - [x] CRUD Fertilizaciones completo
 - [x] GET Productos (solo lectura)
 - [x] GET Parcelas (solo lectura)
+- [x] GET Parcelas/{id}/completa (con tablas satélite SIGPAC)
 - [x] Flujo de estados (enviar/validar/devolver)
 - [x] Filtro por estado en listados
 - [x] CORS configurado
 - [x] Serialización JSON
 - [x] Manejo de errores centralizado
+- [x] Tablas satélite: ReferenciaSigpac, DatosAgronomicos (Exposed)
 
 ### App Móvil ✅
 - [x] Listado de actividades con estado (chip de color)
 - [x] Pantalla nueva actividad
 - [x] Pantalla detalle actividad
 - [x] Pantalla editar actividad
+- [x] Pantalla validar actividad (Desktop)
 - [x] Selector de parcela
 - [x] Navegación entre pantallas
 - [x] Estados de carga/error
@@ -491,4 +523,4 @@ DB_PASSWORD=1234
 
 ---
 
-*Última actualización: 10/04/2026*
+*Última actualización: 13/04/2026*

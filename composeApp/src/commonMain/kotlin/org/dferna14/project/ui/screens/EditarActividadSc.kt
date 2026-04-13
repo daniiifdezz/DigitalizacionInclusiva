@@ -29,10 +29,8 @@ fun EditarActividadSc(
 
     var parcelaSeleccionada by remember { mutableStateOf<Parcela?>(null) }
     var fechaInicio by remember { mutableStateOf("") }
-    var fechaFin by remember { mutableStateOf("") }
     var superficieTratada by remember { mutableStateOf("") }
     var problemaFitosanitario by remember { mutableStateOf("") }
-    var eficacia by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
     var desplegableAbierto by remember { mutableStateOf(false) }
     var datosCargados by remember { mutableStateOf(false) }
@@ -45,10 +43,8 @@ fun EditarActividadSc(
         if (!datosCargados && actividadState is Result.Success) {
             val act = (actividadState as Result.Success).data
             fechaInicio = act.fechaInicio
-            fechaFin = act.fechaFin ?: ""
             superficieTratada = act.superficieTratada?.toString() ?: ""
             problemaFitosanitario = act.problemaFitosanitario ?: ""
-            eficacia = act.eficacia ?: ""
             observaciones = act.observaciones ?: ""
             datosCargados = true
         }
@@ -128,13 +124,6 @@ fun EditarActividadSc(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    OutlinedTextField(
-                        value = fechaFin,
-                        onValueChange = { fechaFin = it },
-                        label = { Text("Fecha fin (AAAA-MM-DD) - opcional") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
                     ExposedDropdownMenuBox(
                         expanded = desplegableAbierto,
                         onExpandedChange = { desplegableAbierto = it }
@@ -193,13 +182,6 @@ fun EditarActividadSc(
                     )
 
                     OutlinedTextField(
-                        value = eficacia,
-                        onValueChange = { eficacia = it },
-                        label = { Text("Eficacia") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
                         value = observaciones,
                         onValueChange = { observaciones = it },
                         label = { Text("Observaciones") },
@@ -215,10 +197,8 @@ fun EditarActividadSc(
                                     id = actividadId,
                                     parcelaId = parcela.id,
                                     fechaInicio = fechaInicio,
-                                    fechaFin = fechaFin.ifBlank { null },
                                     superficieTratada = superficieTratada.toDoubleOrNull(),
                                     problemaFitosanitario = problemaFitosanitario.ifBlank { null },
-                                    eficacia = eficacia.ifBlank { null },
                                     observaciones = observaciones.ifBlank { null }
                                 )
                             )
