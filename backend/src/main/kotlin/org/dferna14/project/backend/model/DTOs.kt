@@ -128,6 +128,38 @@ data class ParcelaResponse(
     val zonaNitratos        : Boolean? = null
 )
 
+// Parcela Completa - combina parcela + referenciasigpac + datosagronomicos
+
+@Serializable
+data class ParcelaCompletaResponse(
+    // Datos de parcela
+    val id                   : Int,
+    val explotacionId        : Int,
+    val orden                : Int?     = null,
+    val zonaNitratos         : Boolean? = null,
+    val sistemaAsesoramiento : String?  = null,
+
+    // SIGPAC (referenciasigpac)
+    val provincia           : String? = null,
+    val terminoMunicipal    : String? = null,
+    val codigoAgregado     : String? = null,
+    val zona              : String? = null,
+    val numeroPoligono     : String? = null,
+    val numeroParcela     : String? = null,
+    val numeroRecinto     : String? = null,
+    val usoSigpac          : String? = null,
+    val superficieHa        : Double? = null,
+
+    // Agronómicos (datosagronomicos)
+    val especieVariedad    : String? = null,
+    val ecoregimenPractica: String? = null,
+    val secanoRegadio    : String? = null,
+    val cultivo          : String? = null,
+    val fechaInicio      : String? = null,
+    val fechaFin         : String? = null,
+    val aireLibreProtegido: String? = null
+)
+
 // Producto catálogo, solo lectura desde la app
 
 @Serializable

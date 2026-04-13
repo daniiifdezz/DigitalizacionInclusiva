@@ -70,3 +70,35 @@ object Fertilizaciones : IntIdTable("fertilizacion") {
     val tipoFertilizacion = varchar("tipo_fertilizacion", 10).nullable()
     val observaciones     = text("observaciones").nullable()
 }
+
+//referencias sigPac
+
+object ReferenciaSigpac : IntIdTable("referenciasigpac") {
+    val parcelaId = integer("parcela_id").references(Parcelas.id)
+    val provincia = varchar("provincia", 100).nullable()
+    val terminoMunicipal = varchar("termino_municipal", 100).nullable()
+    val codigoAgregado = varchar("codigo_agregado", 50).nullable()
+    val zona = varchar("zona", 50).nullable()
+    val numeroPoligono = varchar("numero_poligono", 20).nullable()
+    val numeroParcela = varchar("numero_parcela", 20).nullable()
+    val numeroRecinto = varchar("numero_recinto", 20).nullable()
+    val usoSigpac = varchar("uso_sigpac", 20).nullable()
+    val superficieHa = double("superficie_ha").nullable()
+}
+// Tabla: datosagronomicos
+object DatosAgronomicos : IntIdTable("datosagronomicos") {
+    val parcelaId = integer("parcela_id").references(Parcelas.id)
+    val especieVariedad = varchar("especie_variedad", 200).nullable()
+    val ecoregimenPractica = varchar("ecoregimen_practica", 50).nullable()
+    val secanoRegadio = varchar("secano_regadio", 20).nullable()
+    val cultivo = varchar("cultivo", 100).nullable()
+    val fechaInicio = date("fecha_inicio").nullable()
+    val fechaFin = date("fecha_fin").nullable()
+    val aireLibreProtegido = varchar("aire_libre_protegido", 50).nullable()
+}
+// Tabla: datosmedioambientales (pendiente estructura - la verificas tú)
+object DatosMedioambientales : IntIdTable("datosmedioambientales") {
+    val parcelaId = integer("parcela_id").references(Parcelas.id)
+
+
+}
