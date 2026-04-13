@@ -7,35 +7,40 @@ import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * DTOs del cliente — espejo de los DTOs del backend.
- * Se definen aquí para no acoplar commonMain al módulo backend.
- */
+@Serializable
+enum class EstadoActividadDto {
+    @SerialName("BORRADOR") BORRADOR,
+    @SerialName("PENDIENTE_VALIDAR") PENDIENTE_VALIDAR,
+    @SerialName("VALIDADA") VALIDADA
+}
+
 @Serializable
 data class ActividadDto(
-    @SerialName("id")                    val id                   : Int,
-    @SerialName("parcelaId")             val parcelaId            : Int,
-    @SerialName("equipoId")              val equipoId             : Int?    = null,
-    @SerialName("aplicadorId")           val aplicadorId          : Int?    = null,
-    @SerialName("fechaInicio")           val fechaInicio          : String,
-    @SerialName("fechaFin")              val fechaFin             : String? = null,
-    @SerialName("superficieTratada")     val superficieTratada    : Double? = null,
-    @SerialName("problemaFitosanitario") val problemaFitosanitario: String? = null,
-    @SerialName("eficacia")              val eficacia             : String? = null,
-    @SerialName("observaciones")         val observaciones        : String? = null
+    val id                   : Int,
+    val parcelaId            : Int,
+    val equipoId             : Int?    = null,
+    val aplicadorId          : Int?    = null,
+    val fechaInicio          : String,
+    val fechaFin             : String? = null,
+    val superficieTratada    : Double? = null,
+    val problemaFitosanitario: String? = null,
+    val eficacia             : String? = null,
+    val observaciones        : String? = null,
+    val estado               : EstadoActividadDto = EstadoActividadDto.BORRADOR
 )
 
 @Serializable
 data class ActividadCreateDto(
-    @SerialName("parcelaId")             val parcelaId            : Int,
-    @SerialName("equipoId")              val equipoId             : Int?    = null,
-    @SerialName("aplicadorId")           val aplicadorId          : Int?    = null,
-    @SerialName("fechaInicio")           val fechaInicio          : String,
-    @SerialName("fechaFin")              val fechaFin             : String? = null,
-    @SerialName("superficieTratada")     val superficieTratada    : Double? = null,
-    @SerialName("problemaFitosanitario") val problemaFitosanitario: String? = null,
-    @SerialName("eficacia")              val eficacia             : String? = null,
-    @SerialName("observaciones")         val observaciones        : String? = null
+    val parcelaId            : Int,
+    val equipoId             : Int?    = null,
+    val aplicadorId          : Int?    = null,
+    val fechaInicio          : String,
+    val fechaFin             : String? = null,
+    val superficieTratada    : Double? = null,
+    val problemaFitosanitario: String? = null,
+    val eficacia             : String? = null,
+    val observaciones        : String? = null,
+    val estado               : EstadoActividadDto = EstadoActividadDto.BORRADOR
 )
 
 @Serializable
@@ -86,6 +91,20 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun eliminarActividad(id: Int): Boolean {
         val response = client.delete("$BASE_URL/api/actividades/$id")
         return response.status == HttpStatusCode.NoContent
+    }
+
+    suspend fun getActividadesPendientes(): List<ActividadDto> =
+        client.get("$BASE_URL/api/actividades/pendientes").body()
+
+    suspend fun enviarActividad(id: Int): ActividadDto =
+        client.post("$BASE_URL/api/actividades/$id/enviar").body()
+
+    suspend fun validarActividad(id: Int): ActividadDto =
+        client.post("$BASE_URL/api/actividades/$id/validar").body()
+
+    suspend fun devolverActividad(id: Int): Boolean {
+        val response = client.post("$BASE_URL/api/actividades/$id/devolver")
+        return response.status == HttpStatusCode.OK
     }
 
     // parcelas --> solo lectura

@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.viewmodel.ActividadViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -22,10 +23,21 @@ fun ActividadDetalleSc(
     viewModel: ActividadViewModel = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
+    val operacionExitosa by viewModel.operacionExitosa.collectAsState()
     var mostrarDialogoEliminar by remember { mutableStateOf(false) }
+    var mostrarSnackbar by remember { mutableStateOf(false) }
+    var snackbarMensaje by remember { mutableStateOf("") }
 
     LaunchedEffect(actividadId) {
         viewModel.cargarActividad(actividadId)
+    }
+
+    LaunchedEffect(operacionExitosa) {
+        if (operacionExitosa) {
+            snackbarMensaje = "Operación realizada con éxito"
+            mostrarSnackbar = true
+            viewModel.resetOperacionExitosa()
+        }
     }
 
     Scaffold(
@@ -38,19 +50,54 @@ fun ActividadDetalleSc(
                     }
                 },
                 actions = {
-                    when (actividadState) {
+                    when (val estado = actividadState) {
                         is Result.Success -> {
-                            TextButton(onClick = { onEditar(actividadId) }) {
-                                Text("Editar")
+                            val act = estado.data
+                            if (act.estado.esEditable()) {
+                                TextButton(onClick = { onEditar(actividadId) }) {
+                                    Text("Editar")
+                                }
                             }
-                            TextButton(onClick = { mostrarDialogoEliminar = true }) {
-                                Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                            if (act.estado.puedeEnviar()) {
+                                Button(
+                                    onClick = { viewModel.enviarActividad(actividadId) },
+                                    modifier = Modifier.padding(end = 8.dp)
+                                ) {
+                                    Text("Enviar a validar")
+                                }
+                            }
+                            if (act.estado == EstadoActividad.PENDIENTE_VALIDAR) {
+                                Button(
+                                    onClick = { viewModel.validarActividad(actividadId) },
+                                    modifier = Modifier.padding(end = 8.dp)
+                                ) {
+                                    Text("Validar")
+                                }
+                            }
+                            if (act.estado.esEditable()) {
+                                TextButton(onClick = { mostrarDialogoEliminar = true }) {
+                                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                                }
                             }
                         }
                         else -> {}
                     }
                 }
             )
+        },
+        snackbarHost = {
+            if (mostrarSnackbar) {
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    action = {
+                        TextButton(onClick = { mostrarSnackbar = false }) {
+                            Text("OK")
+                        }
+                    }
+                ) {
+                    Text(snackbarMensaje)
+                }
+            }
         }
     ) { padding ->
         when (val estado = actividadState) {
@@ -130,6 +177,7 @@ private fun ActividadDetalleContenido(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        TarjetaCampo(label = "Estado", valor = actividad.estado.name.replace("_", " "))
         TarjetaCampo(label = "Parcela", valor = "Parcela ${actividad.parcelaId}")
         TarjetaCampo(label = "Fecha de inicio", valor = actividad.fechaInicio)
         actividad.fechaFin?.let {
@@ -146,6 +194,72 @@ private fun ActividadDetalleContenido(
         }
         actividad.observaciones?.let {
             TarjetaCampo(label = "Observaciones", valor = it)
+        }
+
+        when (actividad.estado) {
+            EstadoActividad.BORRADOR -> {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Esta actividad está en modo borrador",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Pulsa 'Enviar a validar' cuando esté completa para que el técnico pueda revisarla.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+            EstadoActividad.PENDIENTE_VALIDAR -> {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Pendiente de validación",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "El técnico de escritorio debe revisar y validar esta actividad.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+            EstadoActividad.VALIDADA -> {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Actividad validada",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Esta actividad está completa y cumple con los requisitos legales del cuaderno de campo.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
         }
     }
 }

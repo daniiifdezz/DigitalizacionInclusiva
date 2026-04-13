@@ -1,12 +1,15 @@
 package org.dferna14.project.domain.model
 
-/**
- * Modelos de dominio de la aplicación.
- *
- * Son distintos de los DTOs del backend y de las entidades SQLDelight.
- * Representan los datos tal como los necesita la UI y la lógica de negocio.
- * La conversión entre capas se hace en el repositorio.
- */
+enum class EstadoActividad {
+    BORRADOR,
+    PENDIENTE_VALIDAR,
+    VALIDADA;
+
+    fun esEditable(): Boolean = this != VALIDADA
+    fun puedeEnviar(): Boolean = this == BORRADOR
+    fun puedeValidar(): Boolean = this == PENDIENTE_VALIDAR
+    fun puedeDevolver(): Boolean = this == PENDIENTE_VALIDAR
+}
 
 data class Parcela(
     val id                   : Int,
@@ -23,7 +26,7 @@ data class Producto(
     val numeroRegistro : String? = null
 )
 
-data class  Actividad(
+data class Actividad(
     val id                   : Int           = 0,
     val parcelaId            : Int,
     val equipoId             : Int?     = null,
@@ -31,10 +34,10 @@ data class  Actividad(
     val fechaInicio          : String,
     val fechaFin             : String?  = null,
     val superficieTratada    : Double?  = null,
-    val problemaFitosanitario: String?  = null,
+    val problemaFitosanitario : String?  = null,
     val eficacia             : String?  = null,
     val observaciones        : String?  = null,
-    // Estado de sincronización offline-first
+    val estado               : EstadoActividad = EstadoActividad.BORRADOR,
     val sincronizado         : Boolean  = false
 )
 

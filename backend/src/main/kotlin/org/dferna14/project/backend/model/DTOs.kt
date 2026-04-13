@@ -10,6 +10,13 @@ import kotlinx.serialization.Serializable
 // Actividad
 
 @Serializable
+enum class EstadoActividad {
+    BORRADOR,           // Creada en móvil, incompleta
+    PENDIENTE_VALIDAR,   // Enviada, espera técnico
+    VALIDADA             // Cerrada por técnico desktop
+}
+
+@Serializable
 data class ActividadRequest(
     val parcelaId            : Int,
     val equipoId             : Int?     = null,
@@ -19,7 +26,8 @@ data class ActividadRequest(
     val superficieTratada    : Double?  = null,
     val problemaFitosanitario: String?  = null,
     val eficacia             : String?  = null,
-    val observaciones        : String?  = null
+    val observaciones        : String?  = null,
+    val estado               : EstadoActividad = EstadoActividad.BORRADOR
 )
 
 @Serializable
@@ -33,7 +41,8 @@ data class ActividadResponse(
     val superficieTratada    : Double?  = null,
     val problemaFitosanitario: String?  = null,
     val eficacia             : String?  = null,
-    val observaciones        : String?  = null
+    val observaciones        : String?  = null,
+    val estado               : EstadoActividad
 )
 
 // ProductoAPlicado

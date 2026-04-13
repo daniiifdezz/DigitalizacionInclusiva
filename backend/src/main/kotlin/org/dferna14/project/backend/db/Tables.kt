@@ -34,6 +34,7 @@ object Actividades : IntIdTable("actividad") {
     val problemaFitosanitario = text("problema_fitosanitario").nullable()
     val eficacia              = varchar("eficacia", 50).nullable()
     val observaciones         = text("observaciones").nullable()
+    val estado                = varchar("estado", 30).default("BORRADOR")
 }
 
 object ActividadProductos : IntIdTable("actividad_producto") {

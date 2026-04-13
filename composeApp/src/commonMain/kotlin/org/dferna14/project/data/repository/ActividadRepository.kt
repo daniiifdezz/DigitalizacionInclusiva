@@ -4,7 +4,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.ActividadCreateDto
+import org.dferna14.project.data.remote.ActividadDto
+import org.dferna14.project.data.remote.EstadoActividadDto
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
 
@@ -28,24 +31,20 @@ class ActividadRepository(
     fun getActividades(): Flow<Result<List<Actividad>>> = flow {
         emit(Result.Loading)
         try {
-            val actividades = api.getActividades().map { dto ->
-                Actividad(
-                    id                    = dto.id,
-                    parcelaId             = dto.parcelaId,
-                    equipoId              = dto.equipoId,
-                    aplicadorId           = dto.aplicadorId,
-                    fechaInicio           = dto.fechaInicio,
-                    fechaFin              = dto.fechaFin,
-                    superficieTratada     = dto.superficieTratada,
-                    problemaFitosanitario = dto.problemaFitosanitario,
-                    eficacia              = dto.eficacia,
-                    observaciones         = dto.observaciones,
-                    sincronizado          = true
-                )
-            }
+            val actividades = api.getActividades().map { it.toDomain() }
             emit(Result.Success(actividades))
         } catch (e: Exception) {
             emit(Result.Error("Error al cargar actividades: ${e.message}"))
+        }
+    }
+
+    fun getActividadesPendientes(): Flow<Result<List<Actividad>>> = flow {
+        emit(Result.Loading)
+        try {
+            val actividades = api.getActividadesPendientes().map { it.toDomain() }
+            emit(Result.Success(actividades))
+        } catch (e: Exception) {
+            emit(Result.Error("Error al cargar actividades pendientes: ${e.message}"))
         }
     }
 
@@ -61,14 +60,41 @@ class ActividadRepository(
                     superficieTratada     = actividad.superficieTratada,
                     problemaFitosanitario = actividad.problemaFitosanitario,
                     eficacia              = actividad.eficacia,
-                    observaciones         = actividad.observaciones
+                    observaciones         = actividad.observaciones,
+                    estado                = EstadoActividadDto.BORRADOR
                 )
             )
-            Result.Success(actividad.copy(id = dto.id, sincronizado = true))
+            Result.Success(dto.toDomain())
         } catch (e: Exception) {
-            println("EXCEPCION COMPLETA: ${e::class.simpleName}: ${e.message}")
-            e.printStackTrace()
             Result.Error("Error al crear actividad: ${e.message}")
+        }
+    }
+
+    suspend fun enviarActividad(id: Int): Result<Actividad> {
+        return try {
+            val dto = api.enviarActividad(id)
+            Result.Success(dto.toDomain())
+        } catch (e: Exception) {
+            Result.Error("Error al enviar actividad: ${e.message}")
+        }
+    }
+
+    suspend fun validarActividad(id: Int): Result<Actividad> {
+        return try {
+            val dto = api.validarActividad(id)
+            Result.Success(dto.toDomain())
+        } catch (e: Exception) {
+            Result.Error("Error al validar actividad: ${e.message}")
+        }
+    }
+
+    suspend fun devolverActividad(id: Int): Result<Unit> {
+        return try {
+            val exito = api.devolverActividad(id)
+            if (exito) Result.Success(Unit)
+            else Result.Error("No se pudo devolver la actividad")
+        } catch (e: Exception) {
+            Result.Error("Error al devolver actividad: ${e.message}")
         }
     }
 
@@ -85,21 +111,7 @@ class ActividadRepository(
     suspend fun getActividad(id: Int): Result<Actividad> {
         return try {
             val dto = api.getActividad(id)
-            Result.Success(
-                Actividad(
-                    id                    = dto.id,
-                    parcelaId             = dto.parcelaId,
-                    equipoId              = dto.equipoId,
-                    aplicadorId           = dto.aplicadorId,
-                    fechaInicio           = dto.fechaInicio,
-                    fechaFin              = dto.fechaFin,
-                    superficieTratada     = dto.superficieTratada,
-                    problemaFitosanitario = dto.problemaFitosanitario,
-                    eficacia              = dto.eficacia,
-                    observaciones         = dto.observaciones,
-                    sincronizado          = true
-                )
-            )
+            Result.Success(dto.toDomain())
         } catch (e: Exception) {
             Result.Error("Error al obtener actividad: ${e.message}")
         }
@@ -107,20 +119,23 @@ class ActividadRepository(
 
     suspend fun actualizarActividad(actividad: Actividad): Result<Actividad> {
         return try {
-            val exito = api.actualizarActividad(
-                actividad.id,
-                ActividadCreateDto(
-                    parcelaId             = actividad.parcelaId,
-                    equipoId              = actividad.equipoId,
-                    aplicadorId           = actividad.aplicadorId,
-                    fechaInicio           = actividad.fechaInicio,
-                    fechaFin              = actividad.fechaFin,
-                    superficieTratada     = actividad.superficieTratada,
-                    problemaFitosanitario = actividad.problemaFitosanitario,
-                    eficacia              = actividad.eficacia,
-                    observaciones         = actividad.observaciones
-                )
+            val dto = ActividadCreateDto(
+                parcelaId             = actividad.parcelaId,
+                equipoId              = actividad.equipoId,
+                aplicadorId           = actividad.aplicadorId,
+                fechaInicio           = actividad.fechaInicio,
+                fechaFin              = actividad.fechaFin,
+                superficieTratada     = actividad.superficieTratada,
+                problemaFitosanitario = actividad.problemaFitosanitario,
+                eficacia              = actividad.eficacia,
+                observaciones         = actividad.observaciones,
+                estado                = when (actividad.estado) {
+                    EstadoActividad.BORRADOR -> EstadoActividadDto.BORRADOR
+                    EstadoActividad.PENDIENTE_VALIDAR -> EstadoActividadDto.PENDIENTE_VALIDAR
+                    EstadoActividad.VALIDADA -> EstadoActividadDto.VALIDADA
+                }
             )
+            val exito = api.actualizarActividad(actividad.id, dto)
             if (exito) Result.Success(actividad)
             else Result.Error("No se pudo actualizar la actividad")
         } catch (e: Exception) {
@@ -148,3 +163,22 @@ class ActividadRepository(
         }
     }
 }
+
+private fun ActividadDto.toDomain() = Actividad(
+    id                    = id,
+    parcelaId             = parcelaId,
+    equipoId              = equipoId,
+    aplicadorId           = aplicadorId,
+    fechaInicio           = fechaInicio,
+    fechaFin              = fechaFin,
+    superficieTratada     = superficieTratada,
+    problemaFitosanitario = problemaFitosanitario,
+    eficacia              = eficacia,
+    observaciones         = observaciones,
+    estado                = when (estado) {
+        EstadoActividadDto.BORRADOR -> EstadoActividad.BORRADOR
+        EstadoActividadDto.PENDIENTE_VALIDAR -> EstadoActividad.PENDIENTE_VALIDAR
+        EstadoActividadDto.VALIDADA -> EstadoActividad.VALIDADA
+    },
+    sincronizado          = true
+)

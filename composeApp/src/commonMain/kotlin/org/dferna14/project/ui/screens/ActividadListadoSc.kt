@@ -7,8 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.viewmodel.ActividadViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -114,10 +116,17 @@ fun ActividadCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text(
-                text = "Parcela ${actividad.parcelaId}",
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Parcela ${actividad.parcelaId}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                EstadoChip(estado = actividad.estado)
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Fecha: ${actividad.fechaInicio}",
@@ -143,10 +152,33 @@ fun ActividadCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onEliminar) {
-                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                if (actividad.estado.esEditable()) {
+                    TextButton(onClick = onEliminar) {
+                        Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun EstadoChip(estado: EstadoActividad) {
+    val (color, texto) = when (estado) {
+        EstadoActividad.BORRADOR -> Pair(Color(0xFFFFA000), "Borrador")
+        EstadoActividad.PENDIENTE_VALIDAR -> Pair(Color(0xFF1976D2), "Pendiente")
+        EstadoActividad.VALIDADA -> Pair(Color(0xFF388E3C), "Validada")
+    }
+
+    Surface(
+        color = color.copy(alpha = 0.15f),
+        shape = MaterialTheme.shapes.small
+    ) {
+        Text(
+            text = texto,
+            color = color,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
     }
 }

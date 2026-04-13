@@ -11,35 +11,39 @@ import org.dferna14.project.backend.model.ActividadProductoRequest
 import org.dferna14.project.backend.model.ActividadProductoResponse
 import org.dferna14.project.backend.model.ActividadRequest
 import org.dferna14.project.backend.model.ActividadResponse
+import org.dferna14.project.backend.model.EstadoActividad
 import org.dferna14.project.backend.model.SemillaTratadaRequest
 import org.dferna14.project.backend.model.SemillaTratadaResponse
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
-/**
- * Endpoints REST para el recurso Actividad.
- *
- * GET    /api/actividades              → lista todas las actividades
- * GET    /api/actividades/{id}         → detalle de una actividad
- * POST   /api/actividades              → crear nueva actividad
- * PUT    /api/actividades/{id}         → actualizar actividad existente
- * DELETE /api/actividades/{id}         → eliminar actividad
- *
- * GET    /api/actividades/{id}/productos  → productos de una actividad
- * POST   /api/actividades/{id}/productos  → añadir producto a actividad
- *
- * GET    /api/actividades/{id}/semilla    → semilla tratada de una actividad
- * POST   /api/actividades/{id}/semilla    → registrar semilla tratada
- */
 fun Route.actividadRoutes() {
 
     route("/api/actividades") {
 
         // GET /api/actividades
+        // Filtro opcional: ?estado=BORRADOR|PENDIENTE_VALIDAR|VALIDADA
         get {
+            val estadoParam = call.request.queryParameters["estado"]
             val actividades = transaction {
-                Actividades.selectAll().map { it.toActividadResponse() }
+                val query = if (estadoParam != null) {
+                    Actividades.selectAll().where { Actividades.estado eq estadoParam }
+                } else {
+                    Actividades.selectAll()
+                }
+                query.map { it.toActividadResponse() }
+            }
+            call.respond(actividades)
+        }
+
+        // GET /api/actividades/pendientes
+        // Devuelve solo actividades pendientes de validar (para desktop)
+        get("pendientes") {
+            val actividades = transaction {
+                Actividades.selectAll()
+                    .where { Actividades.estado eq EstadoActividad.PENDIENTE_VALIDAR.name }
+                    .map { it.toActividadResponse() }
             }
             call.respond(actividades)
         }
@@ -63,7 +67,6 @@ fun Route.actividadRoutes() {
         // POST /api/actividades
         post {
             val request = call.receive<ActividadRequest>()
-
             val fechaInicioLocalDate = java.time.LocalDate.parse(request.fechaInicio)
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 
@@ -78,6 +81,7 @@ fun Route.actividadRoutes() {
                     it[problemaFitosanitario] = request.problemaFitosanitario
                     it[eficacia] = request.eficacia
                     it[observaciones] = request.observaciones
+                    it[estado] = request.estado.name
                 }.value
             }
 
@@ -111,11 +115,81 @@ fun Route.actividadRoutes() {
                     it[problemaFitosanitario] = request.problemaFitosanitario
                     it[eficacia] = request.eficacia
                     it[observaciones] = request.observaciones
+                    it[estado] = request.estado.name
                 }
             }
 
             if (filasActualizadas == 0) call.respond(HttpStatusCode.NotFound)
             else call.respond(HttpStatusCode.OK)
+        }
+
+        // POST /api/actividades/{id}/enviar
+        // Móvil: envía la actividad para validación (BORRADOR -> PENDIENTE_VALIDAR)
+        post("{id}/enviar") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest)
+
+            val filasActualizadas = transaction {
+                Actividades.update({ Actividades.id eq id }) {
+                    it[estado] = EstadoActividad.PENDIENTE_VALIDAR.name
+                }
+            }
+
+            if (filasActualizadas == 0) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                val actividad = transaction {
+                    Actividades.selectAll()
+                        .where { Actividades.id eq id }
+                        .single()
+                        .toActividadResponse()
+                }
+                call.respond(actividad)
+            }
+        }
+
+        // POST /api/actividades/{id}/validar
+        // Desktop: marca como validada (PENDIENTE_VALIDAR -> VALIDADA)
+        post("{id}/validar") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest)
+
+            val filasActualizadas = transaction {
+                Actividades.update({ Actividades.id eq id }) {
+                    it[estado] = EstadoActividad.VALIDADA.name
+                }
+            }
+
+            if (filasActualizadas == 0) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                val actividad = transaction {
+                    Actividades.selectAll()
+                        .where { Actividades.id eq id }
+                        .single()
+                        .toActividadResponse()
+                }
+                call.respond(actividad)
+            }
+        }
+
+        // POST /api/actividades/{id}/devolver
+        // Desktop: devuelve al agricultor (PENDIENTE_VALIDAR -> BORRADOR)
+        post("{id}/devolver") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest)
+
+            val filasActualizadas = transaction {
+                Actividades.update({ Actividades.id eq id }) {
+                    it[estado] = EstadoActividad.BORRADOR.name
+                }
+            }
+
+            if (filasActualizadas == 0) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                call.respond(HttpStatusCode.OK)
+            }
         }
 
         // DELETE /api/actividades/{id}
@@ -234,8 +308,6 @@ fun Route.actividadRoutes() {
     }
 }
 
-// Extensiones de mapeo ResultRow → DTO
-
 private fun ResultRow.toActividadResponse() = ActividadResponse(
     id                    = this[Actividades.id].value,
     parcelaId             = this[Actividades.parcelaId],
@@ -246,7 +318,8 @@ private fun ResultRow.toActividadResponse() = ActividadResponse(
     superficieTratada     = this[Actividades.superficieTratada],
     problemaFitosanitario = this[Actividades.problemaFitosanitario],
     eficacia              = this[Actividades.eficacia],
-    observaciones         = this[Actividades.observaciones]
+    observaciones         = this[Actividades.observaciones],
+    estado                = EstadoActividad.valueOf(this[Actividades.estado] ?: "BORRADOR")
 )
 
 private fun ResultRow.toSemillaResponse() = SemillaTratadaResponse(

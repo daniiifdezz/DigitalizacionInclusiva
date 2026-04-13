@@ -18,6 +18,9 @@ class ActividadViewModel(
     private val _actividades = MutableStateFlow<Result<List<Actividad>>>(Result.Loading)
     val actividades: StateFlow<Result<List<Actividad>>> = _actividades.asStateFlow()
 
+    private val _actividadesPendientes = MutableStateFlow<Result<List<Actividad>>>(Result.Loading)
+    val actividadesPendientes: StateFlow<Result<List<Actividad>>> = _actividadesPendientes.asStateFlow()
+
     private val _parcelas = MutableStateFlow<Result<List<Parcela>>>(Result.Loading)
     val parcelas: StateFlow<Result<List<Parcela>>> = _parcelas.asStateFlow()
 
@@ -26,6 +29,9 @@ class ActividadViewModel(
 
     private val _operacionExitosa = MutableStateFlow(false)
     val operacionExitosa: StateFlow<Boolean> = _operacionExitosa.asStateFlow()
+
+    private val _mensajeError = MutableStateFlow<String?>(null)
+    val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
 
     init {
         cargarActividades()
@@ -36,6 +42,14 @@ class ActividadViewModel(
         viewModelScope.launch {
             repository.getActividades().collect { resultado ->
                 _actividades.value = resultado
+            }
+        }
+    }
+
+    fun cargarActividadesPendientes() {
+        viewModelScope.launch {
+            repository.getActividadesPendientes().collect { resultado ->
+                _actividadesPendientes.value = resultado
             }
         }
     }
@@ -66,6 +80,7 @@ class ActividadViewModel(
                 }
                 is Result.Error -> {
                     _operacionExitosa.value = false
+                    _mensajeError.value = resultado.message
                 }
                 else -> {}
             }
@@ -83,6 +98,57 @@ class ActividadViewModel(
                 }
                 is Result.Error -> {
                     _operacionExitosa.value = false
+                    _mensajeError.value = resultado.message
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun enviarActividad(id: Int) {
+        viewModelScope.launch {
+            val resultado = repository.enviarActividad(id)
+            when (resultado) {
+                is Result.Success -> {
+                    _operacionExitosa.value = true
+                    _actividadActual.value = resultado
+                    cargarActividades()
+                }
+                is Result.Error -> {
+                    _mensajeError.value = resultado.message
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun validarActividad(id: Int) {
+        viewModelScope.launch {
+            val resultado = repository.validarActividad(id)
+            when (resultado) {
+                is Result.Success -> {
+                    _operacionExitosa.value = true
+                    _actividadActual.value = resultado
+                    cargarActividades()
+                }
+                is Result.Error -> {
+                    _mensajeError.value = resultado.message
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun devolverActividad(id: Int) {
+        viewModelScope.launch {
+            val resultado = repository.devolverActividad(id)
+            when (resultado) {
+                is Result.Success -> {
+                    _operacionExitosa.value = true
+                    cargarActividades()
+                }
+                is Result.Error -> {
+                    _mensajeError.value = resultado.message
                 }
                 else -> {}
             }
@@ -100,6 +166,10 @@ class ActividadViewModel(
 
     fun resetOperacionExitosa() {
         _operacionExitosa.value = false
+    }
+
+    fun limpiarMensajeError() {
+        _mensajeError.value = null
     }
 
     fun limpiarActividadActual() {
