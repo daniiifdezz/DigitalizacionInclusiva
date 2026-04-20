@@ -24,6 +24,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ActividadListadoSc(
     onNuevaActividad: () -> Unit,
     onVerDetalle: (Int) -> Unit,
+    isDesktop: Boolean = false,
+    onVolver: (() -> Unit)? = null,
     viewModel: ActividadViewModel = koinViewModel()
 ) {
     val actividadesState by viewModel.actividades.collectAsState()
@@ -31,7 +33,14 @@ fun ActividadListadoSc(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Actividades", style = MaterialTheme.typography.headlineSmall) }
+                title = { Text("Mis Actividades", style = MaterialTheme.typography.headlineSmall) },
+                navigationIcon = {
+                    if (isDesktop && onVolver != null) {
+                        TextButton(onClick = onVolver) {
+                            Text("< Menu")
+                        }
+                    }
+                }
             )
         },
         floatingActionButton = {

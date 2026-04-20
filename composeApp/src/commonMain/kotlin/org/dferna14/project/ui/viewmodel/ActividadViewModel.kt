@@ -41,6 +41,7 @@ class ActividadViewModel(
         cargarActividades()
         cargarParcelas()
         cargarProductos()
+        cargarActividadesPendientes()
     }
 
     fun cargarActividades() {

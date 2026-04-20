@@ -24,7 +24,7 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "Cuaderno de Campo - Digitalización Inclusiva"
         ) {
-            App()
+            App(isDesktop = true)
         }
     }
 }
