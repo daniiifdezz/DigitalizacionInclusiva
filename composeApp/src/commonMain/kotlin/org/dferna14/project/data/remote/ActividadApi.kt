@@ -107,11 +107,16 @@ class ActividadApi(private val client: HttpClient) {
         return response.status == HttpStatusCode.OK
     }
 
-    // parcelas --> solo lectura
+    // parcela, solo leer
 
     suspend fun getParcelas(): List<ParcelaDto> =
         client.get("$BASE_URL/api/parcelas").body()
 
     suspend fun getParcela(id: Int): ParcelaDto =
         client.get("$BASE_URL/api/parcelas/$id").body()
+
+
+    // productos, solo leer
+    suspend fun getProductos(): List<ProductoDto> =
+        client.get("$BASE_URL/api/productos").body()
 }

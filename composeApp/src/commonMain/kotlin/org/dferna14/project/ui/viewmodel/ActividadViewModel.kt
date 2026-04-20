@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
+import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 
 class ActividadViewModel(
@@ -24,6 +25,9 @@ class ActividadViewModel(
     private val _parcelas = MutableStateFlow<Result<List<Parcela>>>(Result.Loading)
     val parcelas: StateFlow<Result<List<Parcela>>> = _parcelas.asStateFlow()
 
+    private val _productos = MutableStateFlow<Result<List<Producto>>>(Result.Loading)
+    val productos: StateFlow<Result<List<Producto>>> = _productos.asStateFlow()
+
     private val _actividadActual = MutableStateFlow<Result<Actividad>>(Result.Loading)
     val actividadActual: StateFlow<Result<Actividad>> = _actividadActual.asStateFlow()
 
@@ -36,6 +40,7 @@ class ActividadViewModel(
     init {
         cargarActividades()
         cargarParcelas()
+        cargarProductos()
     }
 
     fun cargarActividades() {
@@ -58,6 +63,14 @@ class ActividadViewModel(
         viewModelScope.launch {
             repository.getParcelas().collect { resultado ->
                 _parcelas.value = resultado
+            }
+        }
+    }
+
+    fun cargarProductos() {
+        viewModelScope.launch {
+            repository.getProductos().collect { resultado ->
+                _productos.value = resultado
             }
         }
     }

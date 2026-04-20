@@ -13,6 +13,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
+import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.viewmodel.ActividadViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -31,13 +32,17 @@ fun NuevaActividadSc(
 ) {
     // Estado del forms
     val parcelasState by viewModel.parcelas.collectAsState()
+    val productosState by viewModel.productos.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()
 
     var parcelaSeleccionada by remember { mutableStateOf<Parcela?>(null) }
+    var productoSeleccionado by remember { mutableStateOf<Producto?>(null) }
+    var dosis by remember { mutableStateOf("") }
     var superficieTratada by remember { mutableStateOf("") }
     var problemaFitosanitario by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
-    var desplegableAbierto by remember { mutableStateOf(false) }
+    var desplegableParcelaAbierto by remember { mutableStateOf(false) }
+    var desplegableProductoAbierto by remember { mutableStateOf(false) }
 
     // Fecha actual
     val fechaHoy = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
@@ -83,23 +88,23 @@ fun NuevaActividadSc(
 
             // Seleccionamos parcela
             ExposedDropdownMenuBox(
-                expanded = desplegableAbierto,
-                onExpandedChange = { desplegableAbierto = it }
+                expanded = desplegableParcelaAbierto,
+                onExpandedChange = { desplegableParcelaAbierto = it }
             ) {
                 OutlinedTextField(
                     value = parcelaSeleccionada?.let { "Parcela ${it.orden ?: it.id}" } ?: "Selecciona una parcela",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Parcela *") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = desplegableAbierto) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = desplegableParcelaAbierto) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor()
                 )
 
                 ExposedDropdownMenu(
-                    expanded = desplegableAbierto,
-                    onDismissRequest = { desplegableAbierto = false }
+                    expanded = desplegableParcelaAbierto,
+                    onDismissRequest = { desplegableParcelaAbierto = false }
                 ) {
                     when (val estado = parcelasState) {
                         is Result.Success -> {
@@ -108,7 +113,7 @@ fun NuevaActividadSc(
                                     text = { Text("Parcela ${parcela.orden ?: parcela.id}") },
                                     onClick = {
                                         parcelaSeleccionada = parcela
-                                        desplegableAbierto = false
+                                        desplegableParcelaAbierto = false
                                     }
                                 )
                             }
@@ -140,6 +145,59 @@ fun NuevaActividadSc(
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // Selector de producto
+            ExposedDropdownMenuBox(
+                expanded = desplegableProductoAbierto,
+                onExpandedChange = { desplegableProductoAbierto = it }
+            ) {
+                OutlinedTextField(
+                    value = productoSeleccionado?.let { it.nombreComercial ?: "Producto ${it.id}" } ?: "Selecciona producto",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Producto usado") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = desplegableProductoAbierto) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = desplegableProductoAbierto,
+                    onDismissRequest = { desplegableProductoAbierto = false }
+                ) {
+                    when (val estado = productosState) {
+                        is Result.Success -> {
+                            estado.data.forEach { producto ->
+                                DropdownMenuItem(
+                                    text = { Text(producto.nombreComercial ?: "Producto ${producto.id}") },
+                                    onClick = {
+                                        productoSeleccionado = producto
+                                        desplegableProductoAbierto = false
+                                    }
+                                )
+                            }
+                        }
+                        else -> {
+                            DropdownMenuItem(
+                                text = { Text("Cargando productos...") },
+                                onClick = {}
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Dosis del producto
+            if (productoSeleccionado != null) {
+                OutlinedTextField(
+                    value = dosis,
+                    onValueChange = { dosis = it },
+                    label = { Text("Dosis (kg/ha)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             // Observaciones
             OutlinedTextField(

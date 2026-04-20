@@ -9,6 +9,7 @@ import org.dferna14.project.data.remote.EstadoActividadDto
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Parcela
+import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 
 /**
@@ -143,7 +144,7 @@ class ActividadRepository(
         }
     }
 
-    //Parcelas
+    // Parcelas
 
     fun getParcelas(): Flow<Result<List<Parcela>>> = flow {
         emit(Result.Loading)
@@ -162,23 +163,42 @@ class ActividadRepository(
             emit(Result.Error("Error al cargar parcelas: ${e.message}"))
         }
     }
-}
 
-private fun ActividadDto.toDomain() = Actividad(
-    id                    = id,
-    parcelaId             = parcelaId,
-    equipoId              = equipoId,
-    aplicadorId           = aplicadorId,
-    fechaInicio           = fechaInicio,
-    fechaFin              = fechaFin,
-    superficieTratada     = superficieTratada,
-    problemaFitosanitario = problemaFitosanitario,
-    eficacia              = eficacia,
-    observaciones         = observaciones,
-    estado                = when (estado) {
-        EstadoActividadDto.BORRADOR -> EstadoActividad.BORRADOR
-        EstadoActividadDto.PENDIENTE_VALIDAR -> EstadoActividad.PENDIENTE_VALIDAR
-        EstadoActividadDto.VALIDADA -> EstadoActividad.VALIDADA
-    },
-    sincronizado          = true
-)
+    // Productos
+
+    fun getProductos(): Flow<Result<List<Producto>>> = flow {
+        emit(Result.Loading)
+        try {
+            val productos = api.getProductos().map { dto ->
+                Producto(
+                    id = dto.id,
+                    nombreComercial = dto.nombreComercial,
+                    materiaActiva = dto.materiaActiva,
+                    numeroRegistro = dto.numeroRegistro
+                )
+            }
+            emit(Result.Success(productos))
+        } catch (e: Exception) {
+            emit(Result.Error("Error al cargar productos: ${e.message}"))
+        }
+    }
+
+    private fun ActividadDto.toDomain() = Actividad(
+        id                    = id,
+        parcelaId             = parcelaId,
+        equipoId              = equipoId,
+        aplicadorId           = aplicadorId,
+        fechaInicio           = fechaInicio,
+        fechaFin              = fechaFin,
+        superficieTratada     = superficieTratada,
+        problemaFitosanitario = problemaFitosanitario,
+        eficacia              = eficacia,
+        observaciones         = observaciones,
+        estado                = when (estado) {
+            EstadoActividadDto.BORRADOR -> EstadoActividad.BORRADOR
+            EstadoActividadDto.PENDIENTE_VALIDAR -> EstadoActividad.PENDIENTE_VALIDAR
+            EstadoActividadDto.VALIDADA -> EstadoActividad.VALIDADA
+        },
+        sincronizado          = true
+    )
+}

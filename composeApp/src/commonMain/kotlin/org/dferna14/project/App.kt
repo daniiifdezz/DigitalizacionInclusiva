@@ -33,14 +33,13 @@ fun App() {
                     onVolver = { currentScreen = Screen.Listado }
                 )
             }
-            is Screen.Detalle -> {
-                ActividadDetalleSc(
-                    actividadId = screen.actividadId,
-                    onVolver = { currentScreen = Screen.Listado },
-                    onEditar = { id -> currentScreen = Screen.Editar(id) },
-                    onValidar = { id -> currentScreen = Screen.Validar(id) }
-                )
-            }
+is Screen.Detalle -> {
+    ActividadDetalleSc(
+        actividadId = screen.actividadId,
+        onVolver = { currentScreen = Screen.Listado },
+        onEditar = { id -> currentScreen = Screen.Editar(id) }
+    )
+}
             is Screen.Editar -> {
                 EditarActividadSc(
                     actividadId = screen.actividadId,

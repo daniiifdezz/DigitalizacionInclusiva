@@ -20,7 +20,6 @@ fun ActividadDetalleSc(
     actividadId: Int,
     onVolver: () -> Unit,
     onEditar: (Int) -> Unit,
-    onValidar: (Int) -> Unit,
     viewModel: ActividadViewModel = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
@@ -65,15 +64,6 @@ fun ActividadDetalleSc(
                                     modifier = Modifier.padding(end = 8.dp)
                                 ) {
                                     Text("Enviar")
-                                }
-                            }
-                            // Solo puede ir a pantalla de validación en PENDIENTE_VALIDAR
-                            if (act.estado.puedeValidar()) {
-                                Button(
-                                    onClick = { onValidar(actividadId) },
-                                    modifier = Modifier.padding(end = 8.dp)
-                                ) {
-                                    Text("Validar")
                                 }
                             }
                             // Eliminar en BORRADOR y VALIDADA
@@ -183,17 +173,11 @@ private fun ActividadDetalleContenido(
         TarjetaCampo(label = "Estado", valor = actividad.estado.name.replace("_", " "))
         TarjetaCampo(label = "Parcela", valor = "Parcela ${actividad.parcelaId}")
         TarjetaCampo(label = "Fecha de inicio", valor = actividad.fechaInicio)
-        actividad.fechaFin?.let {
-            TarjetaCampo(label = "Fecha fin", valor = it)
-        }
         actividad.superficieTratada?.let {
             TarjetaCampo(label = "Superficie tratada", valor = "$it ha")
         }
         actividad.problemaFitosanitario?.let {
             TarjetaCampo(label = "Problema fitosanitario", valor = it)
-        }
-        actividad.eficacia?.let {
-            TarjetaCampo(label = "Eficacia", valor = it)
         }
         actividad.observaciones?.let {
             TarjetaCampo(label = "Observaciones", valor = it)

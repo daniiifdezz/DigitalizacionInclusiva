@@ -1,4 +1,4 @@
-# CONTEXTO DEL PROYECO - Cuaderno de Campo Digital
+# CONTEXTO DEL PROYECTO - Cuaderno de Campo Digital
 
 ## Información General
 
@@ -9,6 +9,8 @@
 - **Base de datos:** PostgreSQL + Exposed ORM
 - **Tecnología Frontend:** Kotlin Multiplatform (Android + Desktop)
 - **UI:** Jetpack Compose
+- **Dispositivo objetivo:** Samsung Tablet
+- **Entrega:** Julio 2026
 
 ---
 
@@ -19,11 +21,11 @@ DigitalizacionInclusiva/
 ├── backend/                    # Servidor Ktor
 │   └── src/main/kotlin/org/dferna14/project/backend/
 │       ├── Application.kt      # Punto de entrada
-│       ├── db/
-│       │   ├── Tables.kt      # Definición de tablas Exposed
+│       ├─��� db/
+│       │   ├── Tables.kt     # Definición de tablas Exposed
 │       │   └── DatabaseFactory.kt
 │       ├── model/
-│       │   └── DTOs.kt        # Data Transfer Objects
+│       │   └── DTOs.kt       # Data Transfer Objects
 │       ├── plugins/
 │       │   ├── Routing.kt
 │       │   ├── Serialization.kt
@@ -31,7 +33,7 @@ DigitalizacionInclusiva/
 │       │   └── StatusPages.kt
 │       └── routes/
 │           ├── ActividadRoutes.kt
-│           ├── ParcelaRoutes.kt1
+│           ├── ParcelaRoutes.kt
 │           ├── FertilizacionRoutes.kt
 │           └── ProductoRoutes.kt
 │
@@ -41,13 +43,13 @@ DigitalizacionInclusiva/
 │       │   ├── kotlin/org/dferna14/project/
 │       │   │   ├── App.kt                    # Navegación principal
 │       │   │   ├── Platform.kt               # expect/actual
-│       │   │   ├── di/AppModule.kt           # Koin DI
+│       │   │   ├── di/AppModule.kt          # Koin DI
 │       │   │   ├── domain/model/
-│       │   │   │   └── Models.kt             # Modelo de dominio
+│       │   │   │   └── Models.kt           # Modelo de dominio
 │       │   │   ├── data/
 │       │   │   │   ├── remote/
 │       │   │   │   │   ├── ActividadApi.kt   # Cliente HTTP
-│       │   │   │   │   └── ApiClient.kt      # Configuración Ktor
+│       │   │   │   │   └── ApiClient.kt    # Configuración Ktor
 │       │   │   │   ├── repository/
 │       │   │   │   │   └── ActividadRepository.kt
 │       │   │   │   └── local/
@@ -59,7 +61,8 @@ DigitalizacionInclusiva/
 │       │   │       │   ├── ActividadListadoSc.kt
 │       │   │       │   ├── ActividadDetalleSc.kt
 │       │   │       │   ├── NuevaActividadSc.kt
-│       │   │       │   └── EditarActividadSc.kt
+│       │   │       │   ├── EditarActividadSc.kt
+│       │   │       │   └── ValidarActividadSc.kt
 │       │   │       └── theme/
 │       │   │           ├── AppTheme.kt
 │       │   │           └── Color.kt
@@ -67,16 +70,90 @@ DigitalizacionInclusiva/
 │       │       └── CuadernoCampo.sq          # Schema SQLDelight
 │       ├── androidMain/
 │       │   ├── MainActivity.kt
-│       │   ├── MainApplication.kt             # Koin Android
+│       │   ├── MainApplication.kt
 │       │   └── AndroidManifest.xml
 │       └── jvmMain/
 │           └── main.kt                        # Entry point Desktop
 │
 ├── gradle/
-│   └── libs.versions.toml                      # Versiones centralizadas
+│   └── libs.versions.toml                    # Versiones centralizadas
 │
-└── .env                                       # Variables PostgreSQL
+└── .env                                   # Variables PostgreSQL
 ```
+
+---
+
+## Esquema Real PostgreSQL (13/04/2026)
+
+### Todas las tablas en la base de datos
+
+```
+empresaservicio_asesor
+parcela
+referenciasigpac
+datosagronomicos
+datosmedioambientales
+puntocaptacion
+zonaespecifica
+actividad
+usuario
+actividad_producto
+producto
+semillatratada
+postcosecha
+almacenamiento
+transporte
+cultivo
+analisisproducto
+cliente
+cosechacomercializada
+cosecha_parcela
+fertilizacion
+fertilizacion_parcela
+explotacion
+titular
+empresaservicio
+equipoaplicacion
+explotacion_asesor
+asesor
+```
+
+### Mapeo: PostgreSQL → Exposed (Tables.kt)
+
+| Tabla PostgreSQL | En Exposed | Estado |
+|-----------------|------------|---------|
+| parcela | Parcelas | ✅ |
+| referenciasigpac | ReferenciaSigpac | ✅ |
+| datosagronomicos | DatosAgronomicos | ✅ |
+| datosmedioambientales | DatosMedioambientales | ✅ |
+| actividad | Actividades | ✅ |
+| producto | Productos | ✅ |
+| actividad_producto | ActividadProductos | ✅ |
+| semillatratada | SemillasTratadas | ✅ |
+| cultivo | Cultivos | ✅ |
+| fertilizacion | Fertilizaciones | ✅ |
+| **explotacion** | - | ❌ FALTA |
+| **titular** | - | ❌ FALTA |
+| **asesor** | - | ❌ FALTA |
+| **equipoaplicacion** | - | ❌ FALTA |
+| **usuario** | - | ❌ FALTA |
+| almacenamiento | - | ❌ FALTA |
+| transporte | - | ❌ FALTA |
+| cosecha / cosecha_parcela | - | ❌ FALTA |
+| analisisproducto | - | ❌ FALTA |
+| puntocaptacion | - | ❌ FALTA |
+| zonaespecifica | - | ❌ FALTA |
+| postcosecha | - | ❌ FALTA |
+| cliente | - | ❌ FALTA |
+| empresaservicio | - | ❌ FALTA |
+| empresaservicio_asesor | - | ❌ FALTA |
+| explotacion_asesor | - | ❌ FALTA |
+
+### Tabla ACTIVIDAD - Campos actuales (verificado 13/04/2026)
+
+Los campos de **validación** fueron añadidos hoy:
+- `fecha_fin` ✅ (añadido hoy)
+- `eficacia` ✅ (añadido hoy)
 
 ---
 
@@ -84,32 +161,12 @@ DigitalizacionInclusiva/
 
 ### 1. Fechas con java.time.LocalDate
 
-**Problema original:** Conflicto entre `exposed-datetime` y `kotlinx-datetime` (versiones incompatibles).
-
-**Solución aplicada:**
-- Backend: Usa `org.jetbrains.exposed.sql.javatime.date` (JDK 11+)
+- Backend: Usa `org.jetbrains.exposed.sql.javatime.date`
 - App móvil: Usa `kotlinx-datetime` para `Clock.System.todayIn()`
-- Conversión: `LocalDate.parse()` en backend, `.toString()` al devolver JSON
-
-```kotlin
-// Tables.kt
-val fechaInicio = date("fecha_inicio").nullable()
-
-// Routes.kt - INSERT
-val fechaLocal = java.time.LocalDate.parse(request.fechaInicio)
-it[fechaInicio] = fechaLocal
-
-// Routes.kt - SELECT
-.toActividadResponse() {
-    fechaInicio = this[Actividades.fechaInicio]?.toString() ?: ""
-}
-```
 
 ### 2. Navegación Manual (sin Navigation Compose)
 
-**Problema:** `androidx.navigation.compose` versión `2.8.0-alpha10` tenía conflictos con `savedstate` causando crash en runtime.
-
-**Solución:** Navegación con `sealed class Screen` y estado en `App.kt`.
+Navegación con `sealed class Screen` y estado en `App.kt`.
 
 ```kotlin
 sealed class Screen {
@@ -117,31 +174,21 @@ sealed class Screen {
     object NuevaActividad : Screen()
     data class Detalle(val actividadId: Int) : Screen()
     data class Editar(val actividadId: Int) : Screen()
+    data class Validar(val actividadId: Int) : Screen()
 }
 ```
 
-### 3. Flujo de Estados (Implementado 10/04/2026)
-
-Sistema de workflow para actividades agrícolas.
+### 3. Flujo de Estados
 
 **Estados:**
 - `BORRADOR` - Creada en móvil, incompleta
 - `PENDIENTE_VALIDAR` - Enviada, espera técnico
-- `VALIDADA` - Cerrada por técnico desktop
+- `VALIDADA` - Cerrada por técnico desktop (fechaFin, eficacia)
 
 **Transiciones:**
 ```
 BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
-                    ↳ [Devolver] → BORRADOR
-```
-
-**Endpoints:**
-```
-GET  /api/actividades?estado=X
-GET  /api/actividades/pendientes
-POST /api/actividades/{id}/enviar
-POST /api/actividades/{id}/validar
-POST /api/actividades/{id}/devolver
+                                ↳ [Devolver] → BORRADOR
 ```
 
 ### 4. Arquitectura por Capas
@@ -154,312 +201,131 @@ UI (Compose) → ViewModel → Repository → API → Backend → PostgreSQL
 
 ---
 
-## Modelo de Datos Actual
+## Estado del Proyecto
 
-### Tablas Backend (Exposed)
+### ✅ COMPLETADO
 
-```kotlin
-// Parcelas - datos básicos
-object Parcelas : IntIdTable("parcela") {
-    val explotacionId        = integer("explotacion_id")
-    val orden                = integer("orden").nullable()
-    val sistemaAsesoramiento = varchar("sistema_asesoramiento", 50).nullable()
-    val zonaNitratos         = bool("zona_nitratos").nullable()
-}
+#### Backend
+| Feature | Estado |
+|---------|--------|
+| CRUD Actividades | ✅ |
+| Flujo de estados (enviar/validar/devolver) | ✅ |
+| Filtro por estado | ✅ |
+| GET /api/actividades/pendientes | ✅ |
+| CRUD Fertilizaciones | ✅ |
+| GET Productos (solo lectura) | ✅ |
+| GET Parcelas (solo lectura) | ✅ |
+| GET Parcelas/{id}/completa | ✅ |
+| Tablas satélite (ReferenciaSigpac, DatosAgronomicos, DatosMedioambientales) | ✅ |
+| CORS, Serialización JSON, Manejo errores | ✅ |
 
-// Productos - catálogo fitosanitario
-object Productos : IntIdTable("producto") {
-    val nombreComercial = varchar("nombre_comercial", 100).nullable()
-    val materiaActiva   = varchar("materia_activa", 100).nullable()
-    val numeroRegistro  = varchar("numero_registro", 50).nullable()
-}
+#### App Móvil/Android
+| Feature | Estado |
+|---------|--------|
+| Listado actividades con chips de estado | ✅ |
+| NuevaActividadSc | ✅ |
+| ActividadDetalleSc | ✅ |
+| EditarActividadSc | ✅ |
+| ValidarActividadSc | ✅ |
+| Selector de parcela | ✅ |
+| Navegación manual | ✅ |
+| Estados carga/error | ✅ |
+| Diálogo confirmar eliminar | ✅ |
+| Botones dinámicos según estado | ✅ |
 
-// Actividades - con estado
-object Actividades : IntIdTable("actividad") {
-    val parcelaId             = integer("parcela_id").references(Parcelas.id)
-    val equipoId              = integer("equipo_id").nullable()
-    val aplicadorId           = integer("aplicador_id").nullable()
-    val fechaInicio           = date("fecha_inicio").nullable()
-    val fechaFin              = date("fecha_fin").nullable()
-    val superficieTratada     = double("superficie_tratada").nullable()
-    val problemaFitosanitario = text("problema_fitosanitario").nullable()
-    val eficacia              = varchar("eficacia", 50).nullable()
-    val observaciones         = text("observaciones").nullable()
-    val estado                = varchar("estado", 30).default("BORRADOR")
-}
+#### App Desktop
+| Feature | Estado |
+|---------|--------|
+| Usa código compartido (commonMain) | ✅ |
+| Acceso a pantalla Validar | ✅ |
+| Compila y ejecuta | ✅ |
 
-// ActividadProductos - relación N:M
-object ActividadProductos : IntIdTable("actividad_producto") {
-    val actividadId = integer("actividad_id").references(Actividades.id)
-    val productoId  = integer("producto_id").references(Productos.id)
-    val dosis       = double("dosis")
-}
+---
 
-// SemillasTratadas
-object SemillasTratadas : IntIdTable("semillatratada") {
-    val actividadId       = integer("actividad_id").references(Actividades.id)
-    val parcelaId         = integer("parcela_id").references(Parcelas.id)
-    val aplica            = bool("aplica").default(false)
-    val fechaSiembra      = date("fecha_siembra").nullable()
-    val superficieHa      = double("superficie_ha").nullable()
-    val cantidadSemillaKg = double("cantidad_semilla_kg").nullable()
-    val productoId        = integer("producto_id").references(Productos.id).nullable()
-}
+### ❌ PENDIENTE
 
-// Cultivos
-object Cultivos : IntIdTable("cultivo") {
-    val especie  = varchar("especie", 100).nullable()
-    val variedad = varchar("variedad", 100).nullable()
-}
+#### Backend - Nuevas tablas a mapear
+| Tabla | Prioridad |
+|-------|-----------|
+| Explotacion | ALTA |
+| Asesor | ALTA |
+| EquipoAplicacion | MEDIA |
+| Usuario | MEDIA |
+| Titular | MEDIA |
+| Almacenamiento | BAJA |
+| Transporte | BAJA |
+| Cosecha | BAJA |
 
-// Fertilizaciones
-object Fertilizaciones : IntIdTable("fertilizacion") {
-    val cultivoId         = integer("cultivo_id").references(Cultivos.id).nullable()
-    val aplica            = bool("aplica").default(false)
-    val fechaInicio       = date("fecha_inicio").nullable()
-    val fechaFin          = date("fecha_fin").nullable()
-    val tipoProducto      = varchar("tipo_producto", 10).nullable()
-    val numeroAlbaran     = varchar("numero_albaran", 50).nullable()
-    val riquezaNPK        = varchar("riqueza_npk", 50).nullable()
-    val dosis             = double("dosis").nullable()
-    val tipoFertilizacion = varchar("tipo_fertilizacion", 10).nullable()
-    val observaciones     = text("observaciones").nullable()
-}
+#### App Móvil/Android
+| Feature | Prioridad |
+|---------|-----------|
+| **SQLDelight (offline cache)** | **ALTA** |
+| Pantalla parcelas | MEDIA |
+| Pantalla productos (catálogo) | Media |
+| **OCR (CameraX + ML Kit)** | **ALTA** |
+| **Dictado por voz** | **ALTA** |
+| **API clima (OpenMeteo)** | **ALTA** |
 
-// Tablas satélite (modelo relacional)
-object ReferenciaSigpac : IntIdTable("referenciasigpac") {
-    val parcelaId = integer("parcela_id").references(Parcelas.id)
-    val provincia = varchar("provincia", 100).nullable()
-    val terminoMunicipal = varchar("termino_municipal", 100).nullable()
-    val codigoAgregado = varchar("codigo_agregado", 50).nullable()
-    val zona = varchar("zona", 50).nullable()
-    val numeroPoligono = varchar("numero_poligono", 20).nullable()
-    val numeroParcela = varchar("numero_parcela", 20).nullable()
-    val numeroRecinto = varchar("numero_recinto", 20).nullable()
-    val usoSigpac = varchar("uso_sigpac", 20).nullable()
-    val superficieHa = double("superficie_ha").nullable()
-}
+#### App Desktop Específico
+| Feature | Prioridad |
+|---------|-----------|
+| **Menú de navegación** | **ALTA** |
+| **Listado pendientes con filtros** | **ALTA** |
+| **Pantalla validación avanzada** | **ALTA** |
 
-object DatosAgronomicos : IntIdTable("datosagronomicos") {
-    val parcelaId = integer("parcela_id").references(Parcelas.id)
-    val especieVariedad = varchar("especie_variedad", 200).nullable()
-    val ecoregimenPractica = varchar("ecoregimen_practica", 50).nullable()
-    val secanoRegadio = varchar("secano_regadio", 20).nullable()
-    val cultivo = varchar("cultivo", 100).nullable()
-    val fechaInicio = date("fecha_inicio").nullable()
-    val fechaFin = date("fecha_fin").nullable()
-    val aireLibreProtegido = varchar("aire_libre_protegido", 50).nullable()
-}
+---
 
-object DatosMedioambientales : IntIdTable("datosmedioambientales") {
-    val parcelaId = integer("parcela_id").references(Parcelas.id)
-}
+## Diferencias App Móvil vs Desktop
+
+| Aspecto | Móvil (Android/Tablet) | Desktop |
+|--------|------------------------|---------|
+| **Uso principal** | Campo - registro rápido | Oficina - validación técnico |
+| **Navegación** | Pantallas simples secuenciales | Menú completo (Drawer) |
+| **Listado actividades** | Todas | Filtrable por estado/fecha/parcela |
+| **Validar** | Accesible | Pantalla principal |
+| **Datos mostrados** | Mínimos | Completos + campos SIGPAC |
+| **OCR** | ✅ Cámara | ❌ No tiene sentido |
+| **Voz** | ✅ Dictado en campo | ❌ Teclado |
+| **Offline** | ✅ Obligatorio | ❌ Siempre conectado |
+| **Clima** | ✅ Visible | ❌ No necesario |
+
+---
+
+## Planificación (Abril - Julio 2026)
+
+**Tiempo disponible:** ~8 horas/semana
+
+```
+Semana 1 (14-20 Abr):  SQLDelight offline + sincronización local
+Semana 2 (21-27 Abr):  Desktop menú + filtros + validar avanzada
+Semana 3 (28-4 May):   OCR (CameraX + ML Kit) - tablets Samsung
+Semana 4 (5-11 May):   Voz (Speech-to-text) + API clima OpenMeteo
+Semana 5 (12-18 May):  Catálogos (Parcelas/Productos/Fertilizaciones)
+Semana 6 (19-25 May):  Backend: Explotacion, Asesor, EquipoAplicacion
+Semana 7-8 (Jun):      Testing + memoria TFG
+Semana 9 (Jun-Jul):    Ajustes finales + presentación
 ```
 
 ---
 
-## Funcionalidades Implementadas
+## Semana 1: SQLDelight Offline
 
-### Backend ✅
-- [x] CRUD Actividades completo
-- [x] CRUD Fertilizaciones completo
-- [x] GET Productos (solo lectura)
-- [x] GET Parcelas (solo lectura)
-- [x] GET Parcelas/{id}/completa (con tablas satélite SIGPAC)
-- [x] Flujo de estados (enviar/validar/devolver)
-- [x] Filtro por estado en listados
-- [x] CORS configurado
-- [x] Serialización JSON
-- [x] Manejo de errores centralizado
-- [x] Tablas satélite: ReferenciaSigpac, DatosAgronomicos (Exposed)
+### Objetivos
+1. Configurar schema SQLDelight
+2. Implementar queries locales
+3. Sincronización: guardar local → enviar cuando haya conexión
 
-### App Móvil ✅
-- [x] Listado de actividades con estado (chip de color)
-- [x] Pantalla nueva actividad
-- [x] Pantalla detalle actividad
-- [x] Pantalla editar actividad
-- [x] Pantalla validar actividad (Desktop)
-- [x] Selector de parcela
-- [x] Navegación entre pantallas
-- [x] Estados de carga/error
-- [x] Diálogo confirmación eliminar
-- [x] Botones enviar a validar / validar (según estado)
+### Archivos a modificar
+- `composeApp/src/commonMain/sqldelight/CuadernoCampo.sq`
+- `composeApp/src/commonMain/kotlin/.../data/local/`
+- `composeApp/src/commonMain/kotlin/.../data/repository/ActividadRepository.kt`
 
----
-
-## Pendiente de Implementar
-
-# PLANIFICACIÓN PRÓXIMA SESIÓN: Extensión SIGPAC
-### Objetivo
-Mapear los campos SIGPAC que YA EXISTEN en PostgreSQL pero NO están mapeados en Exposed.
-### Estado actual
-PostgreSQL (tabla: parcela)         Exposed (Parcelas.kt)
-────────────────────────────────    ────────────────────────────────
-✅ id                               ✅ id
-✅ explotacion_id                   ✅ explotacionId
-✅ orden                            ✅ orden
-❌ poligono                         ❌ NO MAPEADO
-❌ recinto                          ❌ NO MAPEADO
-❌ superficie_ha                    ❌ NO MAPEADO
-❌ sistema_explotacion              ❌ NO MAPEADO
-❌ uso_sigpac                       ❌ NO MAPEADO
-❌ especie                          ❌ NO MAPEADO
-❌ variedad                         ❌ NO MAPEADO
-✅ zona_nitratos                   ✅ zonaNitratos
-✅ sistema_asesoramiento            ✅ sistemaAsesoramiento
-### IMPORTANTE: Verificación de datos
-**Los datos en PostgreSQL fueron extraídos del CUADERNO DE CAMPO OFICIAL real.**
-**Pendiente verificar:**
-- ¿Los nombres de columna en PostgreSQL coinciden con el documento original?
-- ¿Hay campos adicionales en PostgreSQL que no estén en el cuaderno?
-- ¿Hay campos en el cuaderno que falten en PostgreSQL?
-  **Acción requerida antes de implementar:**
-```sql
--- Ejecutar en PostgreSQL para ver estructura real:
-\d parcela
--- Ver todas las columnas y tipos:
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'parcela';
----
-Paso 1: Consultar estructura PostgreSQL (10 min)
-\d parcela
--- Anotar TODOS los nombres de columna exactos
--- Ver datos de ejemplo:
-SELECT * FROM parcela LIMIT 3;
-Paso 2: Mapear en Exposed (Tables.kt)
-// Añadir a object Parcelas:
-val poligono = integer("poligono").default(0)
-val recinto = integer("recinto").default(0)
-val superficieHa = decimal("superficie_ha", 10, 3).nullable()
-val sistemaExplotacion = varchar("sistema_explotacion", 20).nullable()
-val usoSigpac = varchar("uso_sigpac", 10).nullable()
-val especie = varchar("especie", 100).nullable()
-val variedad = varchar("variedad", 100).nullable()
-Paso 3: Actualizar DTOs (DTOs.kt)
-@Serializable
-data class ParcelaResponse(
-    val id                  : Int,
-    val explotacionId       : Int,
-    val orden               : Int?     = null,
-    val poligono            : Int,                    // NUEVO
-    val recinto             : Int,                    // NUEVO
-    val superficieHa        : Double? = null,       // NUEVO
-    val sistemaExplotacion   : String? = null,       // NUEVO
-    val usoSigpac           : String? = null,         // NUEVO
-    val especie              : String? = null,        // NUEVO
-    val variedad             : String? = null,        // NUEVO
-    val sistemaAsesoramiento : String?  = null,
-    val zonaNitratos        : Boolean? = null
-)
-Paso 4: Actualizar ParcelaRoutes.kt
-// En toParcelaResponse():
-ParcelaResponse(
-    id                   = it[Parcelas.id].value,
-    explotacionId        = it[Parcelas.explotacionId],
-    orden                = it[Parcelas.orden],
-    poligono             = it[Parcelas.poligono],
-    recinto              = it[Parcelas.recinto],
-    superficieHa         = it[Parcelas.superficieHa]?.toDouble(),
-    sistemaExplotacion   = it[Parcelas.sistemaExplotacion],
-    usoSigpac           = it[Parcelas.usoSigpac],
-    especie              = it[Parcelas.especie],
-    variedad             = it[Parcelas.variedad],
-    sistemaAsesoramiento = it[Parcelas.sistemaAsesoramiento],
-    zonaNitratos         = it[Parcelas.zonaNitratos]
-)
-Paso 5: Modelo de dominio (Models.kt)
-data class Parcela(
-    val id                   : Int,
-    val explotacionId        : Int,
-    val orden                : Int?     = null,
-    val poligono             : Int,                    // NUEVO
-    val recinto              : Int,                    // NUEVO
-    val superficieHa          : Double? = null,         // NUEVO
-    val sistemaExplotacion    : String? = null,         // NUEVO
-    val usoSigpac            : String? = null,          // NUEVO
-    val especie               : String? = null,          // NUEVO
-    val variedad              : String? = null,          // NUEVO
-    val sistemaAsesoramiento  : String?  = null,
-    val zonaNitratos         : Boolean? = null
-)
-Paso 6: DTOs cliente (ActividadApi.kt)
-@Serializable
-data class ParcelaDto(
-    val id                   : Int,
-    val explotacionId        : Int,
-    val orden                : Int?     = null,
-    val poligono             : Int,
-    val recinto              : Int,
-    val superficieHa          : Double? = null,
-    val sistemaExplotacion    : String? = null,
-    val usoSigpac           : String? = null,
-    val especie               : String? = null,
-    val variedad              : String? = null,
-    val sistemaAsesoramiento  : String? = null,
-    val zonaNitratos         : Boolean? = null
-)
-Paso 7: Repository
-// En ActividadRepository.kt, getParcelas():
-val parcelas = api.getParcelas().map { dto ->
-    Parcela(
-        id                   = dto.id,
-        explotacionId        = dto.explotacionId,
-        orden                = dto.orden,
-        poligono             = dto.poligono,
-        recinto              = dto.recinto,
-        superficieHa         = dto.superficieHa,
-        sistemaExplotacion    = dto.sistemaExplotacion,
-        usoSigpac           = dto.usoSigpac,
-        especie               = dto.especie,
-        variedad              = dto.variedad,
-        sistemaAsesoramiento = dto.sistemaAsesoramiento,
-        zonaNitratos         = dto.zonaNitratos
-    )
-}
-NO TOCAR en App Móvil
-- El agricultor NO necesita ver estos campos en el móvil
-- El selector de parcela sigue funcionando igual (muestra "Parcela ${orden}" o "Parcela ${poligono}-${recinto}")
-SÍ TOCAR en App Desktop
-- Nueva pantalla "Detalle Parcela" para técnicos
-- Mostrar todos los campos SIGPAC
-- Posibilidad de editar (si aplica)
----
-Tiempo estimado: 30-45 minutos
-
-### Backend
-- [ ] Campos SIGPAC en Parcela (poligono, recinto, especie, variedad)
-- [ ] CRUD Equipos
-- [ ] CRUD Aplicadores
-- [ ] CRUD Explotaciones/Titulares
-- [ ] Tabla Cosecha
-- [ ] Tabla Almacén
-- [ ] Tabla Análisis/Laboratorio
-- [ ] Tabla Transporte
-- [ ] Validación de datos en endpoints
-- [ ] Paginación en listados
-
-### App Móvil
-- [ ] Pantalla de parcelas
-- [ ] Pantalla de productos (catálogo)
-- [ ] OCR con CameraX + ML Kit
-- [ ] Dictado por voz
-- [ ] API de clima (OpenMeteo)
-- [ ] Integración SQLDelight (offline)
-- [ ] Pantalla Desktop de validación completa
-- [ ] Navegación Desktop (menú)
-
----
-
-## Problemas Conocidos
-
-1. **Icons de Material3:** No se usan iconos (Icons.Default) por problemas con la dependencia `material-icons-extended`. Solución temporal: botones de texto.
-
-2. **Navigation Compose:** Eliminado por conflictos de versión. Navegación manual implementada.
-
-3. **menuAnchor() deprecated:** Warning en tiempo de compilación. Usar sobrecarga con `ExposedDropdownMenuAnchorType`.
-
-4. **expect/actual classes beta:** Warning de Kotlin 2.3 sobre clases expect/actual. Añadir flag `-Xexpect-actual-classes` si es necesario.
+### Strategy: Offline-First
+```
+1. App guarda en SQLite local (SQLDelight)
+2. Cuando hay conexión → sincroniza con backend
+3. Estados: LOCAL → SINCRONIZANDO → SINCRONIZADO
+```
 
 ---
 
@@ -472,11 +338,13 @@ Tiempo estimado: 30-45 minutos
 | exposed | 0.61.0 | ORM PostgreSQL |
 | exposed-java-time | 0.51.1 | Tipos fecha en Exposed |
 | kotlinx-datetime | 0.7.1 | Fechas en Compose |
-| sqldelight | 2.1.0 | SQLite local (schema listo) |
+| sqldelight | 2.1.0 | SQLite local |
 | koin | 4.1.0 | Inyección de dependencias |
 | compose | 1.10.0 | UI (multiplatform) |
 | material3 | 1.10.0-alpha05 | Diseño Material 3 |
 | postgresql | 42.7.7 | Driver JDBC |
+| camerax | 1.3.0 | Cámara OCR |
+| mlkit-text-recognition | 16.0.0 | OCR |
 
 ---
 
@@ -491,12 +359,16 @@ Tiempo estimado: 30-45 minutos
 ### Ejecutar App Android
 ```bash
 ./gradlew :composeApp:installDebug
-# O desde Android Studio
 ```
 
 ### Ejecutar App Desktop
 ```bash
 ./gradlew :composeApp:run
+```
+
+### Compilar Todo
+```bash
+./gradlew build
 ```
 
 ### Variables de Entorno (.env)
@@ -508,18 +380,14 @@ DB_USER=postgres
 DB_PASSWORD=1234
 ```
 
-### Compilar Todo
-```bash
-./gradlew build
-```
-
 ---
 
-## Próximos Pasos (según planificación)
+## Problemas Conocidos
 
-1. **Extensión Parcela** - Añadir campos SIGPAC
-2. **Pantalla Desktop** - Listado con filtros + validación
-3. **SQLDelight** - Integrar cache local
+1. **Icons de Material3:** Sin iconos por conflicto. Usar botones de texto.
+2. **Navigation Compose:** Eliminado por conflictos. Navegación manual.
+3. **menuAnchor() deprecated:** Warning. Usar sobrecarga.
+4. **expect/actual classes beta:** Warning Kotlin 2.3.
 
 ---
 
