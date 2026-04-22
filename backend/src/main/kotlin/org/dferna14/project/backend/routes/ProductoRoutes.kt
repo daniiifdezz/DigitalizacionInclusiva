@@ -1,11 +1,13 @@
 package org.dferna14.project.backend.routes
 
 import io.ktor.http.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Productos
+import org.dferna14.project.backend.model.ProductoRequest
 import org.dferna14.project.backend.model.ProductoResponse
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
@@ -51,6 +53,73 @@ fun Route.productoRoutes() {
                 call.respond(HttpStatusCode.NotFound)
             } else {
                 call.respond(producto)
+            }
+        }
+
+        // POST /api/productos - Crear nuevo producto
+        post {
+            val request = call.receive<ProductoRequest>()
+
+            val nuevoId = transaction {
+                Productos.insertAndGetId {
+                    it[nombreComercial] = request.nombreComercial
+                    it[materiaActiva] = request.materiaActiva
+                    it[numeroRegistro] = request.numeroRegistro
+                }.value
+            }
+
+            val creado = transaction {
+                Productos.selectAll()
+                    .where { Productos.id eq nuevoId }
+                    .single()
+                    .let {
+                        ProductoResponse(
+                            id = it[Productos.id].value,
+                            nombreComercial = it[Productos.nombreComercial],
+                            materiaActiva = it[Productos.materiaActiva],
+                            numeroRegistro = it[Productos.numeroRegistro]
+                        )
+                    }
+            }
+
+            call.respond(HttpStatusCode.Created, creado)
+        }
+
+        // PUT /api/productos/{id} - Actualizar producto
+        put("{id}") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@put call.respond(HttpStatusCode.BadRequest)
+
+            val request = call.receive<ProductoRequest>()
+
+            val filasActualizadas = transaction {
+                Productos.update({ Productos.id eq id }) {
+                    it[nombreComercial] = request.nombreComercial
+                    it[materiaActiva] = request.materiaActiva
+                    it[numeroRegistro] = request.numeroRegistro
+                }
+            }
+
+            if (filasActualizadas == 0) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        // DELETE /api/productos/{id} - Eliminar producto
+        delete("{id}") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            val filasEliminadas = transaction {
+                Productos.deleteWhere { Productos.id eq id }
+            }
+
+            if (filasEliminadas == 0) {
+                call.respond(HttpStatusCode.NotFound)
+            } else {
+                call.respond(HttpStatusCode.NoContent)
             }
         }
     }

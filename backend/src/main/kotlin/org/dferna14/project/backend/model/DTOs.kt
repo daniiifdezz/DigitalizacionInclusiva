@@ -117,14 +117,22 @@ data class FertilizacionResponse(
     val observaciones    : String? = null
 )
 
-// Parcela, solo lectura desde App
+// Parcela
+
+@Serializable
+data class ParcelaRequest(
+    val explotacionId       : Int?    = null,
+    val orden               : Int?    = null,
+    val sistemaAsesoramiento: String? = null,
+    val zonaNitratos        : Boolean? = null
+)
 
 @Serializable
 data class ParcelaResponse(
     val id                  : Int,
-    val explotacionId       : Int,
-    val orden               : Int?     = null,
-    val sistemaAsesoramiento: String?  = null,
+    val explotacionId       : Int?    = null,
+    val orden               : Int?    = null,
+    val sistemaAsesoramiento: String? = null,
     val zonaNitratos        : Boolean? = null
 )
 
@@ -134,10 +142,10 @@ data class ParcelaResponse(
 data class ParcelaCompletaResponse(
     // Datos de parcela
     val id                   : Int,
-    val explotacionId        : Int,
-    val orden                : Int?     = null,
+    val explotacionId        : Int?    = null,
+    val orden                : Int?    = null,
     val zonaNitratos         : Boolean? = null,
-    val sistemaAsesoramiento : String?  = null,
+    val sistemaAsesoramiento : String? = null,
 
     // SIGPAC (referenciasigpac)
     val provincia           : String? = null,
@@ -160,7 +168,14 @@ data class ParcelaCompletaResponse(
     val aireLibreProtegido: String? = null
 )
 
-// Producto catálogo, solo lectura desde la app
+// Producto catálogo
+
+@Serializable
+data class ProductoRequest(
+    val nombreComercial : String? = null,
+    val materiaActiva   : String? = null,
+    val numeroRegistro  : String? = null
+)
 
 @Serializable
 data class ProductoResponse(

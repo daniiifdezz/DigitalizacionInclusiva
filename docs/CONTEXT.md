@@ -63,8 +63,8 @@ DigitalizacionInclusiva/
 │       │   │       │   ├── NuevaActividadSc.kt
 │       │   │       │   ├── EditarActividadSc.kt
 │       │   │       │   ├── ValidarActividadSc.kt
-│       │   │       │   ├── DesktopSc.kt        # NUEVO
-│       │   │       │   └── PendientesSc.kt     # NUEVO
+│       │   │       │   ├── DesktopSc.kt
+│       │   │       │   └── PendientesSc.kt
 │       │   │       └── theme/
 │       │   │           ├── AppTheme.kt
 │       │   │           └── Color.kt
@@ -85,7 +85,7 @@ DigitalizacionInclusiva/
 
 ---
 
-## Esquema Real PostgreSQL (20/04/2026)
+## Esquema Real PostgreSQL
 
 ### Todas las tablas en la base de datos
 
@@ -154,21 +154,24 @@ asesor
 
 ### 2. Navegación Diferenciada por Plataforma
 
-**Mobile:** Secuencial simple
+**Mobile:** Bottom Navigation Bar (4 tabs)
 ```
-Listado → Nueva → Detalle → Editar → Listado
+├── Tab 1: Actividades (listado + nueva + detalle + editar)
+├── Tab 2: Parcelas (listado + crear)
+├── Tab 3: Productos (listado + crear)
+└── Tab 4: Ajustes
 ```
 
-**Desktop:** Con menú lateral + pantallas separadas
+**Desktop:** Menú lateral
 ```
 DesktopHome → Menu lateral
-           → Todas las actividades (con botón volver)
+           → Todas las actividades
            → Pendientes de validar
            → Parcelas
            → Productos
 ```
 
-### 3. Flujo de Estados (Implementado)
+### 3. Flujo de Estados
 
 **Estados:**
 - `BORRADOR` - Creada en móvil, incompleta
@@ -184,16 +187,16 @@ BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
 ### 4. Arquitectura Mobile vs Desktop
 
 | Componente | Mobile | Desktop |
-|------------|--------|----------|
-| Listado | Simple (sin volver) | Con menú lateral + botón volver |
-| Nueva | 5 campos básicos | - |
-| Detalle | Datos mínimos | - |
-| Validar | ❌ NO accesible | ✅ Pestañas |
-| Menú | ❌ NO tiene | ✅ Menu lateral |
+|------------|--------|---------|
+| Navegación | Bottom Bar 4 tabs | Menú lateral |
+| Crear parcela | ✅ Solo nombre | ✅ Completo |
+| Crear producto | ✅ Campos mínimos | ✅ Completo |
+| Validar | ❌ NO accesible | ✅ Con pestañas |
+| Datos SIGPAC | ❌ NO | ✅ Sí |
 
 ---
 
-## Estado del Proyecto (20/04/2026)
+## Estado del Proyecto
 
 ### ✅ COMPLETADO
 
@@ -215,119 +218,65 @@ BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
 | Feature | Estado |
 |---------|--------|
 | Listado actividades | ✅ |
-| NuevaActividadSc (5 campos) | ✅ |
-| + Selector productos + dosis | ✅ (20/04/2026) |
+| NuevaActividadSc | ✅ |
+| Selector productos + dosis | ✅ |
 | ActividadDetalleSc | ✅ |
-| - Sin Validar | ✅ (20/04/2026) |
-| - Sin fechaFin/eficacia | ✅ (20/04/2026) |
 | EditarActividadSc | ✅ |
 | Selector de parcela | ✅ |
 | Estados carga/error | ✅ |
 
-#### App Desktop (NUEVO 20/04/2026)
+#### App Desktop
 | Feature | Estado |
 |---------|--------|
 | DesktopMainSc (menú lateral) | ✅ |
-| Stats: Pendientes/Validadas/Total | ✅ |
-| Botones acción rápida | ✅ |
-| PendientesSc (con filtros) | ✅ |
-| Botón "< Menu" para volver | ✅ |
-| Listing con botón volver al menú | ✅ |
-| Navegación diferenciada | ✅ |
+| Stats | ✅ |
+| PendientesSc (filtros) | ✅ |
+| ValidarActividadSc (4 pestañas) | ✅ |
+| ParcelasSc (solo lectura) | ✅ |
 
 ---
 
-### ⏳ PENDIENTE
+## Sprint Planning
 
-#### Backend
-| Tabla | Prioridad |
-|-------|----------|
-| Explotacion | MEDIA |
-| Asesor | MEDIA |
-| EquipoAplicacion | MEDIA |
+### SPRINT 1 — Funcionalidad básica demostrable
 
-#### App Móvil
-| Feature | Prioridad |
-|---------|----------|
-| SQLDelight (offline) | ALTA |
-| OCR | ALTA |
-| Voz | ALTA |
-| API clima | ALTA |
+**Objetivo:** App móvil con 4 tabs funcional + backend para crear parcelas y productos
 
-#### App Desktop
-| Feature | Prioridad |
-|---------|----------|
-| ValidarActividadSc con pestañas | ALTA |
-| Pantalla Parcelas | MEDIA |
-| Pantalla Productos | MEDIA |
+| Tarea | Descripción | Ficheros | Estimación | Prioridad |
+|-------|-------------|----------|------------|-----------|
+| 1.1 | Backend - POST crear parcelas | ParcelaRoutes.kt, DTOs.kt | 30 min | CRÍTICO |
+| 1.2 | Backend - POST crear productos | ProductoRoutes.kt, DTOs.kt | 30 min | CRÍTICO |
+| 1.3 | App - MisParcelasSc (móvil) | MisParcelasSc.kt (NUEVO) + modificar App.kt, ViewModel | 1 hora | CRÍTICO |
+| 1.4 | App - ProductosSc (móvil) | ProductosSc.kt (NUEVO) + modificar App.kt, ViewModel | 1 hora | CRÍTICO |
+| 1.5 | App - AjustesSc (móvil) | AjustesSc.kt (NUEVO) | 30 min | IMPORTANTE |
+| 1.6 | App - Bottom Navigation | App.kt (navigation) | 1 hora | CRÍTICO |
+| 1.7 | App - Repository/ViewModel actualizados | Repository, Api, ViewModel | 1 hora | CRÍTICO |
 
----
+**Total Sprint 1:** ~6 horas
 
-## Diferencias App Móvil vs Desktop
+### SPRINT 2 — Funcionalidad completa móvil
 
-| Aspecto | Móvil (Android) | Desktop |
-|--------|----------------|---------|
-| Uso principal | Campo - registro rápido | Oficina - validación |
-| Navegación | Pantallas secuenciales | Menú lateral |
-| Detalle | Sin fechaFin/eficacia | ✅ Ver todos |
-| Validar | ❌ NO accesible | ✅ Con pestañas |
-| Productos | Selector simple | Catálogo completo |
-| Volver | Botón simple | Botón "< Menu" |
-| Stats | ❌ NO | ✅ sí |
+| Tarea | Descripción | Estimación | Prioridad |
+|-------|-------------|------------|-----------|
+| 2.1 | Registrar semillas tratadas (móvil) | 1.5 horas | IMPORTANTE |
+| 2.2 | Registrar fertilización básica (móvil) | 1 hora | IMPORTANTE |
+| 2.3 | Backend - Rutas semillas (GET/POST) | 30 min | IMPORTANTE |
+| 2.4 | Desktop - GestorParcelasSc completo | 2 horas | IMPORTANTE |
+| 2.5 | Desktop - GestorProductosSc completo | 1.5 horas | IMPORTANTE |
 
-### Flujo Mobile (Campo)
-```
-NuevaActividadSc:
-  - Parcela (dropdown)
-  - Fecha (auto)
-  - Superficie tratada
-  - Problema fitosanitario
-  - Producto + dosis (NUEVO)
-  - Observaciones
-→ Guardar → BORRADOR
+**Total Sprint 2:** ~6.5 horas
 
-ActividadDetalleSc:
-  - Ver datos (sin fechaFin/eficacia)
-  - Editar (solo BORRADOR)
-  - Enviar → PENDIENTE_VALIDAR
-  - Eliminar
-```
+### BACKLOG — Mejoras no urgentes
 
-### Flujo Desktop (Oficina)
-```
-DesktopHome:
-  - Stats (Pendientes, Validadas, Total)
-  - Botones: Ver pendientes, Informes
-  - Menu lateral
-
-Menu → Todas las actividades:
-  - Listado completo
-  - Botón "< Menu" para volver
-
-Menu → Pendientes de validar:
-  - Filtros (estado, fecha)
-  - Lista actividades
-  - Botón "< Menu"
-
-Menu → Validar:
-  - Pestañas: Datos, Productos, Parcela, Validar
-  - Campos técnicos (fecha fin, eficacia, equipo, aplicador)
-```
-
----
-
-## Planificación (Abril - Julio 2026)
-
-**Tiempo disponible:** ~8 horas/semana
-
-```
-Semana 1-2 (Abr):  Desktop básico + navegación
-Semana 3 (28-4 May):  SQLDelight offline
-Semana 4 (May):     OCR
-Semana 5 (May):     Voz + clima
-Semana 6 (May):     Catálogos
-Semana 7-8 (Jun):  Testing + memoria
-```
+| Tarea | Prioridad |
+|-------|-----------|
+| SQLDelight offline | DESEABLE |
+| OCR | DESEABLE |
+| Voz | DESEABLE |
+| API Clima | DESEABLE |
+| Tablas Exposed faltantes | DESEABLE |
+| Informes PDF | DESEABLE |
+| Revisión DATABASE_MAPPING | DESEABLE |
 
 ---
 
@@ -335,7 +284,6 @@ Semana 7-8 (Jun):  Testing + memoria
 
 ### 1. Arrancar Backend (NECESARIO)
 ```powershell
-# El backend debe estar corriendo para que la app funcione
 .\gradlew.bat :backend:run
 # Servidor en http://localhost:8080
 ```
@@ -348,7 +296,6 @@ Semana 7-8 (Jun):  Testing + memoria
 ### 3. Ejecutar App Android
 ```powershell
 .\gradlew.bat :composeApp:installDebug
-# O desde Android Studio con emulador
 ```
 
 ### 4. Compilar todo
@@ -361,7 +308,7 @@ Semana 7-8 (Jun):  Testing + memoria
 ## Dependencias Clave
 
 | Dependencia | Versión |
-|------------|---------|
+|-------------|---------|
 | kotlin | 2.3.0 |
 | ktor | 3.1.3 |
 | exposed | 0.61.0 |
@@ -377,16 +324,15 @@ Semana 7-8 (Jun):  Testing + memoria
 1. **Icons:** Sin iconos por conflicto con material-icons-extended
 2. **Navigation Compose:** Eliminado, navegación manual
 3. **menuAnchor():** Deprecated warning
-4. **Icons Default:** No disponibles
 
 ---
 
 ## Próximo Día
 
-1. **Pestañas en ValidarActividadSc** (Datos/Productos/Parcela/Validar)
-2. **Pantalla Parcelas Desktop** (ver SIGPAC completo)
-3. **Seguir con SQLDelight offline**
+1. **Sprint 1.1:** Backend - POST crear parcelas
+2. **Sprint 1.2:** Backend - POST crear productos
+3. Continuar con Sprint 1
 
 ---
 
-*Última actualización: 20/04/2026*
+*Última actualización: 22/04/2026*

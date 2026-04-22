@@ -12,7 +12,7 @@ import org.jetbrains.exposed.sql.javatime.date
  */
 
 object Parcelas : IntIdTable("parcela") {
-    val explotacionId        = integer("explotacion_id")
+    val explotacionId        = integer("explotacion_id").nullable()
     val orden                = integer("orden").nullable()
     val sistemaAsesoramiento = varchar("sistema_asesoramiento", 50).nullable()
     val zonaNitratos         = bool("zona_nitratos").nullable()
