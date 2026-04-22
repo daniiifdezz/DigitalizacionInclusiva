@@ -91,6 +91,7 @@ class ActividadViewModel(
                 is Result.Success -> {
                     _operacionExitosa.value = true
                     cargarActividades()
+                    cargarActividadesPendientes()
                 }
                 is Result.Error -> {
                     _operacionExitosa.value = false
@@ -127,6 +128,7 @@ class ActividadViewModel(
                     _operacionExitosa.value = true
                     _actividadActual.value = resultado
                     cargarActividades()
+                    cargarActividadesPendientes()
                 }
                 is Result.Error -> {
                     _mensajeError.value = resultado.message
@@ -144,6 +146,7 @@ class ActividadViewModel(
                     _operacionExitosa.value = true
                     _actividadActual.value = resultado
                     cargarActividades()
+                    cargarActividadesPendientes()
                 }
                 is Result.Error -> {
                     _mensajeError.value = resultado.message
@@ -160,6 +163,7 @@ class ActividadViewModel(
                 is Result.Success -> {
                     _operacionExitosa.value = true
                     cargarActividades()
+                    cargarActividadesPendientes()
                 }
                 is Result.Error -> {
                     _mensajeError.value = resultado.message

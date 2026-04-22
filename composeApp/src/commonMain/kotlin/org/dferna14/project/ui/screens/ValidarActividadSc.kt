@@ -27,6 +27,10 @@ fun ValidarActividadSc(
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()
     var datosCargados by remember { mutableStateOf(false) }
 
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("Datos", "Productos", "Parcela", "Validar")
+
+    // Campos para validar
     var fechaFin by remember { mutableStateOf("") }
     var eficacia by remember { mutableStateOf("") }
     var aplicador by remember { mutableStateOf("") }
@@ -117,116 +121,38 @@ fun ValidarActividadSc(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Información de la parcela
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Parcela: ${act.parcelaId}",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = "Fecha inicio: ${act.fechaInicio}",
-                                style = MaterialTheme.typography.bodyMedium
+                    // Tabs
+                    TabRow(selectedTabIndex = selectedTab) {
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                text = { Text(title) }
                             )
                         }
                     }
 
-                    Text(
-                        text = "Completar datos de validación:",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    // Fecha fin - OBLIGATORIA
-                    OutlinedTextField(
-                        value = fechaFin,
-                        onValueChange = { newValue ->
-                            fechaFin = newValue
-                            errorFecha = when {
-                                newValue.isBlank() -> "Obligatorio"
-                                !validarFormatoFecha(newValue) -> "Formato: AAAA-MM-DD"
-                                !esFechaPosterior(newValue, act.fechaInicio) -> "Debe ser >= fecha inicio"
-                                else -> null
-                            }
-                        },
-                        label = { Text("Fecha fin *") },
-                        isError = errorFecha != null,
-                        supportingText = errorFecha?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    // Eficacia - OBLIGATORIA
-                    OutlinedTextField(
-                        value = eficacia,
-                        onValueChange = { newValue ->
-                            eficacia = newValue.uppercase()
-                            errorEficacia = when {
-                                newValue.isBlank() -> "Obligatorio"
-                                !validarEficaciaValue(newValue) -> "Valores: ALTA, MEDIA, BAJA, NULA"
-                                else -> null
-                            }
-                        },
-                        label = { Text("Eficacia *") },
-                        isError = errorEficacia != null,
-                        supportingText = errorEficacia?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = aplicador,
-                        onValueChange = { aplicador = it },
-                        label = { Text("Aplicador (nombre)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = equipo,
-                        onValueChange = { equipo = it },
-                        label = { Text("Equipo usado") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = observaciones,
-                        onValueChange = { observaciones = it },
-                        label = { Text("Observaciones técnicas") },
-                        minLines = 3,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    // Botones de acción
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                viewModel.devolverActividad(actividadId)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp)
-                        ) {
-                            Text("Devolver")
-                        }
-
-                        val esValido = fechaFin.isNotBlank() && 
-                                      validarFormatoFecha(fechaFin) && 
-                                      esFechaPosterior(fechaFin, act.fechaInicio) && 
-                                      validarEficaciaValue(eficacia)
-
-                        Button(
-                            onClick = {
+                    // Contenido según pestaña
+                    when (selectedTab) {
+                        0 -> PestanaDatos(act = act)
+                        1 -> PestanaProductos(act = act)
+                        2 -> PestanaParcela(act = act)
+                        3 -> PestanaValidar(
+                            act = act,
+                            fechaFin = fechaFin,
+                            eficacia = eficacia,
+                            aplicador = aplicador,
+                            equipo = equipo,
+                            observaciones = observaciones,
+                            errorFecha = errorFecha,
+                            errorEficacia = errorEficacia,
+                            onFechaFinChange = { fechaFin = it },
+                            onEficaciaChange = { eficacia = it },
+                            onAplicadorChange = { aplicador = it },
+                            onEquipoChange = { equipo = it },
+                            onObservacionesChange = { observaciones = it },
+                            onValidar = {
                                 val actActualizada = act.copy(
                                     fechaFin = fechaFin,
                                     eficacia = eficacia.uppercase(),
@@ -237,18 +163,282 @@ fun ValidarActividadSc(
                                 viewModel.resetOperacionExitosa()
                                 onVolver()
                             },
-                            enabled = esValido,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp)
-                        ) {
-                            Text("Validar")
-                        }
+                            onDevolver = {
+                                viewModel.devolverActividad(actividadId)
+                            },
+                            validarFormatoFecha = { validarFormatoFecha(it) },
+                            esFechaPosterior = { f, i -> esFechaPosterior(f, i) },
+                            validarEficaciaValue = { validarEficaciaValue(it) }
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PestanaDatos(act: Actividad) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Datos de la actividad",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                FieldView("Parcela", "Parcela ${act.parcelaId}")
+                FieldView("Fecha inicio", act.fechaInicio)
+                act.fechaFin?.let { FieldView("Fecha fin", it) }
+                act.superficieTratada?.let { FieldView("Superficie tratadas", "$it ha") }
+            }
+        }
+
+        Text(
+            text = "Problema fitosanitario",
+            style = MaterialTheme.typography.titleSmall
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = act.problemaFitosanitario ?: "No especificadis",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        Text(
+            text = "Observaciones del agricultor",
+            style = MaterialTheme.typography.titleSmall
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = act.observaciones ?: "Sin observaciones",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PestanaProductos(act: Actividad) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Productos utilizados",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Esta funcionalidad requiere implementación adicional",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PestanaParcela(act: Actividad) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Datos de la parcela (SIGPAC)",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Parcela ID: ${act.parcelaId}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Esta funcionalidad requiere implementación adicional",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PestanaValidar(
+    act: Actividad,
+    fechaFin: String,
+    eficacia: String,
+    aplicador: String,
+    equipo: String,
+    observaciones: String,
+    errorFecha: String?,
+    errorEficacia: String?,
+    onFechaFinChange: (String) -> Unit,
+    onEficaciaChange: (String) -> Unit,
+    onAplicadorChange: (String) -> Unit,
+    onEquipoChange: (String) -> Unit,
+    onObservacionesChange: (String) -> Unit,
+    onValidar: () -> Unit,
+    onDevolver: () -> Unit,
+    validarFormatoFecha: (String) -> Boolean,
+    esFechaPosterior: (String, String) -> Boolean,
+    validarEficaciaValue: (String) -> Boolean
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Completar datos de validación:",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        OutlinedTextField(
+            value = fechaFin,
+            onValueChange = { newValue ->
+                onFechaFinChange(newValue)
+            },
+            label = { Text("Fecha fin *") },
+            isError = errorFecha != null,
+            supportingText = errorFecha?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = eficacia,
+            onValueChange = { newValue ->
+                onEficaciaChange(newValue.uppercase())
+            },
+            label = { Text("Eficacia *") },
+            isError = errorEficacia != null,
+            supportingText = errorEficacia?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = aplicador,
+            onValueChange = onAplicadorChange,
+            label = { Text("Aplicador (nombre)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = equipo,
+            onValueChange = onEquipoChange,
+            label = { Text("Equipo usado") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = observaciones,
+            onValueChange = onObservacionesChange,
+            label = { Text("Observaciones técnicas") },
+            minLines = 3,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = onDevolver,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp)
+            ) {
+                Text("Devolver")
+            }
+
+            val esValido = fechaFin.isNotBlank() &&
+                    validarFormatoFecha(fechaFin) &&
+                    esFechaPosterior(fechaFin, act.fechaInicio) &&
+                    validarEficaciaValue(eficacia)
+
+            Button(
+                onClick = onValidar,
+                enabled = esValido,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp)
+            ) {
+                Text("Validar")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun FieldView(label: String, value: String) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }

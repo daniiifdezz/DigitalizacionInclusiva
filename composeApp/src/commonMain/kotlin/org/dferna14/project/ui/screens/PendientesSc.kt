@@ -34,6 +34,11 @@ fun PendientesSc(
                     TextButton(onClick = onVolver) {
                         Text("< Menu")
                     }
+                },
+                actions = {
+                    TextButton(onClick = { viewModel.cargarActividadesPendientes() }) {
+                        Text("Recargar")
+                    }
                 }
             )
         }
@@ -43,6 +48,7 @@ fun PendientesSc(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Filtros
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -52,13 +58,13 @@ fun PendientesSc(
                 OutlinedTextField(
                     value = filtroEstado,
                     onValueChange = { filtroEstado = it },
-                    label = { Text("Estado") },
+                    label = { Text("Estado (Borrador/Pendiente/Validada)") },
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = filtroFecha,
                     onValueChange = { filtroFecha = it },
-                    label = { Text("Fecha") },
+                    label = { Text("Fecha (AAAA-MM-DD)") },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -69,7 +75,11 @@ fun PendientesSc(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Cargando...")
+                        }
                     }
                 }
                 is Result.Error -> {
@@ -77,7 +87,13 @@ fun PendientesSc(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Error: ${state.message}")
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { viewModel.cargarActividadesPendientes() }) {
+                                Text("Reintentar")
+                            }
+                        }
                     }
                 }
                 is Result.Success -> {
@@ -86,16 +102,49 @@ fun PendientesSc(
                         (filtroFecha.isEmpty() || act.fechaInicio.contains(filtroFecha))
                     }
 
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(filtered) { actividad ->
-                            ActividadPendienteCard(
-                                actividad = actividad,
-                                onClick = { onVerActividad(actividad.id) }
-                            )
+                    if (filtered.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = if (state.data.isEmpty()) 
+                                        "No hay actividades pendientes" 
+                                    else 
+                                        "No hay resultados para los filtros",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                if (filtroEstado.isNotEmpty() || filtroFecha.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TextButton(onClick = {
+                                        filtroEstado = ""
+                                        filtroFecha = ""
+                                    }) {
+                                        Text("Limpiar filtros")
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            item {
+                                Text(
+                                    text = "${filtered.size} actividad(es) encontrada(s)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            items(filtered) { actividad ->
+                                ActividadPendienteCard(
+                                    actividad = actividad,
+                                    onClick = { onVerActividad(actividad.id) }
+                                )
+                            }
                         }
                     }
                 }

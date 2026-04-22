@@ -4,7 +4,7 @@ import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.createHttpClient
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.ui.viewmodel.ActividadViewModel
-import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 /**
@@ -24,6 +24,6 @@ val appModule = module {
     // Repositorio
     single { ActividadRepository(get()) }
 
-    // ViewModel
-    viewModelOf(::ActividadViewModel)
+    // ViewModel - singleton para compartir estado entre pantallas
+    singleOf(::ActividadViewModel)
 }

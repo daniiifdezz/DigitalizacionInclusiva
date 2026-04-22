@@ -7,6 +7,7 @@ import org.dferna14.project.ui.screens.DesktopMainSc
 import org.dferna14.project.ui.screens.EditarActividadSc
 import org.dferna14.project.ui.screens.NuevaActividadSc
 import org.dferna14.project.ui.screens.PendientesSc
+import org.dferna14.project.ui.screens.ParcelasSc
 import org.dferna14.project.ui.screens.ValidarActividadSc
 import org.dferna14.project.ui.theme.AppTheme
 
@@ -19,6 +20,7 @@ sealed class Screen {
 
     // Desktop screens
     object DesktopHome : Screen()
+    object Parcelas : Screen()
     data class Pendientes(val actividadId: Int) : Screen()
 }
 
@@ -78,7 +80,7 @@ fun App(isDesktop: Boolean = false) {
                 DesktopMainSc(
                     onVerListado = { currentScreen = Screen.Listado },
                     onVerPendientes = { currentScreen = Screen.Pendientes(0) },
-                    onVerParcelas = { /* TODO */ },
+                    onVerParcelas = { currentScreen = Screen.Parcelas },
                     onVerProductos = { /* TODO */ },
                     onVerValidar = { id -> currentScreen = Screen.Validar(id) }
                 )
@@ -87,6 +89,11 @@ fun App(isDesktop: Boolean = false) {
                 PendientesSc(
                     onVolver = { currentScreen = Screen.DesktopHome },
                     onVerActividad = { id -> currentScreen = Screen.Validar(id) }
+                )
+            }
+            is Screen.Parcelas -> {
+                ParcelasSc(
+                    onVolver = { currentScreen = Screen.DesktopHome }
                 )
             }
         }
