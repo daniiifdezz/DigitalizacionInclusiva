@@ -147,6 +147,19 @@ asesor
 
 ## Decisiones Técnicas Importantes
 
+### 0. Estandar de Nomenclatura UI (29/04/2026)
+- **Cambio:** Los archivos de pantalla usan sufijo `Sc` (no `Screen`)
+- Ejemplos: `FertilizacionSc.kt`, `SemillasTratadasSc.kt`
+- Referencias en `App.kt` actualizadas a new naming
+
+### 0.1 Arquitectura Fertilización (29/04/2026)
+- **Decisión:** La fertilización se asocia a `cultivoId` según esquema PostgreSQL
+- **Rutas:** No se usan rutas anidadas en actividades (`/api/actividades/{id}/fertilizacion`)
+- **Endpoints:** Se usa `/api/fertilizaciones` directamente (fertilizacion tiene `cultivo_id`)
+- **Modelo Frontend:** `Fertilizacion` actualizado para coincidir con tabla Exposed
+
+---
+
 ### 1. Fechas con java.time.LocalDate
 
 - Backend: Usa `org.jetbrains.exposed.sql.javatime.date`

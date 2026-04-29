@@ -26,6 +26,7 @@ fun Route.parcelaRoutes() {
                         id                   = it[Parcelas.id].value,
                         explotacionId        = it[Parcelas.explotacionId],
                         orden                = it[Parcelas.orden],
+                        alias                = it[Parcelas.alias],
                         sistemaAsesoramiento = it[Parcelas.sistemaAsesoramiento],
                         zonaNitratos         = it[Parcelas.zonaNitratos]
                     )
@@ -48,6 +49,7 @@ fun Route.parcelaRoutes() {
                             id                   = it[Parcelas.id].value,
                             explotacionId        = it[Parcelas.explotacionId],
                             orden                = it[Parcelas.orden],
+                            alias                = it[Parcelas.alias],
                             sistemaAsesoramiento = it[Parcelas.sistemaAsesoramiento],
                             zonaNitratos         = it[Parcelas.zonaNitratos]
                         )
@@ -89,6 +91,7 @@ fun Route.parcelaRoutes() {
                     id                   = parcela[Parcelas.id].value,
                     explotacionId        = parcela[Parcelas.explotacionId],
                     orden                = parcela[Parcelas.orden],
+                    alias                = parcela[Parcelas.alias],
                     zonaNitratos         = parcela[Parcelas.zonaNitratos],
                     sistemaAsesoramiento = parcela[Parcelas.sistemaAsesoramiento],
 
@@ -129,6 +132,7 @@ fun Route.parcelaRoutes() {
                 Parcelas.insertAndGetId {
                     it[explotacionId] = request.explotacionId
                     it[orden] = request.orden
+                    it[alias] = request.alias
                     it[sistemaAsesoramiento] = request.sistemaAsesoramiento
                     it[zonaNitratos] = request.zonaNitratos
                 }.value
@@ -143,6 +147,7 @@ fun Route.parcelaRoutes() {
                             id = it[Parcelas.id].value,
                             explotacionId = it[Parcelas.explotacionId],
                             orden = it[Parcelas.orden],
+                            alias = it[Parcelas.alias],
                             sistemaAsesoramiento = it[Parcelas.sistemaAsesoramiento],
                             zonaNitratos = it[Parcelas.zonaNitratos]
                         )
@@ -163,6 +168,7 @@ fun Route.parcelaRoutes() {
                 Parcelas.update({ Parcelas.id eq id }) {
                     it[explotacionId] = request.explotacionId
                     it[orden] = request.orden
+                    it[alias] = request.alias
                     it[sistemaAsesoramiento] = request.sistemaAsesoramiento
                     it[zonaNitratos] = request.zonaNitratos
                 }

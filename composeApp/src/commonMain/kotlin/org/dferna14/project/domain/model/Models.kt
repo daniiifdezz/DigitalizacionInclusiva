@@ -15,6 +15,7 @@ data class Parcela(
     val id                   : Int,
     val explotacionId        : Int?    = null,
     val orden                : Int?    = null,
+    val alias                : String? = null,
     val sistemaAsesoramiento : String? = null,
     val zonaNitratos         : Boolean? = null
 )
@@ -57,6 +58,20 @@ data class SemillaTratada(
     val superficieHa      : Double? = null,
     val cantidadSemillaKg : Double? = null,
     val productoId        : Int?    = null
+)
+
+data class Fertilizacion(
+    val id                 : Int     = 0,
+    val cultivoId          : Int?    = null,
+    val aplica             : Boolean = false,
+    val fechaInicio        : String? = null,
+    val fechaFin           : String? = null,
+    val tipoProducto       : String? = null,
+    val numeroAlbaran      : String? = null,
+    val riquezaNPK         : String? = null,
+    val dosis              : Double? = null,
+    val tipoFertilizacion  : String? = null,
+    val observaciones      : String? = null
 )
 
 /**

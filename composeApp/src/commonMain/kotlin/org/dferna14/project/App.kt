@@ -19,6 +19,8 @@ sealed class Screen {
     data class Detalle(val actividadId: Int) : Screen()
     data class Editar(val actividadId: Int) : Screen()
     data class Validar(val actividadId: Int) : Screen()
+    data class Semillas(val actividadId: Int) : Screen()
+    data class Fertilizacion(val cultivoId: Int) : Screen()
 
     // Desktop screens
     object DesktopHome : Screen()
@@ -96,6 +98,18 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 onVolver = { onNavigate(Screen.DesktopHome) }
             )
         }
+        is Screen.Semillas -> {
+            SemillasTratadasSc(
+                actividadId = screen.actividadId,
+                onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
+            )
+        }
+        is Screen.Fertilizacion -> {
+            FertilizacionSc(
+                cultivoId = screen.cultivoId,
+                onVolver = { onNavigate(Screen.Detalle(screen.cultivoId)) }
+            )
+        }
         is Screen.Productos -> {
             ProductosSc()
         }
@@ -149,7 +163,9 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                     ActividadDetalleSc(
                         actividadId = screen.actividadId,
                         onVolver = { onNavigate(Screen.MisActividades) },
-                        onEditar = { id -> onNavigate(Screen.Editar(id)) }
+                        onEditar = { id -> onNavigate(Screen.Editar(id)) },
+                        onVerSemillas = { id -> onNavigate(Screen.Semillas(id)) },
+                        onVerFertilizacion = { id -> onNavigate(Screen.Fertilizacion(id)) }
                     )
                 }
                 is Screen.Editar -> {
@@ -166,6 +182,18 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 }
                 is Screen.Ajustes -> {
                     AjustesSc()
+                }
+                is Screen.Semillas -> {
+                    SemillasTratadasSc(
+                        actividadId = screen.actividadId,
+                        onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
+                    )
+                }
+                is Screen.Fertilizacion -> {
+                    FertilizacionSc(
+                        cultivoId = screen.cultivoId,
+                        onVolver = { onNavigate(Screen.Detalle(screen.cultivoId)) }
+                    )
                 }
                 else -> {}
             }

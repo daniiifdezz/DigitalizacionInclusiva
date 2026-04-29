@@ -112,11 +112,13 @@ fun MisParcelasSc(
     if (mostrarDialogoCrear) {
         CrearParcelaDialog(
             onDismiss = { mostrarDialogoCrear = false },
-            onCrear = { orden ->
+            onCreate = { alias, orden ->
+                // El alias del usuario tiene prioridad. Si está vacío, enviar null
                 viewModel.crearParcela(
                     Parcela(
                         id = 0,
-                        orden = orden
+                        orden = orden,
+                        alias = alias?.takeIf { it.isNotBlank() }
                     )
                 )
                 mostrarDialogoCrear = false
@@ -166,7 +168,7 @@ private fun ParcelaCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Parcela ${parcela.orden ?: parcela.id}",
+                    text = parcela.alias ?: "Parcela ${parcela.orden ?: parcela.id}",
                     style = MaterialTheme.typography.titleMedium
                 )
                 if (parcela.sistemaAsesoramiento != null || parcela.zonaNitratos != null) {
@@ -190,8 +192,9 @@ private fun ParcelaCard(
 @Composable
 private fun CrearParcelaDialog(
     onDismiss: () -> Unit,
-    onCrear: (Int?) -> Unit
+    onCreate: (String?, Int?) -> Unit
 ) {
+    var alias by remember { mutableStateOf("") }
     var orden by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -200,15 +203,24 @@ private fun CrearParcelaDialog(
         text = {
             Column {
                 Text(
-                    text = "Introduce un nombre o número para identificar la parcela",
+                    text = "Introduce un nombre para identificar la parcela",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
+                    value = alias,
+                    onValueChange = { alias = it },
+                    label = { Text("Nombre/Alias") },
+                    placeholder = { Text("Ej: Parcela Norte") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
                     value = orden,
                     onValueChange = { orden = it },
-                    label = { Text("Nombre/Número") },
-                    placeholder = { Text("Ej: Parcela 1") },
+                    label = { Text("Orden (opcional)") },
+                    placeholder = { Text("Ej: 1") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -219,7 +231,7 @@ private fun CrearParcelaDialog(
             Button(
                 onClick = {
                     val ordenInt = orden.toIntOrNull()
-                    onCrear(ordenInt)
+                    onCreate(alias.ifBlank { null }, ordenInt)
                 }
             ) {
                 Text("Crear")
@@ -232,3 +244,5 @@ private fun CrearParcelaDialog(
         }
     )
 }
+
+

@@ -2,15 +2,19 @@ package org.dferna14.project.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.Fertilizacion
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.domain.model.SemillaTratada
 
 class ActividadViewModel(
     private val repository: ActividadRepository
@@ -244,5 +248,52 @@ class ActividadViewModel(
 
     fun limpiarActividadActual() {
         _actividadActual.value = Result.Loading
+    }
+
+    // Semillas tratadas
+
+    fun getSemillaTratada(actividadId: Int): Flow<Result<SemillaTratada?>> = flow {
+        emit(Result.Loading)
+        try {
+            val resultado = repository.getSemillaTratada(actividadId)
+            emit(resultado)
+        } catch (e: Exception) {
+            emit(Result.Error("Error al obtener semilla: ${e.message}"))
+        }
+    }
+
+    suspend fun crearSemillaTratada(semilla: SemillaTratada): Result<SemillaTratada> {
+        return try {
+            val resultado = repository.crearSemillaTratada(semilla)
+            if (resultado is Result.Success) {
+                _operacionExitosa.value = true
+            }
+            resultado
+        } catch (e: Exception) {
+            Result.Error("Error al crear semilla: ${e.message}")
+        }
+    }
+
+    // Fertilizacion functions
+    fun getFertilizacion(cultivoId: Int): Flow<Result<Fertilizacion?>> = flow {
+        emit(Result.Loading)
+        try {
+            val resultado = repository.getFertilizacion(cultivoId)
+            emit(resultado)
+        } catch (e: Exception) {
+            emit(Result.Error("Error al obtener fertilización: ${e.message}"))
+        }
+    }
+
+    suspend fun crearFertilizacion(fertilizacion: Fertilizacion): Result<Fertilizacion> {
+        return try {
+            val resultado = repository.crearFertilizacion(fertilizacion)
+            if (resultado is Result.Success) {
+                _operacionExitosa.value = true
+            }
+            resultado
+        } catch (e: Exception) {
+            Result.Error("Error al crear fertilización: ${e.message}")
+        }
     }
 }

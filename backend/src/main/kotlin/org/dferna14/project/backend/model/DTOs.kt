@@ -123,6 +123,7 @@ data class FertilizacionResponse(
 data class ParcelaRequest(
     val explotacionId       : Int?    = null,
     val orden               : Int?    = null,
+    val alias               : String? = null,
     val sistemaAsesoramiento: String? = null,
     val zonaNitratos        : Boolean? = null
 )
@@ -132,6 +133,7 @@ data class ParcelaResponse(
     val id                  : Int,
     val explotacionId       : Int?    = null,
     val orden               : Int?    = null,
+    val alias               : String? = null,
     val sistemaAsesoramiento: String? = null,
     val zonaNitratos        : Boolean? = null
 )
@@ -144,6 +146,7 @@ data class ParcelaCompletaResponse(
     val id                   : Int,
     val explotacionId        : Int?    = null,
     val orden                : Int?    = null,
+    val alias                : String? = null,
     val zonaNitratos         : Boolean? = null,
     val sistemaAsesoramiento : String? = null,
 

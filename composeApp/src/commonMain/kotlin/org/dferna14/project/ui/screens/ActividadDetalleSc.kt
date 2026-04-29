@@ -20,6 +20,8 @@ fun ActividadDetalleSc(
     actividadId: Int,
     onVolver: () -> Unit,
     onEditar: (Int) -> Unit,
+    onVerSemillas: (Int) -> Unit = {},
+    onVerFertilizacion: (Int) -> Unit = {},
     viewModel: ActividadViewModel = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
@@ -127,8 +129,12 @@ fun ActividadDetalleSc(
             is Result.Success -> {
                 ActividadDetalleContenido(
                     actividad = estado.data,
-                    modifier = Modifier.padding(padding)
-                )
+                    onVerSemillas = onVerSemillas,
+                    onVerFertilizacion = onVerFertilizacion,
+                    modifier = Modifier.padding(padding),
+
+
+                    )
             }
         }
     }
@@ -161,7 +167,9 @@ fun ActividadDetalleSc(
 @Composable
 private fun ActividadDetalleContenido(
     actividad: Actividad,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onVerSemillas: (Int) -> Unit = {},
+    onVerFertilizacion: (Int) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -247,6 +255,25 @@ private fun ActividadDetalleContenido(
                     }
                 }
             }
+        }
+
+        // Botones para Semillas y Fertilización
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(
+            onClick = { onVerSemillas(actividad.id) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Semillas Tratadas")
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Button(
+            onClick = { onVerFertilizacion(actividad.id) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Fertilización Básica")
         }
     }
 }

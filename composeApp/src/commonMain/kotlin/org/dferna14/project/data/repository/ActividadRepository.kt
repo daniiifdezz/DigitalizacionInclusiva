@@ -10,11 +10,17 @@ import org.dferna14.project.data.remote.ParcelaCreateDto
 import org.dferna14.project.data.remote.ParcelaDto
 import org.dferna14.project.data.remote.ProductoCreateDto
 import org.dferna14.project.data.remote.ProductoDto
+import org.dferna14.project.data.remote.SemillaTratadaCreateDto
+import org.dferna14.project.data.remote.SemillaTratadaDto
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.domain.model.SemillaTratada
+import org.dferna14.project.data.remote.FertilizacionDto
+import org.dferna14.project.data.remote.FertilizacionCreateDto
+import org.dferna14.project.domain.model.Fertilizacion
 
 /**
  * Repositorio offline-first para Actividades y Parcelas.
@@ -158,6 +164,7 @@ class ActividadRepository(
                     id                   = dto.id,
                     explotacionId        = dto.explotacionId,
                     orden                = dto.orden,
+                    alias                = dto.alias,
                     sistemaAsesoramiento = dto.sistemaAsesoramiento,
                     zonaNitratos         = dto.zonaNitratos
                 )
@@ -174,6 +181,7 @@ class ActividadRepository(
                 ParcelaCreateDto(
                     explotacionId        = parcela.explotacionId,
                     orden                = parcela.orden,
+                    alias                = parcela.alias,
                     sistemaAsesoramiento = parcela.sistemaAsesoramiento,
                     zonaNitratos         = parcela.zonaNitratos
                 )
@@ -183,6 +191,7 @@ class ActividadRepository(
                     id                   = dto.id,
                     explotacionId        = dto.explotacionId,
                     orden                = dto.orden,
+                    alias                = dto.alias,
                     sistemaAsesoramiento = dto.sistemaAsesoramiento,
                     zonaNitratos         = dto.zonaNitratos
                 )
@@ -271,4 +280,124 @@ class ActividadRepository(
         },
         sincronizado          = true
     )
+
+    // Semillas tratadas
+
+    suspend fun getSemillaTratada(actividadId: Int): Result<SemillaTratada> {
+        return try {
+            val dto = api.getSemillaTratada(actividadId)
+            if (dto == null) {
+                Result.Error("No hay semilla tratada para esta actividad")
+            } else {
+                Result.Success(
+                    SemillaTratada(
+                        id                = dto.id,
+                        actividadId       = dto.actividadId,
+                        parcelaId         = dto.parcelaId,
+                        aplica            = dto.aplica,
+                        fechaSiembra      = dto.fechaSiembra,
+                        superficieHa      = dto.superficieHa,
+                        cantidadSemillaKg = dto.cantidadSemillaKg,
+                        productoId        = dto.productoId
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.Error("Error al obtener semilla tratada: ${e.message}")
+        }
+    }
+
+    suspend fun crearSemillaTratada(semilla: SemillaTratada): Result<SemillaTratada> {
+        return try {
+            val dto = api.crearSemillaTratada(
+                SemillaTratadaCreateDto(
+                    actividadId       = semilla.actividadId,
+                    parcelaId         = semilla.parcelaId,
+                    aplica            = semilla.aplica,
+                    fechaSiembra      = semilla.fechaSiembra,
+                    superficieHa      = semilla.superficieHa,
+                    cantidadSemillaKg = semilla.cantidadSemillaKg,
+                    productoId        = semilla.productoId
+                )
+            )
+            Result.Success(
+                SemillaTratada(
+                    id                = dto.id,
+                    actividadId       = dto.actividadId,
+                    parcelaId         = dto.parcelaId,
+                    aplica            = dto.aplica,
+                    fechaSiembra      = dto.fechaSiembra,
+                    superficieHa      = dto.superficieHa,
+                    cantidadSemillaKg = dto.cantidadSemillaKg,
+                    productoId        = dto.productoId
+                )
+            )
+        } catch (e: Exception) {
+            Result.Error("Error al crear semilla tratada: ${e.message}")
+        }
+    }
+
+    // Fertilizacion functions
+    suspend fun getFertilizacion(cultivoId: Int): Result<Fertilizacion?> {
+        return try {
+            val dto = api.getFertilizacionByCultivo(cultivoId)
+            if (dto == null) {
+                Result.Success(null)
+            } else {
+                Result.Success(
+                    Fertilizacion(
+                        id                = dto.id,
+                        cultivoId         = dto.cultivoId,
+                        aplica            = dto.aplica,
+                        fechaInicio       = dto.fechaInicio,
+                        fechaFin          = dto.fechaFin,
+                        tipoProducto      = dto.tipoProducto,
+                        numeroAlbaran     = dto.numeroAlbaran,
+                        riquezaNPK        = dto.riquezaNPK,
+                        dosis             = dto.dosis,
+                        tipoFertilizacion = dto.tipoFertilizacion,
+                        observaciones     = dto.observaciones
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.Error("Error al obtener fertilización: ${e.message}")
+        }
+    }
+
+    suspend fun crearFertilizacion(fertilizacion: Fertilizacion): Result<Fertilizacion> {
+        return try {
+            val dto = api.crearFertilizacion(
+                FertilizacionCreateDto(
+                    cultivoId         = fertilizacion.cultivoId,
+                    aplica            = fertilizacion.aplica,
+                    fechaInicio       = fertilizacion.fechaInicio,
+                    fechaFin          = fertilizacion.fechaFin,
+                    tipoProducto      = fertilizacion.tipoProducto,
+                    numeroAlbaran     = fertilizacion.numeroAlbaran,
+                    riquezaNPK        = fertilizacion.riquezaNPK,
+                    dosis             = fertilizacion.dosis,
+                    tipoFertilizacion = fertilizacion.tipoFertilizacion,
+                    observaciones     = fertilizacion.observaciones
+                )
+            )
+            Result.Success(
+                Fertilizacion(
+                    id                = dto.id,
+                    cultivoId         = dto.cultivoId,
+                    aplica            = dto.aplica,
+                    fechaInicio       = dto.fechaInicio,
+                    fechaFin          = dto.fechaFin,
+                    tipoProducto      = dto.tipoProducto,
+                    numeroAlbaran     = dto.numeroAlbaran,
+                    riquezaNPK        = dto.riquezaNPK,
+                    dosis             = dto.dosis,
+                    tipoFertilizacion = dto.tipoFertilizacion,
+                    observaciones     = dto.observaciones
+                )
+            )
+        } catch (e: Exception) {
+            Result.Error("Error al crear fertilización: ${e.message}")
+        }
+    }
 }
