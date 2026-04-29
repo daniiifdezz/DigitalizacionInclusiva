@@ -46,15 +46,30 @@ data class ActividadCreateDto(
 @Serializable
 data class ParcelaDto(
     @SerialName("id")                    val id                   : Int,
-    @SerialName("explotacionId")         val explotacionId        : Int,
-    @SerialName("orden")                 val orden                : Int?     = null,
-    @SerialName("sistemaAsesoramiento")  val sistemaAsesoramiento : String?  = null,
+    @SerialName("explotacionId")         val explotacionId        : Int?    = null,
+    @SerialName("orden")                 val orden                : Int?    = null,
+    @SerialName("sistemaAsesoramiento")  val sistemaAsesoramiento : String? = null,
+    @SerialName("zonaNitratos")          val zonaNitratos         : Boolean? = null
+)
+
+@Serializable
+data class ParcelaCreateDto(
+    @SerialName("explotacionId")         val explotacionId        : Int?    = null,
+    @SerialName("orden")                 val orden                : Int?    = null,
+    @SerialName("sistemaAsesoramiento")  val sistemaAsesoramiento : String? = null,
     @SerialName("zonaNitratos")          val zonaNitratos         : Boolean? = null
 )
 
 @Serializable
 data class ProductoDto(
     @SerialName("id")               val id              : Int,
+    @SerialName("nombreComercial")  val nombreComercial : String? = null,
+    @SerialName("materiaActiva")    val materiaActiva   : String? = null,
+    @SerialName("numeroRegistro")   val numeroRegistro  : String? = null
+)
+
+@Serializable
+data class ProductoCreateDto(
     @SerialName("nombreComercial")  val nombreComercial : String? = null,
     @SerialName("materiaActiva")    val materiaActiva   : String? = null,
     @SerialName("numeroRegistro")   val numeroRegistro  : String? = null
@@ -107,7 +122,7 @@ class ActividadApi(private val client: HttpClient) {
         return response.status == HttpStatusCode.OK
     }
 
-    // parcela, solo leer
+    // parcela
 
     suspend fun getParcelas(): List<ParcelaDto> =
         client.get("$BASE_URL/api/parcelas").body()
@@ -115,8 +130,49 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun getParcela(id: Int): ParcelaDto =
         client.get("$BASE_URL/api/parcelas/$id").body()
 
+    suspend fun crearParcela(parcela: ParcelaCreateDto): ParcelaDto {
+        return client.post("$BASE_URL/api/parcelas") {
+            contentType(ContentType.Application.Json)
+            setBody(parcela)
+        }.body()
+    }
 
-    // productos, solo leer
+    suspend fun actualizarParcela(id: Int, parcela: ParcelaCreateDto): Boolean {
+        val response = client.put("$BASE_URL/api/parcelas/$id") {
+            contentType(ContentType.Application.Json)
+            setBody(parcela)
+        }
+        return response.status == HttpStatusCode.OK
+    }
+
+    suspend fun eliminarParcela(id: Int): Boolean {
+        val response = client.delete("$BASE_URL/api/parcelas/$id")
+        return response.status == HttpStatusCode.NoContent
+    }
+
+
+    // productos
+
     suspend fun getProductos(): List<ProductoDto> =
         client.get("$BASE_URL/api/productos").body()
+
+    suspend fun crearProducto(producto: ProductoCreateDto): ProductoDto {
+        return client.post("$BASE_URL/api/productos") {
+            contentType(ContentType.Application.Json)
+            setBody(producto)
+        }.body()
+    }
+
+    suspend fun actualizarProducto(id: Int, producto: ProductoCreateDto): Boolean {
+        val response = client.put("$BASE_URL/api/productos/$id") {
+            contentType(ContentType.Application.Json)
+            setBody(producto)
+        }
+        return response.status == HttpStatusCode.OK
+    }
+
+    suspend fun eliminarProducto(id: Int): Boolean {
+        val response = client.delete("$BASE_URL/api/productos/$id")
+        return response.status == HttpStatusCode.NoContent
+    }
 }

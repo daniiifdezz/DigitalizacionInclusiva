@@ -13,9 +13,9 @@ enum class EstadoActividad {
 
 data class Parcela(
     val id                   : Int,
-    val explotacionId        : Int,
-    val orden                : Int?     = null,
-    val sistemaAsesoramiento : String?  = null,
+    val explotacionId        : Int?    = null,
+    val orden                : Int?    = null,
+    val sistemaAsesoramiento : String? = null,
     val zonaNitratos         : Boolean? = null
 )
 

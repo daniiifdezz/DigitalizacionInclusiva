@@ -68,10 +68,62 @@ class ActividadViewModel(
         }
     }
 
+    fun crearParcela(parcela: Parcela) {
+        viewModelScope.launch {
+            val resultado = repository.crearParcela(parcela)
+            when (resultado) {
+                is Result.Success -> {
+                    _operacionExitosa.value = true
+                    cargarParcelas()
+                }
+                is Result.Error -> {
+                    _operacionExitosa.value = false
+                    _mensajeError.value = resultado.message
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun eliminarParcela(id: Int) {
+        viewModelScope.launch {
+            val resultado = repository.eliminarParcela(id)
+            if (resultado is Result.Success) {
+                cargarParcelas()
+            }
+        }
+    }
+
     fun cargarProductos() {
         viewModelScope.launch {
             repository.getProductos().collect { resultado ->
                 _productos.value = resultado
+            }
+        }
+    }
+
+    fun crearProducto(producto: Producto) {
+        viewModelScope.launch {
+            val resultado = repository.crearProducto(producto)
+            when (resultado) {
+                is Result.Success -> {
+                    _operacionExitosa.value = true
+                    cargarProductos()
+                }
+                is Result.Error -> {
+                    _operacionExitosa.value = false
+                    _mensajeError.value = resultado.message
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun eliminarProducto(id: Int) {
+        viewModelScope.launch {
+            val resultado = repository.eliminarProducto(id)
+            if (resultado is Result.Success) {
+                cargarProductos()
             }
         }
     }

@@ -6,6 +6,10 @@ import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.ActividadCreateDto
 import org.dferna14.project.data.remote.ActividadDto
 import org.dferna14.project.data.remote.EstadoActividadDto
+import org.dferna14.project.data.remote.ParcelaCreateDto
+import org.dferna14.project.data.remote.ParcelaDto
+import org.dferna14.project.data.remote.ProductoCreateDto
+import org.dferna14.project.data.remote.ProductoDto
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Parcela
@@ -164,6 +168,40 @@ class ActividadRepository(
         }
     }
 
+    suspend fun crearParcela(parcela: Parcela): Result<Parcela> {
+        return try {
+            val dto = api.crearParcela(
+                ParcelaCreateDto(
+                    explotacionId        = parcela.explotacionId,
+                    orden                = parcela.orden,
+                    sistemaAsesoramiento = parcela.sistemaAsesoramiento,
+                    zonaNitratos         = parcela.zonaNitratos
+                )
+            )
+            Result.Success(
+                Parcela(
+                    id                   = dto.id,
+                    explotacionId        = dto.explotacionId,
+                    orden                = dto.orden,
+                    sistemaAsesoramiento = dto.sistemaAsesoramiento,
+                    zonaNitratos         = dto.zonaNitratos
+                )
+            )
+        } catch (e: Exception) {
+            Result.Error("Error al crear parcela: ${e.message}")
+        }
+    }
+
+    suspend fun eliminarParcela(id: Int): Result<Unit> {
+        return try {
+            val exito = api.eliminarParcela(id)
+            if (exito) Result.Success(Unit)
+            else Result.Error("No se pudo eliminar la parcela")
+        } catch (e: Exception) {
+            Result.Error("Error al eliminar parcela: ${e.message}")
+        }
+    }
+
     // Productos
 
     fun getProductos(): Flow<Result<List<Producto>>> = flow {
@@ -180,6 +218,38 @@ class ActividadRepository(
             emit(Result.Success(productos))
         } catch (e: Exception) {
             emit(Result.Error("Error al cargar productos: ${e.message}"))
+        }
+    }
+
+    suspend fun crearProducto(producto: Producto): Result<Producto> {
+        return try {
+            val dto = api.crearProducto(
+                ProductoCreateDto(
+                    nombreComercial = producto.nombreComercial,
+                    materiaActiva = producto.materiaActiva,
+                    numeroRegistro = producto.numeroRegistro
+                )
+            )
+            Result.Success(
+                Producto(
+                    id = dto.id,
+                    nombreComercial = dto.nombreComercial,
+                    materiaActiva = dto.materiaActiva,
+                    numeroRegistro = dto.numeroRegistro
+                )
+            )
+        } catch (e: Exception) {
+            Result.Error("Error al crear producto: ${e.message}")
+        }
+    }
+
+    suspend fun eliminarProducto(id: Int): Result<Unit> {
+        return try {
+            val exito = api.eliminarProducto(id)
+            if (exito) Result.Success(Unit)
+            else Result.Error("No se pudo eliminar el producto")
+        } catch (e: Exception) {
+            Result.Error("Error al eliminar producto: ${e.message}")
         }
     }
 

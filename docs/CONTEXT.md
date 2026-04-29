@@ -208,8 +208,10 @@ BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
 | Filtro por estado | ✅ |
 | GET /api/actividades/pendientes | ✅ |
 | CRUD Fertilizaciones | ✅ |
-| GET Productos (solo lectura) | ✅ |
-| GET Parcelas (solo lectura) | ✅ |
+| GET Productos | ✅ |
+| POST/PUT/DELETE Productos | ✅ (22/04/2026) |
+| GET Parcelas | ✅ |
+| POST/PUT/DELETE Parcelas | ✅ (22/04/2026) |
 | GET Parcelas/{id}/completa | ✅ |
 | Tablas satélite | ✅ |
 | CORS, Serialización JSON | ✅ |
@@ -217,11 +219,17 @@ BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
 #### App Móvil
 | Feature | Estado |
 |---------|--------|
-| Listado actividades | ✅ |
-| NuevaActividadSc | ✅ |
-| Selector productos + dosis | ✅ |
-| ActividadDetalleSc | ✅ |
-| EditarActividadSc | ✅ |
+| Bottom Navigation (4 tabs) | ✅ (22/04/2026) |
+| Tab 1: MisActividades (listado) | ✅ |
+| Tab 1: NuevaActividad | ✅ |
+| Tab 1: Detalle/Editar | ✅ |
+| Tab 2: MisParcelasSc | ✅ (22/04/2026) |
+| Tab 2: Crear parcela (solo nombre) | ✅ (22/04/2026) |
+| Tab 2: Eliminar parcela | ✅ (22/04/2026) |
+| Tab 3: ProductosSc | ✅ (22/04/2026) |
+| Tab 3: Crear producto | ✅ (22/04/2026) |
+| Tab 3: Eliminar producto | ✅ (22/04/2026) |
+| Tab 4: AjustesSc | ✅ (22/04/2026) |
 | Selector de parcela | ✅ |
 | Estados carga/error | ✅ |
 
@@ -233,40 +241,35 @@ BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
 | PendientesSc (filtros) | ✅ |
 | ValidarActividadSc (4 pestañas) | ✅ |
 | ParcelasSc (solo lectura) | ✅ |
+| ProductosSc (móvil compartido) | ✅ |
 
 ---
 
 ## Sprint Planning
 
-### SPRINT 1 — Funcionalidad básica demostrable
+### SPRINT 1 — COMPLETADO ✅
 
-**Objetivo:** App móvil con 4 tabs funcional + backend para crear parcelas y productos
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| 1.1 | Backend - POST crear parcelas | ✅ |
+| 1.2 | Backend - POST crear productos | ✅ |
+| 1.3 | App - MisParcelasSc (móvil) | ✅ |
+| 1.4 | App - ProductosSc (móvil) | ✅ |
+| 1.5 | App - AjustesSc (móvil) | ✅ |
+| 1.6 | App - Bottom Navigation | ✅ |
+| 1.7 | App - Repository/ViewModel actualizados | ✅ |
 
-| Tarea | Descripción | Ficheros | Estimación | Prioridad |
-|-------|-------------|----------|------------|-----------|
-| 1.1 | Backend - POST crear parcelas | ParcelaRoutes.kt, DTOs.kt | 30 min | CRÍTICO |
-| 1.2 | Backend - POST crear productos | ProductoRoutes.kt, DTOs.kt | 30 min | CRÍTICO |
-| 1.3 | App - MisParcelasSc (móvil) | MisParcelasSc.kt (NUEVO) + modificar App.kt, ViewModel | 1 hora | CRÍTICO |
-| 1.4 | App - ProductosSc (móvil) | ProductosSc.kt (NUEVO) + modificar App.kt, ViewModel | 1 hora | CRÍTICO |
-| 1.5 | App - AjustesSc (móvil) | AjustesSc.kt (NUEVO) | 30 min | IMPORTANTE |
-| 1.6 | App - Bottom Navigation | App.kt (navigation) | 1 hora | CRÍTICO |
-| 1.7 | App - Repository/ViewModel actualizados | Repository, Api, ViewModel | 1 hora | CRÍTICO |
+### SPRINT 2 - Pendiente
 
-**Total Sprint 1:** ~6 horas
+| Tarea | Descripción | Prioridad |
+|-------|-------------|-----------|
+| 2.1 | Registrar semillas tratadas (móvil) | IMPORTANTE |
+| 2.2 | Registrar fertilización básica (móvil) | IMPORTANTE |
+| 2.3 | Backend - Rutas semillas (GET/POST) | IMPORTANTE |
+| 2.4 | Desktop - GestorParcelasSc completo | IMPORTANTE |
+| 2.5 | Desktop - GestorProductosSc completo | IMPORTANTE |
 
-### SPRINT 2 — Funcionalidad completa móvil
-
-| Tarea | Descripción | Estimación | Prioridad |
-|-------|-------------|------------|-----------|
-| 2.1 | Registrar semillas tratadas (móvil) | 1.5 horas | IMPORTANTE |
-| 2.2 | Registrar fertilización básica (móvil) | 1 hora | IMPORTANTE |
-| 2.3 | Backend - Rutas semillas (GET/POST) | 30 min | IMPORTANTE |
-| 2.4 | Desktop - GestorParcelasSc completo | 2 horas | IMPORTANTE |
-| 2.5 | Desktop - GestorProductosSc completo | 1.5 horas | IMPORTANTE |
-
-**Total Sprint 2:** ~6.5 horas
-
-### BACKLOG — Mejoras no urgentes
+### BACKLOG
 
 | Tarea | Prioridad |
 |-------|-----------|
@@ -329,9 +332,9 @@ BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
 
 ## Próximo Día
 
-1. **Sprint 1.1:** Backend - POST crear parcelas
-2. **Sprint 1.2:** Backend - POST crear productos
-3. Continuar con Sprint 1
+1. **Sprint 2.1:** Registrar semillas tratadas (móvil)
+2. **Sprint 2.2:** Registrar fertilización básica (móvil)
+3. Continuar con Sprint 2
 
 ---
 
