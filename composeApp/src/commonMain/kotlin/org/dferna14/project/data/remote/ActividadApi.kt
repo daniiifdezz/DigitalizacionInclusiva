@@ -4,8 +4,10 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+
 
 @Serializable
 enum class EstadoActividadDto {
@@ -86,7 +88,9 @@ data class SemillaTratadaDto(
     @SerialName("fechaSiembra")      val fechaSiembra      : String? = null,
     @SerialName("superficieHa")      val superficieHa      : Double? = null,
     @SerialName("cantidadSemillaKg") val cantidadSemillaKg : Double? = null,
-    @SerialName("productoId")        val productoId        : Int?    = null
+    @SerialName("productoId")        val productoId        : Int?    = null,
+    @SerialName("variedadSemilla")   val variedadSemilla   : String? = null,
+    @SerialName("cultivoId")         val cultivoId         : Int?    = null
 )
 
 @Serializable
@@ -97,7 +101,9 @@ data class SemillaTratadaCreateDto(
     @SerialName("fechaSiembra")      val fechaSiembra      : String? = null,
     @SerialName("superficieHa")      val superficieHa      : Double? = null,
     @SerialName("cantidadSemillaKg") val cantidadSemillaKg : Double? = null,
-    @SerialName("productoId")        val productoId        : Int?    = null
+    @SerialName("productoId")        val productoId        : Int?    = null,
+    @SerialName("variedadSemilla")   val variedadSemilla   : String? = null,
+    @SerialName("cultivoId")         val cultivoId         : Int?    = null
 )
 
 @Serializable
@@ -142,21 +148,24 @@ class ActividadApi(private val client: HttpClient) {
         try {
             val response = client.get("$BASE_URL/api/actividades")
             println("DEBUG: Respuesta recibida: ${response.status}")
-            return response.body()
+            return response.body<List<ActividadDto>>()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             println("DEBUG: ERROR CRÍTICO: ${e.message}")
             e.printStackTrace()
             throw e
         }
     }
+
     suspend fun getActividad(id: Int): ActividadDto =
-        client.get("$BASE_URL/api/actividades/$id").body()
+        client.get("$BASE_URL/api/actividades/$id").body<ActividadDto>()
 
     suspend fun crearActividad(actividad: ActividadCreateDto): ActividadDto {
         return client.post("$BASE_URL/api/actividades") {
             contentType(ContentType.Application.Json)
             setBody(actividad)
-        }.body()
+        }.body<ActividadDto>()
     }
 
     suspend fun actualizarActividad(id: Int, actividad: ActividadCreateDto): Boolean {
@@ -173,13 +182,13 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun getActividadesPendientes(): List<ActividadDto> =
-        client.get("$BASE_URL/api/actividades/pendientes").body()
+        client.get("$BASE_URL/api/actividades/pendientes").body<List<ActividadDto>>()
 
     suspend fun enviarActividad(id: Int): ActividadDto =
-        client.post("$BASE_URL/api/actividades/$id/enviar").body()
+        client.post("$BASE_URL/api/actividades/$id/enviar").body<ActividadDto>()
 
     suspend fun validarActividad(id: Int): ActividadDto =
-        client.post("$BASE_URL/api/actividades/$id/validar").body()
+        client.post("$BASE_URL/api/actividades/$id/validar").body<ActividadDto>()
 
     suspend fun devolverActividad(id: Int): Boolean {
         val response = client.post("$BASE_URL/api/actividades/$id/devolver")
@@ -191,6 +200,8 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun getSemillaTratada(actividadId: Int): SemillaTratadaDto? {
         return try {
             client.get("$BASE_URL/api/actividades/$actividadId/semilla").body<SemillaTratadaDto?>()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             null
         }
@@ -200,15 +211,14 @@ class ActividadApi(private val client: HttpClient) {
         return client.post("$BASE_URL/api/actividades/${semilla.actividadId}/semilla") {
             contentType(ContentType.Application.Json)
             setBody(semilla)
-        }.body()
+        }.body<SemillaTratadaDto>()
     }
 
-
     // Parcelas
-    
+
     suspend fun getParcelas(): List<ParcelaDto> =
         client.get("$BASE_URL/api/parcelas").body<List<ParcelaDto>>()
-    
+
     suspend fun getParcela(id: Int): ParcelaDto =
         client.get("$BASE_URL/api/parcelas/$id").body<ParcelaDto>()
 
@@ -216,7 +226,7 @@ class ActividadApi(private val client: HttpClient) {
         return client.post("$BASE_URL/api/parcelas") {
             contentType(ContentType.Application.Json)
             setBody(parcela)
-        }.body()
+        }.body<ParcelaDto>()
     }
 
     suspend fun actualizarParcela(id: Int, parcela: ParcelaCreateDto): Boolean {
@@ -235,13 +245,13 @@ class ActividadApi(private val client: HttpClient) {
     // Productos
 
     suspend fun getProductos(): List<ProductoDto> =
-        client.get("$BASE_URL/api/productos").body()
+        client.get("$BASE_URL/api/productos").body<List<ProductoDto>>()
 
     suspend fun crearProducto(producto: ProductoCreateDto): ProductoDto {
         return client.post("$BASE_URL/api/productos") {
             contentType(ContentType.Application.Json)
             setBody(producto)
-        }.body()
+        }.body<ProductoDto>()
     }
 
     suspend fun actualizarProducto(id: Int, producto: ProductoCreateDto): Boolean {
@@ -259,12 +269,14 @@ class ActividadApi(private val client: HttpClient) {
 
     // Fertilizacion functions
     suspend fun getFertilizaciones(): List<FertilizacionDto> =
-        client.get("$BASE_URL/api/fertilizaciones").body()
+        client.get("$BASE_URL/api/fertilizaciones").body<List<FertilizacionDto>>()
 
     suspend fun getFertilizacionByCultivo(cultivoId: Int): FertilizacionDto? {
         return try {
             client.get("$BASE_URL/api/fertilizaciones").body<List<FertilizacionDto>>()
                 .find { it.cultivoId == cultivoId }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             null
         }
@@ -274,6 +286,6 @@ class ActividadApi(private val client: HttpClient) {
         return client.post("$BASE_URL/api/fertilizaciones") {
             contentType(ContentType.Application.Json)
             setBody(fertilizacion)
-        }.body()
+        }.body<FertilizacionDto>()
     }
 }

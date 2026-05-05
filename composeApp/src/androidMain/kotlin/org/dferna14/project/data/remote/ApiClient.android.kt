@@ -9,6 +9,9 @@ package org.dferna14.project.data.remote
  * Usa la IP de tu adaptador WiFi físico (busca en ipconfig "Wireless LAN adapter Wi-Fi").
  *
  * PASO 1: Obtén tu IP real (debe ser 192.168.x.x o 10.x.x.x)
- * PASO 2: Reemplaza "TU_IP_FISICA" abajo con esa IP.
+ * PASO 2: Reemplaza "TU_IP_FISICA" abajo con esa IP.ç
+ *192.168.1.138 ethernet casa
+ * 172.20.10.2 datos movil
+ *
  */
-actual val BASE_URL: String = "http://172.20.10.2:8080"
+actual val BASE_URL: String = "http://192.168.1.138:8080"

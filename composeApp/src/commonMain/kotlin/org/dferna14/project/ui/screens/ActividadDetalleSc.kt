@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,7 +22,7 @@ fun ActividadDetalleSc(
     onEditar: (Int) -> Unit,
     onVerSemillas: (Int) -> Unit = {},
     onVerFertilizacion: (Int) -> Unit = {},
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ActividadDetalleVm = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()

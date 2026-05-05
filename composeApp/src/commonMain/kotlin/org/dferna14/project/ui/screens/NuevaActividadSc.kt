@@ -15,7 +15,9 @@ import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ActividadListaVm
+import org.dferna14.project.ui.viewmodel.ParcelaVm
+import org.dferna14.project.ui.viewmodel.ProductoVm
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
@@ -28,11 +30,13 @@ import kotlin.time.Clock
 @Composable
 fun NuevaActividadSc(
     onVolver: () -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ActividadListaVm = koinViewModel(),
+    parcelaVm: ParcelaVm = koinViewModel(),
+    productoVm: ProductoVm = koinViewModel()
 ) {
     // Estado del forms
-    val parcelasState by viewModel.parcelas.collectAsState()
-    val productosState by viewModel.productos.collectAsState()
+    val parcelasState by parcelaVm.parcelas.collectAsState()
+    val productosState by productoVm.productos.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()
 
     var parcelaSeleccionada by remember { mutableStateOf<Parcela?>(null) }
@@ -45,7 +49,7 @@ fun NuevaActividadSc(
     var desplegableProductoAbierto by remember { mutableStateOf(false) }
 
     // Fecha actual
-    val fechaHoy = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+    val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
 
     // Cuando la operación es exitosa volvemos al listado
     LaunchedEffect(operacionExitosa) {

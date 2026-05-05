@@ -49,8 +49,8 @@ fun Route.fertilizacionRoutes() {
             val fechaInicioLocalDate = request.fechaInicio?.let { java.time.LocalDate.parse(it) }
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 
-            val nuevaId = transaction {
-                Fertilizaciones.insertAndGetId {
+            val creada = transaction {
+                val nuevaId = Fertilizaciones.insertAndGetId {
                     it[cultivoId] = request.cultivoId
                     it[aplica] = request.aplica
                     it[fechaInicio] = fechaInicioLocalDate
@@ -62,9 +62,7 @@ fun Route.fertilizacionRoutes() {
                     it[tipoFertilizacion] = request.tipoFertilizacion
                     it[observaciones] = request.observaciones
                 }.value
-            }
 
-            val creada = transaction {
                 Fertilizaciones.selectAll()
                     .where { Fertilizaciones.id eq nuevaId }
                     .single()

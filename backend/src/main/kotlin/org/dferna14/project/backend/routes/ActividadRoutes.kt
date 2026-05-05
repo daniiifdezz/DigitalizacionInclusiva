@@ -70,8 +70,8 @@ fun Route.actividadRoutes() {
             val fechaInicioLocalDate = java.time.LocalDate.parse(request.fechaInicio)
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 
-            val nuevaId = transaction {
-                Actividades.insertAndGetId {
+            val creada = transaction {
+                val nuevaId = Actividades.insertAndGetId {
                     it[parcelaId] = request.parcelaId
                     it[equipoId] = request.equipoId
                     it[aplicadorId] = request.aplicadorId
@@ -83,9 +83,7 @@ fun Route.actividadRoutes() {
                     it[observaciones] = request.observaciones
                     it[estado] = request.estado.name
                 }.value
-            }
 
-            val creada = transaction {
                 Actividades.selectAll()
                     .where { Actividades.id eq nuevaId }
                     .single()
@@ -129,23 +127,19 @@ fun Route.actividadRoutes() {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@post call.respond(HttpStatusCode.BadRequest)
 
-            val filasActualizadas = transaction {
-                Actividades.update({ Actividades.id eq id }) {
+            val actividad = transaction {
+                val filasActualizadas = Actividades.update({ Actividades.id eq id }) {
                     it[estado] = EstadoActividad.PENDIENTE_VALIDAR.name
                 }
+                if (filasActualizadas == 0) null
+                else Actividades.selectAll()
+                    .where { Actividades.id eq id }
+                    .single()
+                    .toActividadResponse()
             }
 
-            if (filasActualizadas == 0) {
-                call.respond(HttpStatusCode.NotFound)
-            } else {
-                val actividad = transaction {
-                    Actividades.selectAll()
-                        .where { Actividades.id eq id }
-                        .single()
-                        .toActividadResponse()
-                }
-                call.respond(actividad)
-            }
+            if (actividad == null) call.respond(HttpStatusCode.NotFound)
+            else call.respond(actividad)
         }
 
         // POST /api/actividades/{id}/validar
@@ -154,23 +148,19 @@ fun Route.actividadRoutes() {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@post call.respond(HttpStatusCode.BadRequest)
 
-            val filasActualizadas = transaction {
-                Actividades.update({ Actividades.id eq id }) {
+            val actividad = transaction {
+                val filasActualizadas = Actividades.update({ Actividades.id eq id }) {
                     it[estado] = EstadoActividad.VALIDADA.name
                 }
+                if (filasActualizadas == 0) null
+                else Actividades.selectAll()
+                    .where { Actividades.id eq id }
+                    .single()
+                    .toActividadResponse()
             }
 
-            if (filasActualizadas == 0) {
-                call.respond(HttpStatusCode.NotFound)
-            } else {
-                val actividad = transaction {
-                    Actividades.selectAll()
-                        .where { Actividades.id eq id }
-                        .single()
-                        .toActividadResponse()
-                }
-                call.respond(actividad)
-            }
+            if (actividad == null) call.respond(HttpStatusCode.NotFound)
+            else call.respond(actividad)
         }
 
         // POST /api/actividades/{id}/devolver
@@ -287,6 +277,8 @@ fun Route.actividadRoutes() {
                         it[SemillasTratadas.superficieHa]      = request.superficieHa
                         it[SemillasTratadas.cantidadSemillaKg] = request.cantidadSemillaKg
                         it[SemillasTratadas.productoId]        = request.productoId
+                        it[SemillasTratadas.variedadSemilla]   = request.variedadSemilla
+                        it[SemillasTratadas.cultivoId]         = request.cultivoId
                     }.value
                 }
 
@@ -300,7 +292,9 @@ fun Route.actividadRoutes() {
                         fechaSiembra      = request.fechaSiembra,
                         superficieHa      = request.superficieHa,
                         cantidadSemillaKg = request.cantidadSemillaKg,
-                        productoId        = request.productoId
+                        productoId        = request.productoId,
+                        variedadSemilla   = request.variedadSemilla,
+                        cultivoId         = request.cultivoId
                     )
                 )
             }
@@ -319,7 +313,9 @@ private fun ResultRow.toActividadResponse() = ActividadResponse(
     problemaFitosanitario = this[Actividades.problemaFitosanitario],
     eficacia              = this[Actividades.eficacia],
     observaciones         = this[Actividades.observaciones],
-    estado                = EstadoActividad.valueOf(this[Actividades.estado] ?: "BORRADOR")
+    estado                = runCatching {
+        EstadoActividad.valueOf(this[Actividades.estado] ?: "BORRADOR")
+    }.getOrDefault(EstadoActividad.BORRADOR)
 )
 
 private fun ResultRow.toSemillaResponse() = SemillaTratadaResponse(
@@ -330,5 +326,7 @@ private fun ResultRow.toSemillaResponse() = SemillaTratadaResponse(
     fechaSiembra      = this[SemillasTratadas.fechaSiembra]?.toString(),
     superficieHa      = this[SemillasTratadas.superficieHa],
     cantidadSemillaKg = this[SemillasTratadas.cantidadSemillaKg],
-    productoId        = this[SemillasTratadas.productoId]
+    productoId        = this[SemillasTratadas.productoId],
+    variedadSemilla   = this[SemillasTratadas.variedadSemilla],
+    cultivoId         = this[SemillasTratadas.cultivoId]
 )

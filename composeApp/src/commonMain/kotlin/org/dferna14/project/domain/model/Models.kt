@@ -21,10 +21,10 @@ data class Parcela(
 )
 
 data class Producto(
-    val id             : Int,
-    val nombreComercial: String? = null,
-    val materiaActiva  : String? = null,
-    val numeroRegistro : String? = null
+    val id: Int,
+    val nombreComercial: String,
+    val materiaActiva: String? = null,
+    val numeroRegistro: String? = null
 )
 
 data class Actividad(
@@ -57,7 +57,9 @@ data class SemillaTratada(
     val fechaSiembra      : String? = null,
     val superficieHa      : Double? = null,
     val cantidadSemillaKg : Double? = null,
-    val productoId        : Int?    = null
+    val productoId        : Int?    = null,
+    val variedadSemilla   : String? = null,
+    val cultivoId         : Int?    = null
 )
 
 data class Fertilizacion(

@@ -11,7 +11,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Fertilizacion
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.FertilizacionVm
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
@@ -21,7 +21,7 @@ fun FertilizacionSc(
     parcelaId: Int,
     actividadId: Int,
     onVolver: () -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: FertilizacionVm = koinViewModel()
 ) {
     // Si parcelaId es 0 o inválido, mostramos error
     if (parcelaId <= 0) {
@@ -118,8 +118,9 @@ fun FertilizacionForm(
     parcelaId: Int,
     onGuardar: (Fertilizacion) -> Unit
 ) {
+    val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
     var aplica by remember { mutableStateOf(false) }
-    var fechaInicio by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()) }
+    var fechaInicio by remember { mutableStateOf(fechaHoy) }
     var fechaFin by remember { mutableStateOf("") }
     var tipoProducto by remember { mutableStateOf("") }
     var numeroAlbaran by remember { mutableStateOf("") }

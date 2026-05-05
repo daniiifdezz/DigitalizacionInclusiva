@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ActividadListaVm
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -26,7 +26,7 @@ fun ActividadListadoSc(
     onVerDetalle: (Int) -> Unit,
     isDesktop: Boolean = false,
     onVolver: (() -> Unit)? = null,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ActividadListaVm = koinViewModel()
 ) {
     val actividadesState by viewModel.actividades.collectAsState()
 
@@ -90,7 +90,7 @@ fun ActividadListadoSc(
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(estado.data) { actividad ->
+                            items(estado.data, key = { it.id }) { actividad ->
                                 ActividadCard(
                                     actividad = actividad,
                                     onClick = { onVerDetalle(actividad.id) },

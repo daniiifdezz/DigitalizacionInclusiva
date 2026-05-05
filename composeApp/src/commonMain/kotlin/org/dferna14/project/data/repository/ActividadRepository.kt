@@ -1,5 +1,6 @@
 package org.dferna14.project.data.repository
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.dferna14.project.data.remote.ActividadApi
@@ -7,18 +8,14 @@ import org.dferna14.project.data.remote.ActividadCreateDto
 import org.dferna14.project.data.remote.ActividadDto
 import org.dferna14.project.data.remote.EstadoActividadDto
 import org.dferna14.project.data.remote.ParcelaCreateDto
-import org.dferna14.project.data.remote.ParcelaDto
 import org.dferna14.project.data.remote.ProductoCreateDto
-import org.dferna14.project.data.remote.ProductoDto
 import org.dferna14.project.data.remote.SemillaTratadaCreateDto
-import org.dferna14.project.data.remote.SemillaTratadaDto
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.SemillaTratada
-import org.dferna14.project.data.remote.FertilizacionDto
 import org.dferna14.project.data.remote.FertilizacionCreateDto
 import org.dferna14.project.domain.model.Fertilizacion
 
@@ -44,6 +41,8 @@ class ActividadRepository(
         try {
             val actividades = api.getActividades().map { it.toDomain() }
             emit(Result.Success(actividades))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             emit(Result.Error("Error al cargar actividades: ${e.message}"))
         }
@@ -54,6 +53,8 @@ class ActividadRepository(
         try {
             val actividades = api.getActividadesPendientes().map { it.toDomain() }
             emit(Result.Success(actividades))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             emit(Result.Error("Error al cargar actividades pendientes: ${e.message}"))
         }
@@ -76,6 +77,8 @@ class ActividadRepository(
                 )
             )
             Result.Success(dto.toDomain())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al crear actividad: ${e.message}")
         }
@@ -85,6 +88,8 @@ class ActividadRepository(
         return try {
             val dto = api.enviarActividad(id)
             Result.Success(dto.toDomain())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al enviar actividad: ${e.message}")
         }
@@ -94,6 +99,8 @@ class ActividadRepository(
         return try {
             val dto = api.validarActividad(id)
             Result.Success(dto.toDomain())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al validar actividad: ${e.message}")
         }
@@ -104,6 +111,8 @@ class ActividadRepository(
             val exito = api.devolverActividad(id)
             if (exito) Result.Success(Unit)
             else Result.Error("No se pudo devolver la actividad")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al devolver actividad: ${e.message}")
         }
@@ -114,6 +123,8 @@ class ActividadRepository(
             val eliminado = api.eliminarActividad(id)
             if (eliminado) Result.Success(Unit)
             else Result.Error("No se pudo eliminar la actividad")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al eliminar actividad: ${e.message}")
         }
@@ -123,6 +134,8 @@ class ActividadRepository(
         return try {
             val dto = api.getActividad(id)
             Result.Success(dto.toDomain())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al obtener actividad: ${e.message}")
         }
@@ -149,6 +162,8 @@ class ActividadRepository(
             val exito = api.actualizarActividad(actividad.id, dto)
             if (exito) Result.Success(actividad)
             else Result.Error("No se pudo actualizar la actividad")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al actualizar actividad: ${e.message}")
         }
@@ -170,6 +185,8 @@ class ActividadRepository(
                 )
             }
             emit(Result.Success(parcelas))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             emit(Result.Error("Error al cargar parcelas: ${e.message}"))
         }
@@ -196,6 +213,8 @@ class ActividadRepository(
                     zonaNitratos         = dto.zonaNitratos
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al crear parcela: ${e.message}")
         }
@@ -206,6 +225,8 @@ class ActividadRepository(
             val exito = api.eliminarParcela(id)
             if (exito) Result.Success(Unit)
             else Result.Error("No se pudo eliminar la parcela")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al eliminar parcela: ${e.message}")
         }
@@ -219,12 +240,14 @@ class ActividadRepository(
             val productos = api.getProductos().map { dto ->
                 Producto(
                     id = dto.id,
-                    nombreComercial = dto.nombreComercial,
+                    nombreComercial = dto.nombreComercial ?: "Sin nombre",
                     materiaActiva = dto.materiaActiva,
                     numeroRegistro = dto.numeroRegistro
                 )
             }
             emit(Result.Success(productos))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             emit(Result.Error("Error al cargar productos: ${e.message}"))
         }
@@ -242,11 +265,13 @@ class ActividadRepository(
             Result.Success(
                 Producto(
                     id = dto.id,
-                    nombreComercial = dto.nombreComercial,
+                    nombreComercial = dto.nombreComercial ?: "Sin nombre",
                     materiaActiva = dto.materiaActiva,
                     numeroRegistro = dto.numeroRegistro
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al crear producto: ${e.message}")
         }
@@ -257,6 +282,8 @@ class ActividadRepository(
             val exito = api.eliminarProducto(id)
             if (exito) Result.Success(Unit)
             else Result.Error("No se pudo eliminar el producto")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al eliminar producto: ${e.message}")
         }
@@ -283,11 +310,13 @@ class ActividadRepository(
 
     // Semillas tratadas
 
-    suspend fun getSemillaTratada(actividadId: Int): Result<SemillaTratada> {
+    suspend fun getSemillaTratada(actividadId: Int): Result<SemillaTratada?> {
         return try {
             val dto = api.getSemillaTratada(actividadId)
             if (dto == null) {
-                Result.Error("No hay semilla tratada para esta actividad")
+                // No hay registro: Devolver Success(null) para que la UI muestre el formulario vacío
+                println("INFO: No hay semilla tratada para actividad $actividadId")
+                Result.Success(null)
             } else {
                 Result.Success(
                     SemillaTratada(
@@ -298,17 +327,22 @@ class ActividadRepository(
                         fechaSiembra      = dto.fechaSiembra,
                         superficieHa      = dto.superficieHa,
                         cantidadSemillaKg = dto.cantidadSemillaKg,
-                        productoId        = dto.productoId
+                        productoId        = dto.productoId,
+                        variedadSemilla   = dto.variedadSemilla,
+                        cultivoId         = dto.cultivoId
                     )
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            Result.Error("Error al obtener semilla tratada: ${e.message}")
+            Result.Error("Error al obtener semilla tratada: ${e.message ?: "Error desconocido"}")
         }
     }
 
     suspend fun crearSemillaTratada(semilla: SemillaTratada): Result<SemillaTratada> {
         return try {
+            println("DEBUG REPO: Enviando SemillaTratada al servidor: $semilla")
             val dto = api.crearSemillaTratada(
                 SemillaTratadaCreateDto(
                     actividadId       = semilla.actividadId,
@@ -317,9 +351,12 @@ class ActividadRepository(
                     fechaSiembra      = semilla.fechaSiembra,
                     superficieHa      = semilla.superficieHa,
                     cantidadSemillaKg = semilla.cantidadSemillaKg,
-                    productoId        = semilla.productoId
+                    productoId        = semilla.productoId,
+                    variedadSemilla   = semilla.variedadSemilla,
+                    cultivoId         = semilla.cultivoId
                 )
             )
+            println("DEBUG REPO: Respuesta SemillaTratada recibida: $dto")
             Result.Success(
                 SemillaTratada(
                     id                = dto.id,
@@ -329,13 +366,19 @@ class ActividadRepository(
                     fechaSiembra      = dto.fechaSiembra,
                     superficieHa      = dto.superficieHa,
                     cantidadSemillaKg = dto.cantidadSemillaKg,
-                    productoId        = dto.productoId
+                    productoId        = dto.productoId,
+                    variedadSemilla   = dto.variedadSemilla,
+                    cultivoId         = dto.cultivoId
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al crear semilla tratada: ${e.message ?: "Error desconocido"}")
         }
     }
+
+
 
     // Fertilizacion functions
     suspend fun getFertilizacion(cultivoId: Int): Result<Fertilizacion?> {
@@ -360,6 +403,8 @@ class ActividadRepository(
                     )
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al obtener fertilización: ${e.message}")
         }
@@ -367,6 +412,7 @@ class ActividadRepository(
 
     suspend fun crearFertilizacion(fertilizacion: Fertilizacion): Result<Fertilizacion> {
         return try {
+            println("DEBUG REPO: Enviando Fertilizacion al servidor: $fertilizacion")
             val dto = api.crearFertilizacion(
                 FertilizacionCreateDto(
                     cultivoId         = fertilizacion.cultivoId,
@@ -381,6 +427,7 @@ class ActividadRepository(
                     observaciones     = fertilizacion.observaciones
                 )
             )
+            println("DEBUG REPO: Respuesta Fertilizacion recibida: $dto")
             Result.Success(
                 Fertilizacion(
                     id                = dto.id,
@@ -396,6 +443,8 @@ class ActividadRepository(
                     observaciones     = dto.observaciones
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Error("Error al crear fertilización: ${e.message ?: "Error desconocido"}")
         }

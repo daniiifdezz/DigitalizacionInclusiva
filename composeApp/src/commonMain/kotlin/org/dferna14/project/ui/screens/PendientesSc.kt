@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ActividadListaVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,7 +20,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun PendientesSc(
     onVolver: () -> Unit,
     onVerActividad: (Int) -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ActividadListaVm = koinViewModel()
 ) {
     val pendientesState by viewModel.actividadesPendientes.collectAsState()
     var filtroEstado by remember { mutableStateOf("") }
@@ -139,7 +139,7 @@ fun PendientesSc(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            items(filtered) { actividad ->
+                            items(filtered, key = { it.id }) { actividad ->
                                 ActividadPendienteCard(
                                     actividad = actividad,
                                     onClick = { onVerActividad(actividad.id) }

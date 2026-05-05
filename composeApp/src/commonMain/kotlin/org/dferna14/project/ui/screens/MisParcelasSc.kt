@@ -12,13 +12,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MisParcelasSc(
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ParcelaVm = koinViewModel()
 ) {
     val parcelasState by viewModel.parcelas.collectAsState()
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
@@ -96,7 +96,7 @@ fun MisParcelasSc(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        items(state.data) { parcela ->
+                        items(state.data, key = { it.id }) { parcela ->
                             ParcelaCard(
                                 parcela = parcela,
                                 onEliminar = { parcelaAEliminar = parcela }

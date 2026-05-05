@@ -52,6 +52,8 @@ object SemillasTratadas : IntIdTable("semillatratada") {
     val superficieHa      = double("superficie_ha").nullable()
     val cantidadSemillaKg = double("cantidad_semilla_kg").nullable()
     val productoId        = integer("producto_id").references(Productos.id).nullable()
+    val variedadSemilla   = varchar("variedad_semilla", 100).nullable()
+    val cultivoId         = integer("cultivo_id").references(Cultivos.id).nullable()
 }
 
 object Cultivos : IntIdTable("cultivo") {

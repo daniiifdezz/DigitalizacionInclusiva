@@ -65,25 +65,29 @@ data class ActividadProductoResponse(
 
 @Serializable
 data class SemillaTratadaRequest(
-    val actividadId     : Int,
-    val parcelaId       : Int,
-    val aplica          : Boolean = false,
-    val fechaSiembra    : String? = null,
-    val superficieHa    : Double? = null,
+    val actividadId      : Int,
+    val parcelaId        : Int,
+    val aplica           : Boolean = false,
+    val fechaSiembra     : String? = null,
+    val superficieHa     : Double? = null,
     val cantidadSemillaKg: Double? = null,
-    val productoId      : Int?    = null
+    val productoId       : Int?    = null,
+    val variedadSemilla  : String? = null,
+    val cultivoId        : Int?    = null
 )
 
 @Serializable
 data class SemillaTratadaResponse(
-    val id              : Int,
-    val actividadId     : Int,
-    val parcelaId       : Int,
-    val aplica          : Boolean,
-    val fechaSiembra    : String? = null,
-    val superficieHa    : Double? = null,
+    val id               : Int,
+    val actividadId      : Int,
+    val parcelaId        : Int,
+    val aplica           : Boolean,
+    val fechaSiembra     : String? = null,
+    val superficieHa     : Double? = null,
     val cantidadSemillaKg: Double? = null,
-    val productoId      : Int?    = null
+    val productoId       : Int?    = null,
+    val variedadSemilla  : String? = null,
+    val cultivoId        : Int?    = null
 )
 
 // Fertilización

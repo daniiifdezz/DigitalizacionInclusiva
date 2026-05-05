@@ -11,7 +11,8 @@ import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+
+import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.koin.compose.viewmodel.koinViewModel
 
 val VALORES_EFICACIA = listOf("ALTA", "MEDIA", "BAJA", "NULA")
@@ -21,7 +22,7 @@ val VALORES_EFICACIA = listOf("ALTA", "MEDIA", "BAJA", "NULA")
 fun ValidarActividadSc(
     actividadId: Int,
     onVolver: () -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ActividadDetalleVm = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()

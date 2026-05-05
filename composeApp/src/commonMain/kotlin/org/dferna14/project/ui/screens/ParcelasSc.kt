@@ -10,14 +10,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParcelasSc(
     onVolver: () -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ParcelaVm = koinViewModel()
 ) {
     val parcelasState by viewModel.parcelas.collectAsState()
     var parcelaExpandida by remember { mutableStateOf<Int?>(null) }

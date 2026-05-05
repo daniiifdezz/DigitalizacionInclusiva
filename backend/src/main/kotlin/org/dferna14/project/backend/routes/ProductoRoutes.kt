@@ -60,15 +60,13 @@ fun Route.productoRoutes() {
         post {
             val request = call.receive<ProductoRequest>()
 
-            val nuevoId = transaction {
-                Productos.insertAndGetId {
+            val creado = transaction {
+                val nuevoId = Productos.insertAndGetId {
                     it[nombreComercial] = request.nombreComercial
                     it[materiaActiva] = request.materiaActiva
                     it[numeroRegistro] = request.numeroRegistro
                 }.value
-            }
 
-            val creado = transaction {
                 Productos.selectAll()
                     .where { Productos.id eq nuevoId }
                     .single()

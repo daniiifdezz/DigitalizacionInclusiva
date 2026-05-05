@@ -10,13 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ProductoVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductosSc(
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ProductoVm = koinViewModel()
 ) {
     val productosState by viewModel.productos.collectAsState()
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
@@ -94,7 +94,7 @@ fun ProductosSc(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        items(state.data) { producto ->
+                        items(state.data, key = { it.id }) { producto ->
                             ProductoCard(
                                 producto = producto,
                                 onEliminar = { productoAEliminar = producto }
@@ -114,7 +114,7 @@ fun ProductosSc(
                 viewModel.crearProducto(
                     Producto(
                         id = 0,
-                        nombreComercial = nombre,
+                        nombreComercial = nombre ?: "",
                         materiaActiva = materiaActiva,
                         numeroRegistro = numeroRegistro
                     )

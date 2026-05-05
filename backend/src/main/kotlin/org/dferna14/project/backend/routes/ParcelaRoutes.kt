@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.DatosAgronomicos
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.ReferenciaSigpac
@@ -128,17 +129,15 @@ fun Route.parcelaRoutes() {
         post {
             val request = call.receive<ParcelaRequest>()
 
-            val nuevaId = transaction {
-                Parcelas.insertAndGetId {
+            val creada = transaction {
+                val nuevaId = Parcelas.insertAndGetId {
                     it[explotacionId] = request.explotacionId
                     it[orden] = request.orden
                     it[alias] = request.alias
                     it[sistemaAsesoramiento] = request.sistemaAsesoramiento
                     it[zonaNitratos] = request.zonaNitratos
                 }.value
-            }
 
-            val creada = transaction {
                 Parcelas.selectAll()
                     .where { Parcelas.id eq nuevaId }
                     .single()
@@ -186,15 +185,22 @@ fun Route.parcelaRoutes() {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
-            val filasEliminadas = transaction {
-                Parcelas.deleteWhere { Parcelas.id eq id }
+            val tieneActividades = transaction {
+                !Actividades.selectAll()
+                    .where { Actividades.parcelaId eq id }
+                    .empty()
             }
 
-            if (filasEliminadas == 0) {
-                call.respond(HttpStatusCode.NotFound)
-            } else {
-                call.respond(HttpStatusCode.NoContent)
+            if (tieneActividades) {
+                return@delete call.respond(
+                    HttpStatusCode.Conflict,
+                    mapOf("message" to "No se puede eliminar la parcela porque tiene actividades asociadas")
+                )
             }
+
+            val eliminadas = transaction { Parcelas.deleteWhere { Parcelas.id eq id } }
+            if (eliminadas == 0) call.respond(HttpStatusCode.NotFound)
+            else call.respond(HttpStatusCode.NoContent)
         }
     }
 }

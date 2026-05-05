@@ -13,7 +13,8 @@ import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
+import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,10 +22,11 @@ import org.koin.compose.viewmodel.koinViewModel
 fun EditarActividadSc(
     actividadId: Int,
     onVolver: () -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: ActividadDetalleVm = koinViewModel(),
+    parcelaVm: ParcelaVm = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
-    val parcelasState by viewModel.parcelas.collectAsState()
+    val parcelasState by parcelaVm.parcelas.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()
 
     var parcelaSeleccionada by remember { mutableStateOf<Parcela?>(null) }

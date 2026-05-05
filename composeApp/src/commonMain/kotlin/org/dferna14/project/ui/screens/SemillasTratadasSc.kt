@@ -15,7 +15,9 @@ import kotlin.time.Clock
 import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.SemillaTratada
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
+import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
+import org.dferna14.project.ui.viewmodel.ProductoVm
+import org.dferna14.project.ui.viewmodel.SemillaVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,26 +25,31 @@ import org.koin.compose.viewmodel.koinViewModel
 fun SemillasTratadasSc(
     actividadId: Int,
     onVolver: () -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    viewModel: SemillaVm = koinViewModel(),
+    actividadDetalleVm: ActividadDetalleVm = koinViewModel(),
+    productoVm: ProductoVm = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
-    val semillaState = remember { mutableStateOf<Result<SemillaTratada?>>(Result.Loading) }
+    val semillaState by viewModel.semilla.collectAsState()
     var mostrarFormulario by remember { mutableStateOf(false) }
-    val productosState by viewModel.productos.collectAsState()
-    val actividadState by viewModel.actividadActual.collectAsState()
+    val productosState by productoVm.productos.collectAsState()
+    val actividadState by actividadDetalleVm.actividadActual.collectAsState()
 
     // Feedback visual
     var mostrarSnackbar by remember { mutableStateOf(false) }
     var snackbarMensaje by remember { mutableStateOf("") }
 
-    // 1. Cargar la actividad para obtener el parcelaId asociado
+    // 1. Cargar la actividad para obtener el parcelaId asociado y la semilla
     LaunchedEffect(actividadId) {
-        viewModel.cargarActividad(actividadId)
-        viewModel.getSemillaTratada(actividadId).collect { resultado ->
-            semillaState.value = resultado
-            if (resultado is Result.Success && resultado.data != null) {
-                mostrarFormulario = true
-            }
+        actividadDetalleVm.cargarActividad(actividadId)
+        viewModel.cargarSemilla(actividadId)
+    }
+
+    // Si la semilla ya existe, mostrar formulario con datos
+    LaunchedEffect(semillaState) {
+        val state = semillaState
+        if (state is Result.Success && state.data != null) {
+            mostrarFormulario = true
         }
     }
 
@@ -59,7 +66,7 @@ fun SemillasTratadasSc(
                     }
                 },
                 actions = {
-                    val state = semillaState.value
+                    val state = semillaState
                     if (state is Result.Success && state.data == null) {
                         TextButton(onClick = { mostrarFormulario = true }) {
                             Text("Añadir")
@@ -90,7 +97,7 @@ fun SemillasTratadasSc(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            when (val state = semillaState.value) {
+            when (val state = semillaState) {
                 is Result.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -106,7 +113,7 @@ fun SemillasTratadasSc(
                         Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = {
-                            viewModel.getSemillaTratada(actividadId)
+                            viewModel.cargarSemilla(actividadId)
                         }) {
                             Text("Reintentar")
                         }
@@ -114,22 +121,10 @@ fun SemillasTratadasSc(
                 }
                 is Result.Success -> {
                     val semilla = state.data
-                    if (semilla == null && !mostrarFormulario) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("No hay semilla tratada registrada")
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Button(onClick = { mostrarFormulario = true }) {
-                                    Text("Registrar semilla tratada")
-                                }
-                            }
-                        }
-                    } else {
+                    // Si no hay registro (null) o se pulsa "Añadir", mostrar formulario vacío
+                    if (semilla != null || mostrarFormulario) {
                         SemillaTratadaForm(
-                            semilla = semilla,
+                            semilla = semilla, // Si es null, el formulario saldrá vacío
                             productosState = productosState,
                             onGuardar = { semillaNueva ->
                                 scope.launch {
@@ -138,6 +133,7 @@ fun SemillasTratadasSc(
                                         actividadId = actividadId,
                                         parcelaId = parcelaId
                                     )
+                                    println("DEBUG APP: Enviando SemillaTratada al servidor: $semillaFinal")
                                     val resultado = viewModel.crearSemillaTratada(semillaFinal)
                                     if (resultado is Result.Success) {
                                         snackbarMensaje = "Registro guardado correctamente"
@@ -150,6 +146,20 @@ fun SemillasTratadasSc(
                                 }
                             }
                         )
+                    } else {
+                        // Mostrar pantalla vacía con botón para crear
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("No hay semilla tratada registrada")
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(onClick = { mostrarFormulario = true }) {
+                                    Text("Registrar semilla tratada")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -163,12 +173,21 @@ private fun SemillaTratadaForm(
     productosState: Result<List<org.dferna14.project.domain.model.Producto>>,
     onGuardar: (SemillaTratada) -> Unit
 ) {
+    val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
     var aplica by remember { mutableStateOf(semilla?.aplica ?: false) }
-    var fechaSiembra by remember { mutableStateOf(semilla?.fechaSiembra ?: Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()) }
+    var fechaSiembra by remember { mutableStateOf(semilla?.fechaSiembra ?: fechaHoy) }
     var superficieHa by remember { mutableStateOf(semilla?.superficieHa?.toString() ?: "") }
     var cantidadSemillaKg by remember { mutableStateOf(semilla?.cantidadSemillaKg?.toString() ?: "") }
     var productoId by remember { mutableStateOf(semilla?.productoId) }
+    var variedadSemilla by remember { mutableStateOf(semilla?.variedadSemilla ?: "") }
+    var cultivoId by remember { mutableStateOf(semilla?.cultivoId) }
     var mostrarSelectorProducto by remember { mutableStateOf(false) }
+
+    // Obtener nombre del producto seleccionado
+    val productoSeleccionado = when (productosState) {
+        is Result.Success -> productosState.data.find { it.id == productoId }?.nombreComercial
+        else -> null
+    }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -212,7 +231,7 @@ private fun SemillaTratadaForm(
             )
 
             OutlinedTextField(
-                value = productoId?.let { "Producto ID: $it" } ?: "Seleccionar producto",
+                value = productoSeleccionado ?: "Seleccionar producto",
                 onValueChange = { },
                 label = { Text("Producto utilizado") },
                 readOnly = true,
@@ -222,6 +241,15 @@ private fun SemillaTratadaForm(
                         Text("Seleccionar")
                     }
                 }
+            )
+
+            OutlinedTextField(
+                value = variedadSemilla,
+                onValueChange = { variedadSemilla = it },
+                label = { Text("Variedad de Semilla") },
+                placeholder = { Text("Ej: Trigo R01") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
@@ -238,7 +266,9 @@ private fun SemillaTratadaForm(
                         fechaSiembra = if (aplica) fechaSiembra else null,
                         superficieHa = superficieHa.toDoubleOrNull(),
                         cantidadSemillaKg = cantidadSemillaKg.toDoubleOrNull(),
-                        productoId = if (aplica) productoId else null
+                        productoId = if (aplica) productoId else null,
+                        variedadSemilla = if (aplica) variedadSemilla else null,
+                        cultivoId = if (aplica) cultivoId else null
                     )
                 )
             },
@@ -263,7 +293,7 @@ private fun SemillaTratadaForm(
                                 .fillMaxWidth()
                                 .heightIn(max = 300.dp)
                         ) {
-                            items(state.data) { producto ->
+                            items(state.data, key = { it.id }) { producto ->
                                 TextButton(
                                     onClick = {
                                         productoId = producto.id

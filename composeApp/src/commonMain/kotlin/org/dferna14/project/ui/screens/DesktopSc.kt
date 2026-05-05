@@ -8,8 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.dferna14.project.ui.viewmodel.ActividadViewModel
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,8 +16,7 @@ fun DesktopMainSc(
     onVerPendientes: () -> Unit,
     onVerParcelas: () -> Unit,
     onVerProductos: () -> Unit,
-    onVerValidar: (Int) -> Unit,
-    viewModel: ActividadViewModel = koinViewModel()
+    onVerValidar: (Int) -> Unit
 ) {
     var selectedItem by remember { mutableStateOf(0) }
 
