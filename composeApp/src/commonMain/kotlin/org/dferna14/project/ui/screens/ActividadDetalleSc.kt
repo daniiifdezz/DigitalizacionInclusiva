@@ -269,11 +269,29 @@ private fun ActividadDetalleContenido(
         
         Spacer(modifier = Modifier.height(8.dp))
         
+        // Lógica Fertilización: Validar puente Actividad -> Parcela -> Cultivo
+        // Nota: Actualmente usamos parcelaId como referencia temporal.
+        // Si no hay parcelaId válido, deshabilitamos el botón.
+        val tieneParcelaAsociada = actividad.parcelaId > 0
+        
         Button(
-            onClick = { onVerFertilizacion(actividad.id) },
-            modifier = Modifier.fillMaxWidth()
+            onClick = { 
+                // Pasamos el parcelaId como referencia (el backend tiene cultivoId nullable)
+                onVerFertilizacion(actividad.parcelaId) 
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = tieneParcelaAsociada
         ) {
             Text("Fertilización Básica")
+        }
+        
+        if (!tieneParcelaAsociada) {
+            Text(
+                text = "⚠️ Falta asociar una parcela a esta actividad",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
 }

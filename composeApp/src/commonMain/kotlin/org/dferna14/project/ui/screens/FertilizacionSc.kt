@@ -15,14 +15,49 @@ import org.dferna14.project.ui.viewmodel.ActividadViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FertilizacionSc(
-    cultivoId: Int,
+    parcelaId: Int,
+    actividadId: Int,
     onVolver: () -> Unit,
     viewModel: ActividadViewModel = koinViewModel()
 ) {
+    // Si parcelaId es 0 o inválido, mostramos error
+    if (parcelaId <= 0) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Fertilización Básica") },
+                    navigationIcon = {
+                        TextButton(onClick = onVolver) {
+                            Text("< Volver")
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Error: No hay parcela asociada",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Asocia una parcela a esta actividad antes de fertilizar.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+        return
+    }
+
     val scope = rememberCoroutineScope()
     var guardando by remember { mutableStateOf(false) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
@@ -47,9 +82,8 @@ fun FertilizacionSc(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             FertilizacionForm(
-                cultivoId = cultivoId,
+                parcelaId = parcelaId,
                 onGuardar = { nuevaFertilizacion ->
-                    // 2. Ejecutamos la llamada suspendida dentro del scope
                     scope.launch {
                         guardando = true
                         mensajeError = null
@@ -81,7 +115,7 @@ fun FertilizacionSc(
 
 @Composable
 fun FertilizacionForm(
-    cultivoId: Int,
+    parcelaId: Int,
     onGuardar: (Fertilizacion) -> Unit
 ) {
     var aplica by remember { mutableStateOf(false) }
@@ -186,10 +220,12 @@ fun FertilizacionForm(
 
         Button(
             onClick = {
+                // Enviamos null para cultivoId hasta que implementemos el vínculo real Cultivo
+                // La tabla Fertilizaciones tiene cultivoId nullable()
                 onGuardar(
                     Fertilizacion(
                         id = 0,
-                        cultivoId = cultivoId,
+                        cultivoId = null, // Siempre null hasta tener vínculo Cultivo
                         aplica = aplica,
                         fechaInicio = if (aplica) fechaInicio else null,
                         fechaFin = if (aplica && fechaFin.isNotBlank()) fechaFin else null,

@@ -3,6 +3,8 @@ package org.dferna14.project.backend.db
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
 
 /**
  * Gestiona la conexión a PostgreSQL mediante HikariCP (pool de conexiones)
@@ -27,6 +29,16 @@ object DatabaseFactory {
 
         val dataSource = HikariDataSource(config)
         Database.connect(dataSource)
+
+        // Migración automática: Crea tablas y añade columnas faltantes sin borrar datos
+        transaction {
+            SchemaUtils.createMissingTablesAndColumns(
+                Parcelas, Actividades, Productos, ActividadProductos,
+                SemillasTratadas, Cultivos, Fertilizaciones, ReferenciaSigpac,
+                DatosAgronomicos, DatosMedioambientales
+            )
+            println("MIGRATION: Tablas sincronizadas con Exposed")
+        }
 
         println("Conectado a PostgreSQL: ${config.jdbcUrl}")
     }

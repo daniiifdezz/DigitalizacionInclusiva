@@ -171,6 +171,21 @@ data class ParcelaCompletaResponse(
     val aireLibreProtegido: String? = null
 )
 
+// Cultivo
+
+@Serializable
+data class CultivoRequest(
+    val especie  : String? = null,
+    val variedad : String? = null
+)
+
+@Serializable
+data class CultivoResponse(
+    val id       : Int,
+    val especie  : String? = null,
+    val variedad : String? = null
+)
+
 // Producto catálogo
 
 @Serializable

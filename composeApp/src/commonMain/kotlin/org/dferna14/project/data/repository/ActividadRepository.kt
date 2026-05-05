@@ -333,7 +333,7 @@ class ActividadRepository(
                 )
             )
         } catch (e: Exception) {
-            Result.Error("Error al crear semilla tratada: ${e.message}")
+            Result.Error("Error al crear semilla tratada: ${e.message ?: "Error desconocido"}")
         }
     }
 
@@ -397,7 +397,7 @@ class ActividadRepository(
                 )
             )
         } catch (e: Exception) {
-            Result.Error("Error al crear fertilización: ${e.message}")
+            Result.Error("Error al crear fertilización: ${e.message ?: "Error desconocido"}")
         }
     }
 }

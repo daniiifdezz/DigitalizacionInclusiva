@@ -29,9 +29,15 @@ fun SemillasTratadasSc(
     val semillaState = remember { mutableStateOf<Result<SemillaTratada?>>(Result.Loading) }
     var mostrarFormulario by remember { mutableStateOf(false) }
     val productosState by viewModel.productos.collectAsState()
+    val actividadState by viewModel.actividadActual.collectAsState()
 
-    // Cargar semilla tratada al iniciar
+    // Feedback visual
+    var mostrarSnackbar by remember { mutableStateOf(false) }
+    var snackbarMensaje by remember { mutableStateOf("") }
+
+    // 1. Cargar la actividad para obtener el parcelaId asociado
     LaunchedEffect(actividadId) {
+        viewModel.cargarActividad(actividadId)
         viewModel.getSemillaTratada(actividadId).collect { resultado ->
             semillaState.value = resultado
             if (resultado is Result.Success && resultado.data != null) {
@@ -39,6 +45,9 @@ fun SemillasTratadasSc(
             }
         }
     }
+
+    // Extraer parcelaId de la actividad cargada
+    val parcelaId = (actividadState as? Result.Success)?.data?.parcelaId ?: 0
 
     Scaffold(
         topBar = {
@@ -58,6 +67,20 @@ fun SemillasTratadasSc(
                     }
                 }
             )
+        },
+        snackbarHost = {
+            if (mostrarSnackbar) {
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    action = {
+                        TextButton(onClick = { mostrarSnackbar = false }) {
+                            Text("OK")
+                        }
+                    }
+                ) {
+                    Text(snackbarMensaje)
+                }
+            }
         }
     ) { padding ->
         Column(
@@ -110,8 +133,20 @@ fun SemillasTratadasSc(
                             productosState = productosState,
                             onGuardar = { semillaNueva ->
                                 scope.launch {
-                                    viewModel.crearSemillaTratada(semillaNueva)
-                                    mostrarFormulario = false
+                                    // Usar el actividadId y parcelaId reales
+                                    val semillaFinal = semillaNueva.copy(
+                                        actividadId = actividadId,
+                                        parcelaId = parcelaId
+                                    )
+                                    val resultado = viewModel.crearSemillaTratada(semillaFinal)
+                                    if (resultado is Result.Success) {
+                                        snackbarMensaje = "Registro guardado correctamente"
+                                        mostrarSnackbar = true
+                                        mostrarFormulario = false
+                                    } else if (resultado is Result.Error) {
+                                        snackbarMensaje = resultado.message ?: "Error al guardar"
+                                        mostrarSnackbar = true
+                                    }
                                 }
                             }
                         )
@@ -223,7 +258,11 @@ private fun SemillaTratadaForm(
                         CircularProgressIndicator()
                     }
                     is Result.Success -> {
-                        LazyColumn {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp)
+                        ) {
                             items(state.data) { producto ->
                                 TextButton(
                                     onClick = {

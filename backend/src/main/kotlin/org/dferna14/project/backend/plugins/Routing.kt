@@ -7,6 +7,7 @@ import org.dferna14.project.backend.routes.actividadRoutes
 import org.dferna14.project.backend.routes.parcelaRoutes
 import org.dferna14.project.backend.routes.fertilizacionRoutes
 import org.dferna14.project.backend.routes.productoRoutes
+import org.dferna14.project.backend.routes.cultivoRoutes
 
 /**
  * Registro central de todas las rutas de la API.
@@ -25,5 +26,6 @@ fun Application.configureRouting() {
         parcelaRoutes()
         fertilizacionRoutes()
         productoRoutes()
+        cultivoRoutes()
     }
 }

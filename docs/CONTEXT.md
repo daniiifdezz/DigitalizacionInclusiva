@@ -14,6 +14,26 @@
 
 ---
 
+## Jerarquía de Datos (Crítico para IDs)
+
+Para evitar errores de persistencia, seguir esta jerarquía:
+
+```
+Actividad (tiene actividadId, parcelaId)
+    └── Parcela (tiene id, alias, datos agronómicos)
+            └── Cultivo (tiene id, especie, variedad)
+                    └── Fertilización (tiene cultivoId, NULLABLE)
+```
+
+**Reglas de Negocio (Oficiales):**
+1. **Identidad de Parcelas:** La UI debe priorizar siempre `parcela.alias`. El ID técnico solo se usa como respaldo si el alias es nulo.
+2. **Integridad de Datos:** Queda prohibido el uso de IDs 'quemados' (como el 0). Las pantallas deben recuperar los datos reales del ViewModel antes de proceder al guardado.
+3. **Lógica de Fertilización:** El campo `cultivoId` es **NULLABLE** por diseño. Esto permite registrar fertilizaciones de fondo (pre-siembra). La navegación utiliza `parcelaId` y `actividadId`.
+4. **Configuración de Red:** La App está configurada para entorno físico (Tablet física -> PC) mediante la IP local del WiFi/Ethernet. Se descarta el uso de localhost en Android.
+5. **Feedback Visual:** Tras guardar Semillas o Fertilización, debe aparecer un Snackbar o mensaje visual que confirme "Registro guardado correctamente" o muestre el error específico.
+
+---
+
 ## Estructura del Proyecto
 
 ```
@@ -152,11 +172,15 @@ asesor
 - Ejemplos: `FertilizacionSc.kt`, `SemillasTratadasSc.kt`
 - Referencias en `App.kt` actualizadas a new naming
 
-### 0.1 Arquitectura Fertilización (29/04/2026)
+### 0.1 Arquitectura Fertilización (29/04/2026 - Actualizado 05/05/2026)
+- **Jerarquía de Datos:** Actividad -> Parcela (parcelaId) -> Cultivo (cultivoId)
 - **Decisión:** La fertilización se asocia a `cultivoId` según esquema PostgreSQL
 - **Rutas:** No se usan rutas anidadas en actividades (`/api/actividades/{id}/fertilizacion`)
 - **Endpoints:** Se usa `/api/fertilizaciones` directamente (fertilizacion tiene `cultivo_id`)
+- **Backend Nuevo:** `CultivoRoutes.kt` creado para gestionar tabla `cultivo` (GET/POST/PUT/DELETE)
 - **Modelo Frontend:** `Fertilizacion` actualizado para coincidir con tabla Exposed
+- **Navegación:** Desde `ActividadDetalleSc`, se pasa `parcelaId` a Fertilización. Falta vínculo directo Cultivo.
+- **UI:** Botón Fertilización deshabilitado si no hay `cultivoId` válido. Aviso visual añadido.
 
 ---
 
@@ -272,15 +296,24 @@ BORRADOR → [Enviar] → PENDIENTE_VALIDAR → [Validar] → VALIDADA
 | 1.6 | App - Bottom Navigation | ✅ |
 | 1.7 | App - Repository/ViewModel actualizados | ✅ |
 
-### SPRINT 2 - Pendiente
+### SPRINT 2 - En Progreso
 
-| Tarea | Descripción | Prioridad |
-|-------|-------------|-----------|
-| 2.1 | Registrar semillas tratadas (móvil) | IMPORTANTE |
-| 2.2 | Registrar fertilización básica (móvil) | IMPORTANTE |
-| 2.3 | Backend - Rutas semillas (GET/POST) | IMPORTANTE |
-| 2.4 | Desktop - GestorParcelasSc completo | IMPORTANTE |
-| 2.5 | Desktop - GestorProductosSc completo | IMPORTANTE |
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| 2.1 | Registrar semillas tratadas (móvil) | IMPORTANTE | ✅ COMPLETADO |
+| 2.2 | Registrar fertilización básica (móvil) | IMPORTANTE | 🔧 En progreso |
+| 2.3 | Backend - Rutas semillas (GET/POST) | IMPORTANTE | ✅ COMPLETADO |
+| 2.4 | Backend - Rutas cultivos (GET/POST) | IMPORTANTE | ✅ COMPLETADO (05/05/2026) |
+| 2.5 | Desktop - GestorParcelasSc completo | IMPORTANTE | PENDIENTE |
+
+#### Cambios Recientes (05/05/2026)
+1. **SemillasTratadasSc.kt**: Corregido el guardado. Ahora usa `actividadId` y `parcelaId` reales obtenidos vía ViewModel.
+2. **CultivoRoutes.kt**: Nuevo archivo creado en `backend/routes/` con endpoints CRUD para tabla `cultivo`.
+3. **Routing.kt**: Registrada `cultivoRoutes()` en el backend.
+4. **DTOs.kt**: Añadidos `CultivoRequest` y `CultivoResponse`.
+5. **ParcelasSc.kt**: Corregida visualización de alias. Prioriza `parcela.alias`.
+6. **ActividadRepository.kt**: Mejorada gestión de errores HTTP. Propaga mensajes de error específicos.
+7. **ActividadDetalleSc.kt**: Navegación a Fertilización ahora pasa `parcelaId` (temporal, requiere vínculo cultivo).
 
 ### BACKLOG
 

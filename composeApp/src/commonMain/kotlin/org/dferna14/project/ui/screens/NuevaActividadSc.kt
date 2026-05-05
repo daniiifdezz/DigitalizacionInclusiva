@@ -92,7 +92,7 @@ fun NuevaActividadSc(
                 onExpandedChange = { desplegableParcelaAbierto = it }
             ) {
                 OutlinedTextField(
-                    value = parcelaSeleccionada?.let { "Parcela ${it.orden ?: it.id}" } ?: "Selecciona una parcela",
+                    value = parcelaSeleccionada?.let { it.alias ?: "Parcela ${it.orden ?: it.id}" } ?: "Selecciona una parcela",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Parcela *") },
@@ -110,7 +110,7 @@ fun NuevaActividadSc(
                         is Result.Success -> {
                             estado.data.forEach { parcela ->
                                 DropdownMenuItem(
-                                    text = { Text("Parcela ${parcela.orden ?: parcela.id}") },
+                                    text = { Text(parcela.alias ?: "Parcela ${parcela.orden ?: parcela.id}") },
                                     onClick = {
                                         parcelaSeleccionada = parcela
                                         desplegableParcelaAbierto = false

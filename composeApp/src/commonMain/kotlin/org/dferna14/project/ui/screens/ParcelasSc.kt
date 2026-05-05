@@ -137,7 +137,7 @@ private fun ParcelaCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Parcela #${parcela.id}",
+                        text = parcela.alias ?: "Parcela ${parcela.id}",
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(

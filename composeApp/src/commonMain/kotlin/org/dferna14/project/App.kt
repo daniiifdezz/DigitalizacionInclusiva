@@ -20,7 +20,8 @@ sealed class Screen {
     data class Editar(val actividadId: Int) : Screen()
     data class Validar(val actividadId: Int) : Screen()
     data class Semillas(val actividadId: Int) : Screen()
-    data class Fertilizacion(val cultivoId: Int) : Screen()
+    // Fertilización: almacenamos parcelaId (referencia) y actividadId (para volver atrás)
+    data class Fertilizacion(val parcelaId: Int, val actividadId: Int) : Screen()
 
     // Desktop screens
     object DesktopHome : Screen()
@@ -72,7 +73,9 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
             ActividadDetalleSc(
                 actividadId = screen.actividadId,
                 onVolver = { onNavigate(Screen.MisActividades) },
-                onEditar = { id -> onNavigate(Screen.Editar(id)) }
+                onEditar = { id -> onNavigate(Screen.Editar(id)) },
+                onVerSemillas = { id -> onNavigate(Screen.Semillas(id)) },
+                onVerFertilizacion = { parcelaId -> onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId)) }
             )
         }
         is Screen.Editar -> {
@@ -106,8 +109,9 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         }
         is Screen.Fertilizacion -> {
             FertilizacionSc(
-                cultivoId = screen.cultivoId,
-                onVolver = { onNavigate(Screen.Detalle(screen.cultivoId)) }
+                parcelaId = screen.parcelaId,
+                actividadId = screen.actividadId,
+                onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
             )
         }
         is Screen.Productos -> {
@@ -165,7 +169,7 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                         onVolver = { onNavigate(Screen.MisActividades) },
                         onEditar = { id -> onNavigate(Screen.Editar(id)) },
                         onVerSemillas = { id -> onNavigate(Screen.Semillas(id)) },
-                        onVerFertilizacion = { id -> onNavigate(Screen.Fertilizacion(id)) }
+                onVerFertilizacion = { parcelaId -> onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId)) }
                     )
                 }
                 is Screen.Editar -> {
@@ -191,8 +195,9 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 }
                 is Screen.Fertilizacion -> {
                     FertilizacionSc(
-                        cultivoId = screen.cultivoId,
-                        onVolver = { onNavigate(Screen.Detalle(screen.cultivoId)) }
+                        parcelaId = screen.parcelaId,
+                        actividadId = screen.actividadId,
+                        onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
                     )
                 }
                 else -> {}

@@ -137,9 +137,18 @@ class ActividadApi(private val client: HttpClient) {
 
     // Actividades
 
-    suspend fun getActividades(): List<ActividadDto> =
-        client.get("$BASE_URL/api/actividades").body()
-
+    suspend fun getActividades(): List<ActividadDto> {
+        println("DEBUG: Intentando conectar a $BASE_URL/api/actividades")
+        try {
+            val response = client.get("$BASE_URL/api/actividades")
+            println("DEBUG: Respuesta recibida: ${response.status}")
+            return response.body()
+        } catch (e: Exception) {
+            println("DEBUG: ERROR CRÍTICO: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
     suspend fun getActividad(id: Int): ActividadDto =
         client.get("$BASE_URL/api/actividades/$id").body()
 
@@ -196,12 +205,12 @@ class ActividadApi(private val client: HttpClient) {
 
 
     // Parcelas
-
+    
     suspend fun getParcelas(): List<ParcelaDto> =
-        client.get("$BASE_URL/api/parcelas").body()
-
+        client.get("$BASE_URL/api/parcelas").body<List<ParcelaDto>>()
+    
     suspend fun getParcela(id: Int): ParcelaDto =
-        client.get("$BASE_URL/api/parcelas/$id").body()
+        client.get("$BASE_URL/api/parcelas/$id").body<ParcelaDto>()
 
     suspend fun crearParcela(parcela: ParcelaCreateDto): ParcelaDto {
         return client.post("$BASE_URL/api/parcelas") {
