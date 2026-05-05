@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(./gradlew :composeApp:compileKotlinJvm)",
-      "Bash(./gradlew :composeApp:compileDebugKotlinAndroid)",
-      "Bash(./gradlew :composeApp:compileKotlinJvm :composeApp:compileDebugKotlinAndroid :backend:compileKotlin)"
-    ]
-  }
-}
