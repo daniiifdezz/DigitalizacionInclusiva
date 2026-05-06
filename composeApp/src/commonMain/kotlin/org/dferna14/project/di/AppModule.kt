@@ -5,10 +5,12 @@ import org.dferna14.project.data.remote.createHttpClient
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
+import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.FertilizacionVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
 import org.dferna14.project.ui.viewmodel.SemillaVm
+import org.dferna14.project.ui.viewmodel.UsuarioVm
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -36,4 +38,6 @@ val appModule = module {
     factoryOf(::ProductoVm)
     factoryOf(::SemillaVm)
     factoryOf(::FertilizacionVm)
+    factoryOf(::EquipoVm)
+    factoryOf(::UsuarioVm)
 }

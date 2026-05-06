@@ -11,11 +11,13 @@ import org.dferna14.project.data.remote.ParcelaCreateDto
 import org.dferna14.project.data.remote.ProductoCreateDto
 import org.dferna14.project.data.remote.SemillaTratadaCreateDto
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.EquipoAplicacion
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.SemillaTratada
+import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.data.remote.FertilizacionCreateDto
 import org.dferna14.project.domain.model.Fertilizacion
 
@@ -447,6 +449,53 @@ class ActividadRepository(
             throw e
         } catch (e: Exception) {
             Result.Error("Error al crear fertilización: ${e.message ?: "Error desconocido"}")
+        }
+    }
+
+    // Equipos de aplicación
+
+    suspend fun getEquipos(): Result<List<EquipoAplicacion>> {
+        return try {
+            val equipos = api.getEquipos().map { dto ->
+                EquipoAplicacion(
+                    id                    = dto.id,
+                    explotacionId         = dto.explotacionId,
+                    tipo                  = dto.tipo,
+                    marca                 = dto.marca,
+                    modelo                = dto.modelo,
+                    numeroRoma            = dto.numeroRoma,
+                    anyoFabricacion       = dto.anyoFabricacion,
+                    fechaUltimaInspeccion = dto.fechaUltimaInspeccion
+                )
+            }
+            Result.Success(equipos)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al cargar equipos: ${e.message}")
+        }
+    }
+
+    // Usuarios (para dropdown de aplicador)
+
+    suspend fun getUsuarios(rol: String? = null): Result<List<Usuario>> {
+        return try {
+            val usuarios = api.getUsuarios(rol).map { dto ->
+                Usuario(
+                    id            = dto.id,
+                    nombre        = dto.nombre,
+                    apellidos     = dto.apellidos,
+                    email         = dto.email,
+                    rol           = dto.rol,
+                    explotacionId = dto.explotacionId,
+                    fechaAlta     = dto.fechaAlta
+                )
+            }
+            Result.Success(usuarios)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al cargar usuarios: ${e.message}")
         }
     }
 }

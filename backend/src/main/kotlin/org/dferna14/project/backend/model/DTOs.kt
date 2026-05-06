@@ -169,10 +169,64 @@ data class ParcelaCompletaResponse(
     val especieVariedad    : String? = null,
     val ecoregimenPractica: String? = null,
     val secanoRegadio    : String? = null,
-    val cultivo          : String? = null,
+    val cultivoId        : Int?    = null,
     val fechaInicio      : String? = null,
     val fechaFin         : String? = null,
     val aireLibreProtegido: String? = null
+)
+
+// SIGPAC y Datos Agronómicos (request bodies para POST/PUT bajo /api/parcelas/{id}/...)
+
+@Serializable
+data class ReferenciaSigpacRequest(
+    val provincia        : String? = null,
+    val terminoMunicipal : String? = null,
+    val codigoAgregado   : String? = null,
+    val zona             : String? = null,
+    val numeroPoligono   : String? = null,
+    val numeroParcela    : String? = null,
+    val numeroRecinto    : String? = null,
+    val usoSigpac        : String? = null,
+    val superficieHa     : Double? = null
+)
+
+@Serializable
+data class ReferenciaSigpacResponse(
+    val id                : Int,
+    val parcelaId         : Int,
+    val provincia         : String? = null,
+    val terminoMunicipal  : String? = null,
+    val codigoAgregado    : String? = null,
+    val zona              : String? = null,
+    val numeroPoligono    : String? = null,
+    val numeroParcela     : String? = null,
+    val numeroRecinto     : String? = null,
+    val usoSigpac         : String? = null,
+    val superficieHa      : Double? = null
+)
+
+@Serializable
+data class DatosAgronomicosRequest(
+    val especieVariedad    : String? = null,
+    val ecoregimenPractica : String? = null,
+    val secanoRegadio      : String? = null,
+    val cultivoId          : Int?    = null,
+    val fechaInicio        : String? = null,
+    val fechaFin           : String? = null,
+    val aireLibreProtegido : String? = null
+)
+
+@Serializable
+data class DatosAgronomicosResponse(
+    val id                 : Int,
+    val parcelaId          : Int,
+    val especieVariedad    : String? = null,
+    val ecoregimenPractica : String? = null,
+    val secanoRegadio      : String? = null,
+    val cultivoId          : Int?    = null,
+    val fechaInicio        : String? = null,
+    val fechaFin           : String? = null,
+    val aireLibreProtegido : String? = null
 )
 
 // Cultivo
@@ -205,4 +259,90 @@ data class ProductoResponse(
     val nombreComercial : String? = null,
     val materiaActiva   : String? = null,
     val numeroRegistro  : String? = null
+)
+
+// Titular
+
+@Serializable
+data class TitularRequest(
+    val nombre    : String,
+    val apellidos : String? = null,
+    val nif       : String,
+    val direccion : String? = null,
+    val telefono  : String? = null,
+    val email     : String? = null
+)
+
+@Serializable
+data class TitularResponse(
+    val id        : Int,
+    val nombre    : String,
+    val apellidos : String? = null,
+    val nif       : String,
+    val direccion : String? = null,
+    val telefono  : String? = null,
+    val email     : String? = null
+)
+
+// Explotacion
+
+@Serializable
+data class ExplotacionRequest(
+    val nombre       : String,
+    val titularId    : Int?    = null,
+    val direccion    : String? = null,
+    val municipio    : String? = null,
+    val provincia    : String? = null,
+    val codigoPostal : String? = null,
+    val nifEmpresa   : String? = null
+)
+
+@Serializable
+data class ExplotacionResponse(
+    val id           : Int,
+    val nombre       : String,
+    val titularId    : Int?    = null,
+    val direccion    : String? = null,
+    val municipio    : String? = null,
+    val provincia    : String? = null,
+    val codigoPostal : String? = null,
+    val nifEmpresa   : String? = null
+)
+
+// EquipoAplicacion
+
+@Serializable
+data class EquipoRequest(
+    val explotacionId         : Int?    = null,
+    val tipo                  : String,
+    val marca                 : String? = null,
+    val modelo                : String? = null,
+    val numeroRoma            : String? = null,
+    val anyoFabricacion       : Int?    = null,
+    val fechaUltimaInspeccion : String? = null
+)
+
+@Serializable
+data class EquipoResponse(
+    val id                    : Int,
+    val explotacionId         : Int?    = null,
+    val tipo                  : String,
+    val marca                 : String? = null,
+    val modelo                : String? = null,
+    val numeroRoma            : String? = null,
+    val anyoFabricacion       : Int?    = null,
+    val fechaUltimaInspeccion : String? = null
+)
+
+// Usuario (response-only por ahora; el sprint de auth añadirá login y POST)
+
+@Serializable
+data class UsuarioResponse(
+    val id            : Int,
+    val nombre        : String,
+    val apellidos     : String? = null,
+    val email         : String,
+    val rol           : String,
+    val explotacionId : Int?    = null,
+    val fechaAlta     : String? = null
 )

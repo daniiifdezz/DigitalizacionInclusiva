@@ -76,6 +76,48 @@ data class Fertilizacion(
     val observaciones      : String? = null
 )
 
+data class Titular(
+    val id        : Int     = 0,
+    val nombre    : String,
+    val apellidos : String? = null,
+    val nif       : String,
+    val direccion : String? = null,
+    val telefono  : String? = null,
+    val email     : String? = null
+)
+
+data class Explotacion(
+    val id           : Int     = 0,
+    val nombre       : String,
+    val titularId    : Int?    = null,
+    val direccion    : String? = null,
+    val municipio    : String? = null,
+    val provincia    : String? = null,
+    val codigoPostal : String? = null,
+    val nifEmpresa   : String? = null
+)
+
+data class EquipoAplicacion(
+    val id                    : Int     = 0,
+    val explotacionId         : Int?    = null,
+    val tipo                  : String,
+    val marca                 : String? = null,
+    val modelo                : String? = null,
+    val numeroRoma            : String? = null,
+    val anyoFabricacion       : Int?    = null,
+    val fechaUltimaInspeccion : String? = null
+)
+
+data class Usuario(
+    val id            : Int     = 0,
+    val nombre        : String,
+    val apellidos     : String? = null,
+    val email         : String,
+    val rol           : String  = "AGRICULTOR",
+    val explotacionId : Int?    = null,
+    val fechaAlta     : String? = null
+)
+
 /**
  * Wrapper para manejo de estados de carga, exito y error, sin el uso de excepciones
  */

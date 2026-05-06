@@ -33,9 +33,11 @@ object DatabaseFactory {
         // Migración automática: Crea tablas y añade columnas faltantes sin borrar datos
         transaction {
             SchemaUtils.createMissingTablesAndColumns(
-                Parcelas, Actividades, Productos, ActividadProductos,
-                SemillasTratadas, Cultivos, Fertilizaciones, ReferenciaSigpac,
-                DatosAgronomicos, DatosMedioambientales
+                Titulares, Explotaciones, Parcelas, Productos, Cultivos,
+                EquiposAplicacion, Usuarios,
+                Actividades, ActividadProductos, SemillasTratadas,
+                Fertilizaciones, FertilizacionParcelas,
+                ReferenciaSigpac, DatosAgronomicos, DatosMedioambientales
             )
             println("MIGRATION: Tablas sincronizadas con Exposed")
         }

@@ -9,10 +9,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.EquipoAplicacion
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.domain.model.Usuario
 
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
+import org.dferna14.project.ui.viewmodel.EquipoVm
+import org.dferna14.project.ui.viewmodel.UsuarioVm
 import org.koin.compose.viewmodel.koinViewModel
 
 val VALORES_EFICACIA = listOf("ALTA", "MEDIA", "BAJA", "NULA")
@@ -22,9 +26,13 @@ val VALORES_EFICACIA = listOf("ALTA", "MEDIA", "BAJA", "NULA")
 fun ValidarActividadSc(
     actividadId: Int,
     onVolver: () -> Unit,
-    viewModel: ActividadDetalleVm = koinViewModel()
+    viewModel: ActividadDetalleVm = koinViewModel(),
+    equipoVm: EquipoVm = koinViewModel(),
+    usuarioVm: UsuarioVm = koinViewModel()
 ) {
     val actividadState by viewModel.actividadActual.collectAsState()
+    val equiposState by equipoVm.equipos.collectAsState()
+    val usuariosState by usuarioVm.usuarios.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()
     var datosCargados by remember { mutableStateOf(false) }
 
@@ -34,9 +42,11 @@ fun ValidarActividadSc(
     // Campos para validar
     var fechaFin by remember { mutableStateOf("") }
     var eficacia by remember { mutableStateOf("") }
-    var aplicador by remember { mutableStateOf("") }
-    var equipo by remember { mutableStateOf("") }
+    var aplicadorSeleccionado by remember { mutableStateOf<Usuario?>(null) }
+    var equipoSeleccionado by remember { mutableStateOf<EquipoAplicacion?>(null) }
     var observaciones by remember { mutableStateOf("") }
+    var desplegableEquipo by remember { mutableStateOf(false) }
+    var desplegableAplicador by remember { mutableStateOf(false) }
 
     var errorFecha by remember { mutableStateOf<String?>(null) }
     var errorEficacia by remember { mutableStateOf<String?>(null) }
@@ -68,6 +78,22 @@ fun ValidarActividadSc(
             eficacia = act.eficacia ?: ""
             observaciones = act.observaciones ?: ""
             datosCargados = true
+        }
+    }
+
+    LaunchedEffect(actividadState, equiposState) {
+        val act = (actividadState as? Result.Success)?.data ?: return@LaunchedEffect
+        val equipos = (equiposState as? Result.Success)?.data ?: return@LaunchedEffect
+        if (equipoSeleccionado == null && act.equipoId != null) {
+            equipoSeleccionado = equipos.find { it.id == act.equipoId }
+        }
+    }
+
+    LaunchedEffect(actividadState, usuariosState) {
+        val act = (actividadState as? Result.Success)?.data ?: return@LaunchedEffect
+        val usuarios = (usuariosState as? Result.Success)?.data ?: return@LaunchedEffect
+        if (aplicadorSeleccionado == null && act.aplicadorId != null) {
+            aplicadorSeleccionado = usuarios.find { it.id == act.aplicadorId }
         }
     }
 
@@ -143,20 +169,28 @@ fun ValidarActividadSc(
                             act = act,
                             fechaFin = fechaFin,
                             eficacia = eficacia,
-                            aplicador = aplicador,
-                            equipo = equipo,
+                            aplicadorSeleccionado = aplicadorSeleccionado,
+                            equipoSeleccionado = equipoSeleccionado,
+                            equiposState = equiposState,
+                            usuariosState = usuariosState,
+                            desplegableEquipo = desplegableEquipo,
+                            desplegableAplicador = desplegableAplicador,
                             observaciones = observaciones,
                             errorFecha = errorFecha,
                             errorEficacia = errorEficacia,
                             onFechaFinChange = { fechaFin = it },
                             onEficaciaChange = { eficacia = it },
-                            onAplicadorChange = { aplicador = it },
-                            onEquipoChange = { equipo = it },
+                            onAplicadorChange = { aplicadorSeleccionado = it },
+                            onEquipoChange = { equipoSeleccionado = it },
+                            onDesplegableEquipoChange = { desplegableEquipo = it },
+                            onDesplegableAplicadorChange = { desplegableAplicador = it },
                             onObservacionesChange = { observaciones = it },
                             onValidar = {
                                 val actActualizada = act.copy(
                                     fechaFin = fechaFin,
                                     eficacia = eficacia.uppercase(),
+                                    equipoId = equipoSeleccionado?.id,
+                                    aplicadorId = aplicadorSeleccionado?.id,
                                     observaciones = observaciones.ifBlank { null },
                                     estado = EstadoActividad.VALIDADA
                                 )
@@ -324,15 +358,21 @@ private fun PestanaValidar(
     act: Actividad,
     fechaFin: String,
     eficacia: String,
-    aplicador: String,
-    equipo: String,
+    aplicadorSeleccionado: Usuario?,
+    equipoSeleccionado: EquipoAplicacion?,
+    equiposState: Result<List<EquipoAplicacion>>,
+    usuariosState: Result<List<Usuario>>,
+    desplegableEquipo: Boolean,
+    desplegableAplicador: Boolean,
     observaciones: String,
     errorFecha: String?,
     errorEficacia: String?,
     onFechaFinChange: (String) -> Unit,
     onEficaciaChange: (String) -> Unit,
-    onAplicadorChange: (String) -> Unit,
-    onEquipoChange: (String) -> Unit,
+    onAplicadorChange: (Usuario?) -> Unit,
+    onEquipoChange: (EquipoAplicacion?) -> Unit,
+    onDesplegableEquipoChange: (Boolean) -> Unit,
+    onDesplegableAplicadorChange: (Boolean) -> Unit,
     onObservacionesChange: (String) -> Unit,
     onValidar: () -> Unit,
     onDevolver: () -> Unit,
@@ -374,18 +414,27 @@ private fun PestanaValidar(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = aplicador,
-            onValueChange = onAplicadorChange,
-            label = { Text("Aplicador (nombre)") },
-            modifier = Modifier.fillMaxWidth()
+        AplicadorDropdown(
+            aplicadorSeleccionado = aplicadorSeleccionado,
+            usuariosState = usuariosState,
+            expandido = desplegableAplicador,
+            onExpandidoChange = onDesplegableAplicadorChange,
+            onSeleccionar = {
+                onAplicadorChange(it)
+                onDesplegableAplicadorChange(false)
+            }
         )
 
-        OutlinedTextField(
-            value = equipo,
-            onValueChange = onEquipoChange,
-            label = { Text("Equipo usado") },
-            modifier = Modifier.fillMaxWidth()
+        EquipoDropdown(
+            equipoSeleccionado = equipoSeleccionado,
+            equiposState = equiposState,
+            expandido = desplegableEquipo,
+            onExpandidoChange = onDesplegableEquipoChange,
+            onSeleccionar = {
+                onEquipoChange(it)
+                onDesplegableEquipoChange(false)
+            },
+            label = "Equipo usado"
         )
 
         OutlinedTextField(

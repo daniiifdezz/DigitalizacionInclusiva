@@ -135,6 +135,29 @@ data class FertilizacionCreateDto(
     @SerialName("observaciones")     val observaciones     : String? = null
 )
 
+@Serializable
+data class EquipoDto(
+    @SerialName("id")                    val id                    : Int,
+    @SerialName("explotacionId")         val explotacionId         : Int?    = null,
+    @SerialName("tipo")                  val tipo                  : String,
+    @SerialName("marca")                 val marca                 : String? = null,
+    @SerialName("modelo")                val modelo                : String? = null,
+    @SerialName("numeroRoma")            val numeroRoma            : String? = null,
+    @SerialName("anyoFabricacion")       val anyoFabricacion       : Int?    = null,
+    @SerialName("fechaUltimaInspeccion") val fechaUltimaInspeccion : String? = null
+)
+
+@Serializable
+data class UsuarioDto(
+    @SerialName("id")            val id            : Int,
+    @SerialName("nombre")        val nombre        : String,
+    @SerialName("apellidos")     val apellidos     : String? = null,
+    @SerialName("email")         val email         : String,
+    @SerialName("rol")           val rol           : String,
+    @SerialName("explotacionId") val explotacionId : Int?    = null,
+    @SerialName("fechaAlta")     val fechaAlta     : String? = null
+)
+
 /**
  * Fuente de datos remota — encapsula todas las llamadas HTTP.
  * El repositorio usa esta clase, nunca HttpClient directamente.
@@ -287,5 +310,17 @@ class ActividadApi(private val client: HttpClient) {
             contentType(ContentType.Application.Json)
             setBody(fertilizacion)
         }.body<FertilizacionDto>()
+    }
+
+    // Equipos de aplicación
+
+    suspend fun getEquipos(): List<EquipoDto> =
+        client.get("$BASE_URL/api/equipos").body<List<EquipoDto>>()
+
+    // Usuarios (para dropdown de aplicador)
+
+    suspend fun getUsuarios(rol: String? = null): List<UsuarioDto> {
+        val url = if (rol != null) "$BASE_URL/api/usuarios?rol=$rol" else "$BASE_URL/api/usuarios"
+        return client.get(url).body<List<UsuarioDto>>()
     }
 }

@@ -111,7 +111,7 @@ fun Route.parcelaRoutes() {
                     especieVariedad    = datosAgro?.get(DatosAgronomicos.especieVariedad),
                     ecoregimenPractica = datosAgro?.get(DatosAgronomicos.ecoregimenPractica),
                     secanoRegadio    = datosAgro?.get(DatosAgronomicos.secanoRegadio),
-                    cultivo          = datosAgro?.get(DatosAgronomicos.cultivo),
+                    cultivoId        = datosAgro?.get(DatosAgronomicos.cultivoId),
                     fechaInicio      = datosAgro?.get(DatosAgronomicos.fechaInicio)?.toString(),
                     fechaFin         = datosAgro?.get(DatosAgronomicos.fechaFin)?.toString(),
                     aireLibreProtegido = datosAgro?.get(DatosAgronomicos.aireLibreProtegido)
