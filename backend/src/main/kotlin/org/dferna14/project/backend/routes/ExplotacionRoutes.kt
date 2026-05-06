@@ -54,13 +54,18 @@ fun Route.explotacionRoutes() {
 
             val creada = transaction {
                 val nuevoId = Explotaciones.insertAndGetId {
-                    it[nombre]       = request.nombre
-                    it[titularId]    = request.titularId
-                    it[direccion]    = request.direccion
-                    it[municipio]    = request.municipio
-                    it[provincia]    = request.provincia
-                    it[codigoPostal] = request.codigoPostal
-                    it[nifEmpresa]   = request.nifEmpresa
+                    it[nombre]             = request.nombre
+                    it[titularId]          = request.titularId
+                    it[nifEmpresa]         = request.nifEmpresa
+                    it[registroNacional]   = request.registroNacional
+                    it[registroAutonomico] = request.registroAutonomico
+                    it[direccion]          = request.direccion
+                    it[municipio]          = request.municipio
+                    it[provincia]          = request.provincia
+                    it[codigoPostal]       = request.codigoPostal
+                    it[telefonoFijo]       = request.telefonoFijo
+                    it[telefonoMovil]      = request.telefonoMovil
+                    it[email]              = request.email
                 }.value
 
                 Explotaciones.selectAll()
@@ -81,13 +86,18 @@ fun Route.explotacionRoutes() {
 
             val filas = transaction {
                 Explotaciones.update({ Explotaciones.id eq id }) {
-                    it[nombre]       = request.nombre
-                    it[titularId]    = request.titularId
-                    it[direccion]    = request.direccion
-                    it[municipio]    = request.municipio
-                    it[provincia]    = request.provincia
-                    it[codigoPostal] = request.codigoPostal
-                    it[nifEmpresa]   = request.nifEmpresa
+                    it[nombre]             = request.nombre
+                    it[titularId]          = request.titularId
+                    it[nifEmpresa]         = request.nifEmpresa
+                    it[registroNacional]   = request.registroNacional
+                    it[registroAutonomico] = request.registroAutonomico
+                    it[direccion]          = request.direccion
+                    it[municipio]          = request.municipio
+                    it[provincia]          = request.provincia
+                    it[codigoPostal]       = request.codigoPostal
+                    it[telefonoFijo]       = request.telefonoFijo
+                    it[telefonoMovil]      = request.telefonoMovil
+                    it[email]              = request.email
                 }
             }
 
@@ -124,12 +134,17 @@ fun Route.explotacionRoutes() {
 }
 
 private fun ResultRow.toExplotacionResponse() = ExplotacionResponse(
-    id           = this[Explotaciones.id].value,
-    nombre       = this[Explotaciones.nombre],
-    titularId    = this[Explotaciones.titularId],
-    direccion    = this[Explotaciones.direccion],
-    municipio    = this[Explotaciones.municipio],
-    provincia    = this[Explotaciones.provincia],
-    codigoPostal = this[Explotaciones.codigoPostal],
-    nifEmpresa   = this[Explotaciones.nifEmpresa]
+    id                 = this[Explotaciones.id].value,
+    nombre             = this[Explotaciones.nombre],
+    titularId          = this[Explotaciones.titularId],
+    nifEmpresa         = this[Explotaciones.nifEmpresa],
+    registroNacional   = this[Explotaciones.registroNacional],
+    registroAutonomico = this[Explotaciones.registroAutonomico],
+    direccion          = this[Explotaciones.direccion],
+    municipio          = this[Explotaciones.municipio],
+    provincia          = this[Explotaciones.provincia],
+    codigoPostal       = this[Explotaciones.codigoPostal],
+    telefonoFijo       = this[Explotaciones.telefonoFijo],
+    telefonoMovil      = this[Explotaciones.telefonoMovil],
+    email              = this[Explotaciones.email]
 )

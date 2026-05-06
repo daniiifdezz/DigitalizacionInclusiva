@@ -26,6 +26,7 @@ sealed class Screen {
     // Desktop screens
     object DesktopHome : Screen()
     object Parcelas : Screen()
+    object Configuracion : Screen()
     data class Pendientes(val actividadId: Int) : Screen()
 }
 
@@ -53,7 +54,13 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 onVerPendientes = { onNavigate(Screen.Pendientes(0)) },
                 onVerParcelas = { onNavigate(Screen.Parcelas) },
                 onVerProductos = { onNavigate(Screen.Productos) },
-                onVerValidar = { id -> onNavigate(Screen.Validar(id)) }
+                onVerValidar = { id -> onNavigate(Screen.Validar(id)) },
+                onVerConfiguracion = { onNavigate(Screen.Configuracion) }
+            )
+        }
+        is Screen.Configuracion -> {
+            ConfiguracionSc(
+                onVolver = { onNavigate(Screen.DesktopHome) }
             )
         }
         is Screen.MisActividades -> {
@@ -115,7 +122,9 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
             )
         }
         is Screen.Productos -> {
-            ProductosSc()
+            ProductosSc(
+                onVolver = { onNavigate(Screen.DesktopHome) }
+            )
         }
         else -> {}
     }
@@ -182,7 +191,9 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                     MisParcelasSc()
                 }
                 is Screen.Productos -> {
-                    ProductosSc()
+                    ProductosSc(
+                        onVolver = { onNavigate(Screen.MisActividades) }
+                    )
                 }
                 is Screen.Ajustes -> {
                     AjustesSc()

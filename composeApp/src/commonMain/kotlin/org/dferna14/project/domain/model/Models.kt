@@ -77,24 +77,32 @@ data class Fertilizacion(
 )
 
 data class Titular(
-    val id        : Int     = 0,
-    val nombre    : String,
-    val apellidos : String? = null,
-    val nif       : String,
-    val direccion : String? = null,
-    val telefono  : String? = null,
-    val email     : String? = null
+    val id           : Int     = 0,
+    val nombre       : String,
+    val apellidos    : String? = null,
+    val nif          : String,
+    val direccion    : String? = null,
+    val localidad    : String? = null,
+    val codigoPostal : String? = null,
+    val provincia    : String? = null,
+    val telefono     : String? = null,
+    val email        : String? = null
 )
 
 data class Explotacion(
-    val id           : Int     = 0,
-    val nombre       : String,
-    val titularId    : Int?    = null,
-    val direccion    : String? = null,
-    val municipio    : String? = null,
-    val provincia    : String? = null,
-    val codigoPostal : String? = null,
-    val nifEmpresa   : String? = null
+    val id                 : Int     = 0,
+    val nombre             : String,
+    val titularId          : Int?    = null,
+    val nifEmpresa         : String? = null,
+    val registroNacional   : String? = null,
+    val registroAutonomico : String? = null,
+    val direccion          : String? = null,
+    val municipio          : String? = null,
+    val provincia          : String? = null,
+    val codigoPostal       : String? = null,
+    val telefonoFijo       : String? = null,
+    val telefonoMovil      : String? = null,
+    val email              : String? = null
 )
 
 data class EquipoAplicacion(

@@ -1,10 +1,15 @@
 package org.dferna14.project.di
 
 import org.dferna14.project.data.remote.ActividadApi
+import org.dferna14.project.data.remote.ExplotacionApi
+import org.dferna14.project.data.remote.TitularApi
 import org.dferna14.project.data.remote.createHttpClient
 import org.dferna14.project.data.repository.ActividadRepository
+import org.dferna14.project.data.repository.ExplotacionRepository
+import org.dferna14.project.data.repository.TitularRepository
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
+import org.dferna14.project.ui.viewmodel.ConfiguracionVm
 import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.FertilizacionVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
@@ -18,18 +23,22 @@ import org.koin.dsl.module
  * Módulo Koin — define cómo se crean e inyectan las dependencias.
  *
  * Orden de dependencias:
- * HttpClient → ActividadApi → ActividadRepository → ViewModels
+ * HttpClient → *Api → *Repository → ViewModels
  */
 val appModule = module {
 
     // Cliente HTTP — singleton compartido
     single { createHttpClient() }
 
-    // Fuente de datos remota
+    // Fuentes de datos remotas
     single { ActividadApi(get()) }
+    single { TitularApi(get()) }
+    single { ExplotacionApi(get()) }
 
-    // Repositorio
+    // Repositorios
     single { ActividadRepository(get()) }
+    factoryOf(::TitularRepository)
+    factoryOf(::ExplotacionRepository)
 
     // ViewModels — cada pantalla recibe su propia instancia (factory)
     factoryOf(::ActividadListaVm)
@@ -40,4 +49,5 @@ val appModule = module {
     factoryOf(::FertilizacionVm)
     factoryOf(::EquipoVm)
     factoryOf(::UsuarioVm)
+    factoryOf(::ConfiguracionVm)
 }

@@ -51,12 +51,15 @@ fun Route.titularRoutes() {
 
             val creado = transaction {
                 val nuevoId = Titulares.insertAndGetId {
-                    it[nombre]    = request.nombre
-                    it[apellidos] = request.apellidos
-                    it[nif]       = request.nif
-                    it[direccion] = request.direccion
-                    it[telefono]  = request.telefono
-                    it[email]     = request.email
+                    it[nombre]       = request.nombre
+                    it[apellidos]    = request.apellidos
+                    it[nif]          = request.nif
+                    it[direccion]    = request.direccion
+                    it[localidad]    = request.localidad
+                    it[codigoPostal] = request.codigoPostal
+                    it[provincia]    = request.provincia
+                    it[telefono]     = request.telefono
+                    it[email]        = request.email
                 }.value
 
                 Titulares.selectAll()
@@ -77,12 +80,15 @@ fun Route.titularRoutes() {
 
             val filas = transaction {
                 Titulares.update({ Titulares.id eq id }) {
-                    it[nombre]    = request.nombre
-                    it[apellidos] = request.apellidos
-                    it[nif]       = request.nif
-                    it[direccion] = request.direccion
-                    it[telefono]  = request.telefono
-                    it[email]     = request.email
+                    it[nombre]       = request.nombre
+                    it[apellidos]    = request.apellidos
+                    it[nif]          = request.nif
+                    it[direccion]    = request.direccion
+                    it[localidad]    = request.localidad
+                    it[codigoPostal] = request.codigoPostal
+                    it[provincia]    = request.provincia
+                    it[telefono]     = request.telefono
+                    it[email]        = request.email
                 }
             }
 
@@ -106,11 +112,14 @@ fun Route.titularRoutes() {
 }
 
 private fun ResultRow.toTitularResponse() = TitularResponse(
-    id        = this[Titulares.id].value,
-    nombre    = this[Titulares.nombre],
-    apellidos = this[Titulares.apellidos],
-    nif       = this[Titulares.nif],
-    direccion = this[Titulares.direccion],
-    telefono  = this[Titulares.telefono],
-    email     = this[Titulares.email]
+    id           = this[Titulares.id].value,
+    nombre       = this[Titulares.nombre],
+    apellidos    = this[Titulares.apellidos],
+    nif          = this[Titulares.nif],
+    direccion    = this[Titulares.direccion],
+    localidad    = this[Titulares.localidad],
+    codigoPostal = this[Titulares.codigoPostal],
+    provincia    = this[Titulares.provincia],
+    telefono     = this[Titulares.telefono],
+    email        = this[Titulares.email]
 )

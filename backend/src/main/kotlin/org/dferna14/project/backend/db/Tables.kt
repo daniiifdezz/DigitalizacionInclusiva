@@ -19,6 +19,9 @@ object Titulares : IntIdTable("titular") {
     val apellidos     = varchar("apellidos", 150).nullable()
     val nif           = varchar("nif", 20).uniqueIndex()
     val direccion     = varchar("direccion", 200).nullable()
+    val localidad     = varchar("localidad", 100).nullable()
+    val codigoPostal  = varchar("codigo_postal", 10).nullable()
+    val provincia     = varchar("provincia", 100).nullable()
     val telefono      = varchar("telefono", 20).nullable()
     val email         = varchar("email", 150).nullable()
 }
@@ -37,13 +40,18 @@ object Cultivos : IntIdTable("cultivo") {
 // ── Entidades con FK a las raíces ─────────────────────────────────────────────
 
 object Explotaciones : IntIdTable("explotacion") {
-    val nombre        = varchar("nombre", 150)
-    val titularId     = integer("titular_id").references(Titulares.id).nullable()
-    val direccion     = varchar("direccion", 200).nullable()
-    val municipio     = varchar("municipio", 100).nullable()
-    val provincia     = varchar("provincia", 100).nullable()
-    val codigoPostal  = varchar("codigo_postal", 10).nullable()
-    val nifEmpresa    = varchar("nif_empresa", 20).nullable()
+    val nombre              = varchar("nombre", 150)
+    val titularId           = integer("titular_id").references(Titulares.id).nullable()
+    val nifEmpresa          = varchar("nif_empresa", 20).nullable()
+    val registroNacional    = varchar("registro_nacional", 50).nullable()
+    val registroAutonomico  = varchar("registro_autonomico", 50).nullable()
+    val direccion           = varchar("direccion", 200).nullable()
+    val municipio           = varchar("municipio", 100).nullable()
+    val provincia           = varchar("provincia", 100).nullable()
+    val codigoPostal        = varchar("codigo_postal", 10).nullable()
+    val telefonoFijo        = varchar("telefono_fijo", 20).nullable()
+    val telefonoMovil       = varchar("telefono_movil", 20).nullable()
+    val email               = varchar("email", 150).nullable()
 }
 
 object Parcelas : IntIdTable("parcela") {

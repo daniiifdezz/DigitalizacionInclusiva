@@ -16,12 +16,13 @@ fun DesktopMainSc(
     onVerPendientes: () -> Unit,
     onVerParcelas: () -> Unit,
     onVerProductos: () -> Unit,
-    onVerValidar: (Int) -> Unit
+    onVerValidar: (Int) -> Unit,
+    onVerConfiguracion: () -> Unit
 ) {
     var selectedItem by remember { mutableStateOf(0) }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        // Menu lateral sederhana (Column)
+        // Menu lateral
         Column(
             modifier = Modifier
                 .width(200.dp)
@@ -68,6 +69,14 @@ fun DesktopMainSc(
                     onVerProductos()
                 }
             )
+            MenuItem(
+                text = "Configuración",
+                selected = selectedItem == 4,
+                onClick = {
+                    selectedItem = 4
+                    onVerConfiguracion()
+                }
+            )
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -78,7 +87,7 @@ fun DesktopMainSc(
             )
         }
 
-        // Main content
+        // Contenido del main
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -90,7 +99,7 @@ fun DesktopMainSc(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Quick stats
+            // Quick stats (revisar, ya que esta hardcodeado, mirar posteriormente)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -130,6 +139,8 @@ fun DesktopMainSc(
                 ) {
                     Text("Ver pendientes")
                 }
+
+                // Revisar para un futuro
                 Button(
                     onClick = { /* TODO */ },
                     modifier = Modifier.weight(1f)

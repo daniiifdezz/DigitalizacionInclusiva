@@ -16,7 +16,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductosSc(
-    viewModel: ProductoVm = koinViewModel()
+    viewModel: ProductoVm = koinViewModel(),
+    onVolver: () -> Unit
 ) {
     val productosState by viewModel.productos.collectAsState()
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
@@ -25,7 +26,12 @@ fun ProductosSc(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Productos") }
+                title = { Text("Productos") },
+                navigationIcon = {
+                    TextButton(onClick = onVolver) {
+                        Text("< Menú")
+                    }
+                }
             )
         },
         floatingActionButton = {
