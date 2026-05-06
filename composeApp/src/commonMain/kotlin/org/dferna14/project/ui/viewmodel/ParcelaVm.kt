@@ -75,6 +75,27 @@ class ParcelaVm(
         }
     }
 
+    fun actualizarParcela(parcela: Parcela) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.actualizarParcela(parcela)
+                when (resultado) {
+                    is Result.Success -> {
+                        cargarParcelas()
+                        cargarParcelaCompleta(parcela.id)
+                        _guardadoExitoso.emit("Datos básicos guardados correctamente")
+                    }
+                    is Result.Error -> _guardadoExitoso.emit(resultado.message)
+                    else -> {}
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _guardadoExitoso.emit("Error al actualizar parcela: ${e.message}")
+            }
+        }
+    }
+
     fun eliminarParcela(id: Int) {
         viewModelScope.launch {
             try {

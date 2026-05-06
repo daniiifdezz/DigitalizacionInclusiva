@@ -103,7 +103,10 @@ fun EditarParcelaSc(
                         )
                     } else {
                         when (selectedTab) {
-                            0 -> DatosBasicosTab(parcela = completa.parcela)
+                            0 -> DatosBasicosTab(
+                                parcela = completa.parcela,
+                                onGuardar = { viewModel.actualizarParcela(it) }
+                            )
                             1 -> SigpacTab(
                                 parcelaId = parcelaId,
                                 sigpacExistente = completa.referenciaSigpac,
@@ -144,7 +147,20 @@ private fun ErrorBox(mensaje: String, onReintentar: () -> Unit) {
 // ── Tab 1: Datos básicos ──────────────────────────────────────────────────────
 
 @Composable
-private fun DatosBasicosTab(parcela: Parcela) {
+private fun DatosBasicosTab(
+    parcela: Parcela,
+    onGuardar: (Parcela) -> Unit
+) {
+    // Solo dos campos son editables aquí: sistema_asesoramiento y zona_nitratos.
+    // El resto (alias, orden, explotación) se gestiona desde el flujo de creación
+    // de parcela; los mostramos como referencia y los preservamos en el PUT.
+    var sistemaAsesoramiento by remember(parcela) {
+        mutableStateOf(parcela.sistemaAsesoramiento ?: "")
+    }
+    var zonaNitratos by remember(parcela) {
+        mutableStateOf(parcela.zonaNitratos ?: false)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -155,20 +171,51 @@ private fun DatosBasicosTab(parcela: Parcela) {
         ReadOnlyField("ID parcela", parcela.id.toString())
         ReadOnlyField("Alias", parcela.alias ?: "—")
         ReadOnlyField("Orden", parcela.orden?.toString() ?: "—")
-        ReadOnlyField("Sistema asesoramiento", parcela.sistemaAsesoramiento ?: "—")
-        ReadOnlyField(
-            "Zona nitratos",
-            parcela.zonaNitratos?.let { if (it) "Sí" else "No" } ?: "—"
-        )
         ReadOnlyField("Explotación", parcela.explotacionId?.toString() ?: "—")
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "La edición de datos básicos se gestiona desde la pantalla de creación. " +
-                    "Aquí los mostramos para referencia mientras editas SIGPAC y agronómicos.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        OutlinedTextField(
+            value = sistemaAsesoramiento,
+            onValueChange = { sistemaAsesoramiento = it },
+            label = { Text("Sistema de asesoramiento") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
         )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Zona vulnerable a nitratos",
+                modifier = Modifier.weight(1f)
+            )
+            Switch(
+                checked = zonaNitratos,
+                onCheckedChange = { zonaNitratos = it }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                onGuardar(
+                    parcela.copy(
+                        sistemaAsesoramiento = sistemaAsesoramiento.takeIf { it.isNotBlank() },
+                        zonaNitratos         = zonaNitratos
+                    )
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text("Guardar datos básicos")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
