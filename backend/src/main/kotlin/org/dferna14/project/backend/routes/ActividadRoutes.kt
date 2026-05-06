@@ -183,11 +183,15 @@ fun Route.actividadRoutes() {
         }
 
         // DELETE /api/actividades/{id}
+        // Borra en cascada los hijos  en misma transaccion antes de borrar la actividad
+        // evitamos violaciones de FK
         delete("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
             val filasEliminadas = transaction {
+                SemillasTratadas.deleteWhere { SemillasTratadas.actividadId eq id }
+                ActividadProductos.deleteWhere { ActividadProductos.actividadId eq id }
                 Actividades.deleteWhere { Actividades.id eq id }
             }
 
@@ -244,6 +248,8 @@ fun Route.actividadRoutes() {
         }
 
         // Semilla tratada de una actividad
+        // Relación 1:1 lógica (una semilla por actividad). Si existe actualiza, sino insertamos.
+        // Así evitamos duplicados que antes daban bugs.
         route("{id}/semilla") {
 
             get {
@@ -253,7 +259,8 @@ fun Route.actividadRoutes() {
                 val semilla = transaction {
                     SemillasTratadas.selectAll()
                         .where { SemillasTratadas.actividadId eq actividadId }
-                        .singleOrNull()
+                        .orderBy(SemillasTratadas.id to SortOrder.DESC)
+                        .firstOrNull()
                         ?.toSemillaResponse()
                 }
 
@@ -268,24 +275,45 @@ fun Route.actividadRoutes() {
                 val request = call.receive<SemillaTratadaRequest>()
                 val fechaSiembraLocalDate = request.fechaSiembra?.let { java.time.LocalDate.parse(it) }
 
-                val nuevoId = transaction {
-                    SemillasTratadas.insertAndGetId {
-                        it[SemillasTratadas.actividadId]       = actividadId
-                        it[SemillasTratadas.parcelaId]         = request.parcelaId
-                        it[SemillasTratadas.aplica]            = request.aplica
-                        it[SemillasTratadas.fechaSiembra]      = fechaSiembraLocalDate
-                        it[SemillasTratadas.superficieHa]      = request.superficieHa
-                        it[SemillasTratadas.cantidadSemillaKg] = request.cantidadSemillaKg
-                        it[SemillasTratadas.productoId]        = request.productoId
-                        it[SemillasTratadas.variedadSemilla]   = request.variedadSemilla
-                        it[SemillasTratadas.cultivoId]         = request.cultivoId
-                    }.value
+                val (semillaId, esNueva) = transaction {
+                    val existente = SemillasTratadas.selectAll()
+                        .where { SemillasTratadas.actividadId eq actividadId }
+                        .orderBy(SemillasTratadas.id to SortOrder.DESC)
+                        .firstOrNull()
+
+                    if (existente != null) {
+                        val idExistente = existente[SemillasTratadas.id].value
+                        SemillasTratadas.update({ SemillasTratadas.id eq idExistente }) {
+                            it[parcelaId]         = request.parcelaId
+                            it[aplica]            = request.aplica
+                            it[fechaSiembra]      = fechaSiembraLocalDate
+                            it[superficieHa]      = request.superficieHa
+                            it[cantidadSemillaKg] = request.cantidadSemillaKg
+                            it[productoId]        = request.productoId
+                            it[variedadSemilla]   = request.variedadSemilla
+                            it[cultivoId]         = request.cultivoId
+                        }
+                        idExistente to false
+                    } else {
+                        val nuevoId = SemillasTratadas.insertAndGetId {
+                            it[SemillasTratadas.actividadId]       = actividadId
+                            it[SemillasTratadas.parcelaId]         = request.parcelaId
+                            it[SemillasTratadas.aplica]            = request.aplica
+                            it[SemillasTratadas.fechaSiembra]      = fechaSiembraLocalDate
+                            it[SemillasTratadas.superficieHa]      = request.superficieHa
+                            it[SemillasTratadas.cantidadSemillaKg] = request.cantidadSemillaKg
+                            it[SemillasTratadas.productoId]        = request.productoId
+                            it[SemillasTratadas.variedadSemilla]   = request.variedadSemilla
+                            it[SemillasTratadas.cultivoId]         = request.cultivoId
+                        }.value
+                        nuevoId to true
+                    }
                 }
 
                 call.respond(
-                    HttpStatusCode.Created,
+                    if (esNueva) HttpStatusCode.Created else HttpStatusCode.OK,
                     SemillaTratadaResponse(
-                        id                = nuevoId,
+                        id                = semillaId,
                         actividadId       = actividadId,
                         parcelaId         = request.parcelaId,
                         aplica            = request.aplica,

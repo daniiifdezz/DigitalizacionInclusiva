@@ -30,6 +30,13 @@ fun ActividadListadoSc(
 ) {
     val actividadesState by viewModel.actividades.collectAsState()
 
+    // Refrescar la lista cada vez que se entra a la pantalla.
+    // El VM es factory pero compartido por ViewModelStoreOwner — sin esto,
+    // los cambios hechos desde Detalle (enviar/eliminar) no se reflejan al volver.
+    LaunchedEffect(Unit) {
+        viewModel.cargarActividades()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

@@ -121,19 +121,28 @@ fun SemillasTratadasSc(
                 }
                 is Result.Success -> {
                     val semilla = state.data
-                    // Si no hay registro (null) o se pulsa "Añadir", mostrar formulario vacío
-                    if (semilla != null || mostrarFormulario) {
+                    // No habilitar el form hasta que la actividad esté cargada — sin esto
+                    // se podía guardar con parcelaId=0 si el usuario era muy rápido y el
+                    // INSERT petaba con FK violation devolviendo 500 silencioso.
+                    val actividadCargada = actividadState is Result.Success && parcelaId > 0
+
+                    if (!actividadCargada) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    } else if (semilla != null || mostrarFormulario) {
                         SemillaTratadaForm(
                             semilla = semilla, // Si es null, el formulario saldrá vacío
                             productosState = productosState,
                             onGuardar = { semillaNueva ->
                                 scope.launch {
-                                    // Usar el actividadId y parcelaId reales
                                     val semillaFinal = semillaNueva.copy(
                                         actividadId = actividadId,
                                         parcelaId = parcelaId
                                     )
-                                    println("DEBUG APP: Enviando SemillaTratada al servidor: $semillaFinal")
                                     val resultado = viewModel.crearSemillaTratada(semillaFinal)
                                     if (resultado is Result.Success) {
                                         snackbarMensaje = "Registro guardado correctamente"

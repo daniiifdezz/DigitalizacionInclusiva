@@ -23,6 +23,11 @@ fun PendientesSc(
     viewModel: ActividadListaVm = koinViewModel()
 ) {
     val pendientesState by viewModel.actividadesPendientes.collectAsState()
+
+    // Refrescar tras dar a enviar para ver los pendientes actualizados
+    LaunchedEffect(Unit) {
+        viewModel.cargarActividadesPendientes()
+    }
     var filtroEstado by remember { mutableStateOf("") }
     var filtroFecha by remember { mutableStateOf("") }
 
