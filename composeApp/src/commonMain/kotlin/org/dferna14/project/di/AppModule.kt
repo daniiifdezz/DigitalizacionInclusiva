@@ -2,6 +2,7 @@ package org.dferna14.project.di
 
 import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.ExplotacionApi
+import org.dferna14.project.data.remote.ParcelaApi
 import org.dferna14.project.data.remote.TitularApi
 import org.dferna14.project.data.remote.createHttpClient
 import org.dferna14.project.data.repository.ActividadRepository
@@ -34,9 +35,10 @@ val appModule = module {
     single { ActividadApi(get()) }
     single { TitularApi(get()) }
     single { ExplotacionApi(get()) }
+    single { ParcelaApi(get()) }
 
     // Repositorios
-    single { ActividadRepository(get()) }
+    single { ActividadRepository(get(), get()) }
     factoryOf(::TitularRepository)
     factoryOf(::ExplotacionRepository)
 

@@ -6,15 +6,22 @@ import kotlinx.coroutines.flow.flow
 import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.ActividadCreateDto
 import org.dferna14.project.data.remote.ActividadDto
+import org.dferna14.project.data.remote.DatosAgronomicosCreateDto
 import org.dferna14.project.data.remote.EstadoActividadDto
+import org.dferna14.project.data.remote.ParcelaApi
 import org.dferna14.project.data.remote.ParcelaCreateDto
 import org.dferna14.project.data.remote.ProductoCreateDto
+import org.dferna14.project.data.remote.ReferenciaSigpacCreateDto
 import org.dferna14.project.data.remote.SemillaTratadaCreateDto
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.Cultivo
+import org.dferna14.project.domain.model.DatosAgronomicos
 import org.dferna14.project.domain.model.EquipoAplicacion
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Parcela
+import org.dferna14.project.domain.model.ParcelaCompleta
 import org.dferna14.project.domain.model.Producto
+import org.dferna14.project.domain.model.ReferenciaSigpac
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.SemillaTratada
 import org.dferna14.project.domain.model.Usuario
@@ -33,7 +40,8 @@ import org.dferna14.project.domain.model.Fertilizacion
  * La interfaz no cambiará cuando añadamos la caché local.
  */
 class ActividadRepository(
-    private val api: ActividadApi
+    private val api: ActividadApi,
+    private val parcelaApi: ParcelaApi
 ) {
 
     // Actividades
@@ -219,6 +227,27 @@ class ActividadRepository(
             throw e
         } catch (e: Exception) {
             Result.Error("Error al crear parcela: ${e.message}")
+        }
+    }
+
+    suspend fun actualizarParcela(parcela: Parcela): Result<Parcela> {
+        return try {
+            val ok = api.actualizarParcela(
+                id = parcela.id,
+                parcela = ParcelaCreateDto(
+                    explotacionId        = parcela.explotacionId,
+                    orden                = parcela.orden,
+                    alias                = parcela.alias,
+                    sistemaAsesoramiento = parcela.sistemaAsesoramiento,
+                    zonaNitratos         = parcela.zonaNitratos
+                )
+            )
+            if (ok) Result.Success(parcela)
+            else Result.Error("No se pudo actualizar la parcela")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al actualizar parcela: ${e.message}")
         }
     }
 
@@ -496,6 +525,137 @@ class ActividadRepository(
             throw e
         } catch (e: Exception) {
             Result.Error("Error al cargar usuarios: ${e.message}")
+        }
+    }
+
+    // Parcela completa (parcela + sigpac + agronómicos) y sus operaciones
+
+    suspend fun getParcelaCompleta(id: Int): Result<ParcelaCompleta?> {
+        return try {
+            val dto = parcelaApi.getParcelaCompleta(id)
+            if (dto == null) {
+                Result.Success(null)
+            } else {
+                Result.Success(
+                    ParcelaCompleta(
+                        parcela = Parcela(
+                            id                   = dto.parcela.id,
+                            explotacionId        = dto.parcela.explotacionId,
+                            orden                = dto.parcela.orden,
+                            alias                = dto.parcela.alias,
+                            sistemaAsesoramiento = dto.parcela.sistemaAsesoramiento,
+                            zonaNitratos         = dto.parcela.zonaNitratos
+                        ),
+                        referenciaSigpac = dto.referenciaSigpac?.let { s ->
+                            ReferenciaSigpac(
+                                id               = s.id,
+                                parcelaId        = s.parcelaId,
+                                provincia        = s.provincia,
+                                terminoMunicipal = s.terminoMunicipal,
+                                codigoAgregado   = s.codigoAgregado,
+                                zona             = s.zona,
+                                numeroPoligono   = s.numeroPoligono,
+                                numeroParcela    = s.numeroParcela,
+                                numeroRecinto    = s.numeroRecinto,
+                                usoSigpac        = s.usoSigpac,
+                                superficieHa     = s.superficieHa
+                            )
+                        },
+                        datosAgronomicos = dto.datosAgronomicos?.let { a ->
+                            DatosAgronomicos(
+                                id                 = a.id,
+                                parcelaId          = a.parcelaId,
+                                especieVariedad    = a.especieVariedad,
+                                ecoregimenPractica = a.ecoregimenPractica,
+                                secanoRegadio      = a.secanoRegadio,
+                                cultivoId          = a.cultivoId,
+                                fechaInicio        = a.fechaInicio,
+                                fechaFin           = a.fechaFin,
+                                aireLibreProtegido = a.aireLibreProtegido
+                            )
+                        }
+                    )
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al cargar parcela completa: ${e.message}")
+        }
+    }
+
+    suspend fun guardarSigpac(
+        parcelaId: Int,
+        sigpac: ReferenciaSigpac,
+        esActualizacion: Boolean
+    ): Result<Boolean> {
+        return try {
+            val ok = parcelaApi.crearOActualizarSigpac(
+                parcelaId = parcelaId,
+                request = ReferenciaSigpacCreateDto(
+                    provincia        = sigpac.provincia,
+                    terminoMunicipal = sigpac.terminoMunicipal,
+                    codigoAgregado   = sigpac.codigoAgregado,
+                    zona             = sigpac.zona,
+                    numeroPoligono   = sigpac.numeroPoligono,
+                    numeroParcela    = sigpac.numeroParcela,
+                    numeroRecinto    = sigpac.numeroRecinto,
+                    usoSigpac        = sigpac.usoSigpac,
+                    superficieHa     = sigpac.superficieHa
+                ),
+                esActualizacion = esActualizacion
+            )
+            if (ok) Result.Success(true)
+            else Result.Error("El backend rechazó la operación SIGPAC")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al guardar SIGPAC: ${e.message}")
+        }
+    }
+
+    suspend fun guardarAgronomico(
+        parcelaId: Int,
+        agronomico: DatosAgronomicos,
+        esActualizacion: Boolean
+    ): Result<Boolean> {
+        return try {
+            val ok = parcelaApi.crearOActualizarAgronomico(
+                parcelaId = parcelaId,
+                request = DatosAgronomicosCreateDto(
+                    especieVariedad    = agronomico.especieVariedad,
+                    ecoregimenPractica = agronomico.ecoregimenPractica,
+                    secanoRegadio      = agronomico.secanoRegadio,
+                    cultivoId          = agronomico.cultivoId,
+                    fechaInicio        = agronomico.fechaInicio,
+                    fechaFin           = agronomico.fechaFin,
+                    aireLibreProtegido = agronomico.aireLibreProtegido
+                ),
+                esActualizacion = esActualizacion
+            )
+            if (ok) Result.Success(true)
+            else Result.Error("El backend rechazó la operación agronómicos")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al guardar datos agronómicos: ${e.message}")
+        }
+    }
+
+    suspend fun getCultivos(): Result<List<Cultivo>> {
+        return try {
+            val cultivos = parcelaApi.getCultivos().map { dto ->
+                Cultivo(
+                    id       = dto.id,
+                    especie  = dto.especie,
+                    variedad = dto.variedad
+                )
+            }
+            Result.Success(cultivos)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al cargar cultivos: ${e.message}")
         }
     }
 }

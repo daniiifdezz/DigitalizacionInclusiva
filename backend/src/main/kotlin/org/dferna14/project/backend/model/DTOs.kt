@@ -142,37 +142,15 @@ data class ParcelaResponse(
     val zonaNitratos        : Boolean? = null
 )
 
-// Parcela Completa - combina parcela + referenciasigpac + datosagronomicos
+// Parcela Completa - agrega parcela + referenciasigpac + datosagronomicos en sub-objetos.
+// Si referenciaSigpac o datosAgronomicos es null el cliente sabe que no existe aún
+// y debe hacer POST. Si no es null, hace PUT.
 
 @Serializable
 data class ParcelaCompletaResponse(
-    // Datos de parcela
-    val id                   : Int,
-    val explotacionId        : Int?    = null,
-    val orden                : Int?    = null,
-    val alias                : String? = null,
-    val zonaNitratos         : Boolean? = null,
-    val sistemaAsesoramiento : String? = null,
-
-    // SIGPAC (referenciasigpac)
-    val provincia           : String? = null,
-    val terminoMunicipal    : String? = null,
-    val codigoAgregado     : String? = null,
-    val zona              : String? = null,
-    val numeroPoligono     : String? = null,
-    val numeroParcela     : String? = null,
-    val numeroRecinto     : String? = null,
-    val usoSigpac          : String? = null,
-    val superficieHa        : Double? = null,
-
-    // Agronómicos (datosagronomicos)
-    val especieVariedad    : String? = null,
-    val ecoregimenPractica: String? = null,
-    val secanoRegadio    : String? = null,
-    val cultivoId        : Int?    = null,
-    val fechaInicio      : String? = null,
-    val fechaFin         : String? = null,
-    val aireLibreProtegido: String? = null
+    val parcela          : ParcelaResponse,
+    val referenciaSigpac : ReferenciaSigpacResponse? = null,
+    val datosAgronomicos : DatosAgronomicosResponse? = null
 )
 
 // SIGPAC y Datos Agronómicos (request bodies para POST/PUT bajo /api/parcelas/{id}/...)

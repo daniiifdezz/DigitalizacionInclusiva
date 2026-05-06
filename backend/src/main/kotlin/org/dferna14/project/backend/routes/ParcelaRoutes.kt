@@ -8,9 +8,11 @@ import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.DatosAgronomicos
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.ReferenciaSigpac
+import org.dferna14.project.backend.model.DatosAgronomicosResponse
 import org.dferna14.project.backend.model.ParcelaCompletaResponse
 import org.dferna14.project.backend.model.ParcelaRequest
 import org.dferna14.project.backend.model.ParcelaResponse
+import org.dferna14.project.backend.model.ReferenciaSigpacResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -65,56 +67,63 @@ fun Route.parcelaRoutes() {
         }
 
         // GET /api/parcelas/{id}/completa
-        // Devuelve parcela con todos los datos de tablas satélite
+        // Devuelve parcela + sub-objetos satélite (referenciasigpac, datosagronomicos).
+        // Si SIGPAC o agronómicos no existen para esta parcela, su sub-objeto es null.
         get("{id}/completa") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val parcelaCompleta = transaction {
-                // Datos de parcela
                 val parcela = Parcelas.selectAll()
                     .where { Parcelas.id eq id }
                     .singleOrNull()
                     ?: return@transaction null
 
-                // LEFT JOIN referenciasigpac
                 val refSigpac = ReferenciaSigpac.selectAll()
                     .where { ReferenciaSigpac.parcelaId eq id }
                     .singleOrNull()
 
-                // LEFT JOIN datosagronomicos
                 val datosAgro = DatosAgronomicos.selectAll()
                     .where { DatosAgronomicos.parcelaId eq id }
                     .singleOrNull()
 
-                // Construir respuesta combinada
                 ParcelaCompletaResponse(
-                    id                   = parcela[Parcelas.id].value,
-                    explotacionId        = parcela[Parcelas.explotacionId],
-                    orden                = parcela[Parcelas.orden],
-                    alias                = parcela[Parcelas.alias],
-                    zonaNitratos         = parcela[Parcelas.zonaNitratos],
-                    sistemaAsesoramiento = parcela[Parcelas.sistemaAsesoramiento],
-
-                    // SIGPAC
-                    provincia           = refSigpac?.get(ReferenciaSigpac.provincia),
-                    terminoMunicipal    = refSigpac?.get(ReferenciaSigpac.terminoMunicipal),
-                    codigoAgregado     = refSigpac?.get(ReferenciaSigpac.codigoAgregado),
-                    zona              = refSigpac?.get(ReferenciaSigpac.zona),
-                    numeroPoligono     = refSigpac?.get(ReferenciaSigpac.numeroPoligono),
-                    numeroParcela     = refSigpac?.get(ReferenciaSigpac.numeroParcela),
-                    numeroRecinto     = refSigpac?.get(ReferenciaSigpac.numeroRecinto),
-                    usoSigpac          = refSigpac?.get(ReferenciaSigpac.usoSigpac),
-                    superficieHa        = refSigpac?.get(ReferenciaSigpac.superficieHa),
-
-                    // Agronómicos
-                    especieVariedad    = datosAgro?.get(DatosAgronomicos.especieVariedad),
-                    ecoregimenPractica = datosAgro?.get(DatosAgronomicos.ecoregimenPractica),
-                    secanoRegadio    = datosAgro?.get(DatosAgronomicos.secanoRegadio),
-                    cultivoId        = datosAgro?.get(DatosAgronomicos.cultivoId),
-                    fechaInicio      = datosAgro?.get(DatosAgronomicos.fechaInicio)?.toString(),
-                    fechaFin         = datosAgro?.get(DatosAgronomicos.fechaFin)?.toString(),
-                    aireLibreProtegido = datosAgro?.get(DatosAgronomicos.aireLibreProtegido)
+                    parcela = ParcelaResponse(
+                        id                   = parcela[Parcelas.id].value,
+                        explotacionId        = parcela[Parcelas.explotacionId],
+                        orden                = parcela[Parcelas.orden],
+                        alias                = parcela[Parcelas.alias],
+                        sistemaAsesoramiento = parcela[Parcelas.sistemaAsesoramiento],
+                        zonaNitratos         = parcela[Parcelas.zonaNitratos]
+                    ),
+                    referenciaSigpac = refSigpac?.let {
+                        ReferenciaSigpacResponse(
+                            id               = it[ReferenciaSigpac.id].value,
+                            parcelaId        = it[ReferenciaSigpac.parcelaId],
+                            provincia        = it[ReferenciaSigpac.provincia],
+                            terminoMunicipal = it[ReferenciaSigpac.terminoMunicipal],
+                            codigoAgregado   = it[ReferenciaSigpac.codigoAgregado],
+                            zona             = it[ReferenciaSigpac.zona],
+                            numeroPoligono   = it[ReferenciaSigpac.numeroPoligono],
+                            numeroParcela    = it[ReferenciaSigpac.numeroParcela],
+                            numeroRecinto    = it[ReferenciaSigpac.numeroRecinto],
+                            usoSigpac        = it[ReferenciaSigpac.usoSigpac],
+                            superficieHa     = it[ReferenciaSigpac.superficieHa]
+                        )
+                    },
+                    datosAgronomicos = datosAgro?.let {
+                        DatosAgronomicosResponse(
+                            id                 = it[DatosAgronomicos.id].value,
+                            parcelaId          = it[DatosAgronomicos.parcelaId],
+                            especieVariedad    = it[DatosAgronomicos.especieVariedad],
+                            ecoregimenPractica = it[DatosAgronomicos.ecoregimenPractica],
+                            secanoRegadio      = it[DatosAgronomicos.secanoRegadio],
+                            cultivoId          = it[DatosAgronomicos.cultivoId],
+                            fechaInicio        = it[DatosAgronomicos.fechaInicio]?.toString(),
+                            fechaFin           = it[DatosAgronomicos.fechaFin]?.toString(),
+                            aireLibreProtegido = it[DatosAgronomicos.aireLibreProtegido]
+                        )
+                    }
                 )
             }
 

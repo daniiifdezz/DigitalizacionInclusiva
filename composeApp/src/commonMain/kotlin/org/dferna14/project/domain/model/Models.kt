@@ -126,6 +126,44 @@ data class Usuario(
     val fechaAlta     : String? = null
 )
 
+data class Cultivo(
+    val id       : Int     = 0,
+    val especie  : String? = null,
+    val variedad : String? = null
+)
+
+data class ReferenciaSigpac(
+    val id               : Int     = 0,
+    val parcelaId        : Int,
+    val provincia        : String? = null,
+    val terminoMunicipal : String? = null,
+    val codigoAgregado   : String? = null,
+    val zona             : String? = null,
+    val numeroPoligono   : String? = null,
+    val numeroParcela    : String? = null,
+    val numeroRecinto    : String? = null,
+    val usoSigpac        : String? = null,
+    val superficieHa     : Double? = null
+)
+
+data class DatosAgronomicos(
+    val id                 : Int     = 0,
+    val parcelaId          : Int,
+    val especieVariedad    : String? = null,
+    val ecoregimenPractica : String? = null,
+    val secanoRegadio      : String? = null,
+    val cultivoId          : Int?    = null,
+    val fechaInicio        : String? = null,
+    val fechaFin           : String? = null,
+    val aireLibreProtegido : String? = null
+)
+
+data class ParcelaCompleta(
+    val parcela          : Parcela,
+    val referenciaSigpac : ReferenciaSigpac? = null,
+    val datosAgronomicos : DatosAgronomicos? = null
+)
+
 /**
  * Wrapper para manejo de estados de carga, exito y error, sin el uso de excepciones
  */

@@ -17,6 +17,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ParcelasSc(
     onVolver: () -> Unit,
+    onEditarParcela: (Int) -> Unit,
     viewModel: ParcelaVm = koinViewModel()
 ) {
     val parcelasState by viewModel.parcelas.collectAsState()
@@ -99,13 +100,14 @@ fun ParcelasSc(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        items(state.data) { parcela ->
+                        items(state.data, key = { it.id }) { parcela ->
                             ParcelaCard(
                                 parcela = parcela,
                                 expandida = parcelaExpandida == parcela.id,
                                 onToggleExpand = {
                                     parcelaExpandida = if (parcelaExpandida == parcela.id) null else parcela.id
-                                }
+                                },
+                                onEditar = { onEditarParcela(parcela.id) }
                             )
                         }
                     }
@@ -119,7 +121,8 @@ fun ParcelasSc(
 private fun ParcelaCard(
     parcela: Parcela,
     expandida: Boolean,
-    onToggleExpand: () -> Unit
+    onToggleExpand: () -> Unit,
+    onEditar: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -161,6 +164,14 @@ private fun ParcelaCard(
                 InfoRow("Orden", parcela.orden?.toString() ?: "No disponible")
                 InfoRow("Sistema Asesoramiento", parcela.sistemaAsesoramiento ?: "No disponible")
                 InfoRow("Zona Nitratos", parcela.zonaNitratos?.let { if (it) "Sí" else "No" } ?: "No disponible")
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onEditar,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Editar SIGPAC y agronómicos")
+                }
             }
         }
     }

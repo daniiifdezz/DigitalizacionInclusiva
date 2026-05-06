@@ -27,6 +27,7 @@ sealed class Screen {
     object DesktopHome : Screen()
     object Parcelas : Screen()
     object Configuracion : Screen()
+    data class EditarParcela(val parcelaId: Int) : Screen()
     data class Pendientes(val actividadId: Int) : Screen()
 }
 
@@ -105,7 +106,14 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         }
         is Screen.Parcelas -> {
             ParcelasSc(
-                onVolver = { onNavigate(Screen.DesktopHome) }
+                onVolver = { onNavigate(Screen.DesktopHome) },
+                onEditarParcela = { id -> onNavigate(Screen.EditarParcela(id)) }
+            )
+        }
+        is Screen.EditarParcela -> {
+            EditarParcelaSc(
+                parcelaId = screen.parcelaId,
+                onVolver = { onNavigate(Screen.Parcelas) }
             )
         }
         is Screen.Semillas -> {
