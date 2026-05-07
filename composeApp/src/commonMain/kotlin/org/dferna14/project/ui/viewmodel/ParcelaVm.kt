@@ -11,15 +11,18 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.dferna14.project.data.repository.ActividadRepository
+import org.dferna14.project.data.repository.ExplotacionRepository
 import org.dferna14.project.domain.model.Cultivo
 import org.dferna14.project.domain.model.DatosAgronomicos
+import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.ParcelaCompleta
 import org.dferna14.project.domain.model.ReferenciaSigpac
 import org.dferna14.project.domain.model.Result
 
 class ParcelaVm(
-    private val repository: ActividadRepository
+    private val repository: ActividadRepository,
+    private val explotacionRepository: ExplotacionRepository
 ) : ViewModel() {
 
     private val _parcelas = MutableStateFlow<Result<List<Parcela>>>(Result.Loading)
@@ -30,6 +33,9 @@ class ParcelaVm(
 
     private val _cultivos = MutableStateFlow<Result<List<Cultivo>>>(Result.Loading)
     val cultivos: StateFlow<Result<List<Cultivo>>> = _cultivos.asStateFlow()
+
+    private val _explotaciones = MutableStateFlow<Result<List<Explotacion>>>(Result.Loading)
+    val explotaciones: StateFlow<Result<List<Explotacion>>> = _explotaciones.asStateFlow()
 
     private val _operacionExitosa = MutableStateFlow(false)
     val operacionExitosa: StateFlow<Boolean> = _operacionExitosa.asStateFlow()
@@ -42,6 +48,20 @@ class ParcelaVm(
 
     init {
         cargarParcelas()
+        cargarExplotaciones()
+    }
+
+    fun cargarExplotaciones() {
+        viewModelScope.launch {
+            _explotaciones.value = Result.Loading
+            try {
+                _explotaciones.value = explotacionRepository.getExplotaciones()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _explotaciones.value = Result.Error("Error al cargar explotaciones: ${e.message}")
+            }
+        }
     }
 
     fun cargarParcelas() {

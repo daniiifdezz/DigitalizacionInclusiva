@@ -22,6 +22,16 @@ class ExplotacionRepository(
         }
     }
 
+    suspend fun getExplotaciones(): Result<List<Explotacion>> {
+        return try {
+            Result.Success(api.getExplotaciones().map { it.toDomain() })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al obtener explotaciones: ${e.message}")
+        }
+    }
+
     suspend fun crearExplotacion(explotacion: Explotacion): Result<Explotacion> {
         return try {
             val dto = api.crearExplotacion(explotacion.toCreateDto())

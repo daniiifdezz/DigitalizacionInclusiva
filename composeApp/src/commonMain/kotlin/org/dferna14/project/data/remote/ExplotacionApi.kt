@@ -57,6 +57,14 @@ class ExplotacionApi(private val client: HttpClient) {
         }
     }
 
+    /**
+     * Lista completa de explotaciones — usada para los selectores de creación
+     * y edición de parcela. En cuanto haya login, esta lista se filtrará por
+     * la explotación del usuario autenticado.
+     */
+    suspend fun getExplotaciones(): List<ExplotacionDto> =
+        client.get("$BASE_URL/api/explotaciones").body()
+
     suspend fun crearExplotacion(request: ExplotacionCreateDto): ExplotacionDto {
         return client.post("$BASE_URL/api/explotaciones") {
             contentType(ContentType.Application.Json)

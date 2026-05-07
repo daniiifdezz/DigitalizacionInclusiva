@@ -12,6 +12,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Cultivo
 import org.dferna14.project.domain.model.DatosAgronomicos
+import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.ParcelaCompleta
 import org.dferna14.project.domain.model.ReferenciaSigpac
@@ -37,6 +38,7 @@ fun EditarParcelaSc(
 ) {
     val parcelaCompletaState by viewModel.parcelaCompleta.collectAsState()
     val cultivosState by viewModel.cultivos.collectAsState()
+    val explotacionesState by viewModel.explotaciones.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedTab by remember { mutableStateOf(0) }
@@ -44,6 +46,7 @@ fun EditarParcelaSc(
     LaunchedEffect(parcelaId) {
         viewModel.cargarParcelaCompleta(parcelaId)
         viewModel.cargarCultivos()
+        viewModel.cargarExplotaciones()
     }
 
     LaunchedEffect(Unit) {
@@ -105,6 +108,7 @@ fun EditarParcelaSc(
                         when (selectedTab) {
                             0 -> DatosBasicosTab(
                                 parcela = completa.parcela,
+                                explotacionesState = explotacionesState,
                                 onGuardar = { viewModel.actualizarParcela(it) }
                             )
                             1 -> SigpacTab(
@@ -146,20 +150,34 @@ private fun ErrorBox(mensaje: String, onReintentar: () -> Unit) {
 
 // ── Tab 1: Datos básicos ──────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DatosBasicosTab(
     parcela: Parcela,
+    explotacionesState: Result<List<Explotacion>>,
     onGuardar: (Parcela) -> Unit
 ) {
-    // Solo dos campos son editables aquí: sistema_asesoramiento y zona_nitratos.
-    // El resto (alias, orden, explotación) se gestiona desde el flujo de creación
-    // de parcela; los mostramos como referencia y los preservamos en el PUT.
+    // Editables: sistema_asesoramiento, zona_nitratos y explotación.
+    // El resto (alias) se mantiene como referencia y se preserva en el PUT.
     var sistemaAsesoramiento by remember(parcela) {
         mutableStateOf(parcela.sistemaAsesoramiento ?: "")
     }
     var zonaNitratos by remember(parcela) {
         mutableStateOf(parcela.zonaNitratos ?: false)
     }
+
+    val explotaciones = (explotacionesState as? Result.Success)?.data.orEmpty()
+
+    // Selecciona la explotación inicial: la asignada en BD si existe; si no, la única
+    // disponible auto-seleccionada (caso TFG monoexplotación). Si hay varias y la parcela
+    // no tiene asignada, queda en null hasta que el usuario elija.
+    var explotacionSeleccionada by remember(parcela, explotaciones) {
+        mutableStateOf(
+            explotaciones.find { it.id == parcela.explotacionId }
+                ?: explotaciones.singleOrNull()
+        )
+    }
+    var dropdownAbierto by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -170,8 +188,49 @@ private fun DatosBasicosTab(
     ) {
         ReadOnlyField("ID parcela", parcela.id.toString())
         ReadOnlyField("Alias", parcela.alias ?: "—")
-        ReadOnlyField("Orden", parcela.orden?.toString() ?: "—")
-        ReadOnlyField("Explotación", parcela.explotacionId?.toString() ?: "—")
+
+        // Dropdown explotación
+        ExposedDropdownMenuBox(
+            expanded = dropdownAbierto,
+            onExpandedChange = { dropdownAbierto = it }
+        ) {
+            OutlinedTextField(
+                value = when {
+                    explotacionSeleccionada != null -> explotacionSeleccionada!!.nombre
+                    explotacionesState is Result.Loading -> "Cargando..."
+                    explotaciones.isEmpty() -> "Sin explotaciones disponibles"
+                    else -> "Selecciona explotación"
+                },
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Explotación") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownAbierto) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor()
+            )
+            ExposedDropdownMenu(
+                expanded = dropdownAbierto,
+                onDismissRequest = { dropdownAbierto = false }
+            ) {
+                if (explotaciones.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("No hay explotaciones — créala en Configuración") },
+                        onClick = {}
+                    )
+                } else {
+                    explotaciones.forEach { exp ->
+                        DropdownMenuItem(
+                            text = { Text(exp.nombre) },
+                            onClick = {
+                                explotacionSeleccionada = exp
+                                dropdownAbierto = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
 
         OutlinedTextField(
             value = sistemaAsesoramiento,
@@ -203,6 +262,7 @@ private fun DatosBasicosTab(
             onClick = {
                 onGuardar(
                     parcela.copy(
+                        explotacionId        = explotacionSeleccionada?.id,
                         sistemaAsesoramiento = sistemaAsesoramiento.takeIf { it.isNotBlank() },
                         zonaNitratos         = zonaNitratos
                     )

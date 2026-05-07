@@ -202,6 +202,10 @@ class ActividadRepository(
         }
     }
 
+    // TODO(auth): cuando se implemente el login, obtener explotacionId
+    // del usuario autenticado en lugar de cargarlo de la lista. La parcela
+    // entrante debería traer ya el explotacionId del JWT y este método solo
+    // validaría que coincide con el del usuario logueado.
     suspend fun crearParcela(parcela: Parcela): Result<Parcela> {
         return try {
             val dto = api.crearParcela(
