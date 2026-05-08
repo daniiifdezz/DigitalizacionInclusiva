@@ -95,7 +95,8 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         is Screen.Validar -> {
             ValidarActividadSc(
                 actividadId = screen.actividadId,
-                onVolver = { onNavigate(Screen.DesktopHome) }
+                onVolver = { onNavigate(Screen.DesktopHome) },
+                onIrAEditarParcela = { parcelaId -> onNavigate(Screen.EditarParcela(parcelaId)) }
             )
         }
         is Screen.Pendientes -> {

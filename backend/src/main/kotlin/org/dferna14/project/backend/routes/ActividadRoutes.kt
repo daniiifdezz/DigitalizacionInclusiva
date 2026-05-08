@@ -245,6 +245,25 @@ fun Route.actividadRoutes() {
                     )
                 )
             }
+
+            // DELETE /api/actividades/{id}/productos/{actividadProductoId}
+            // Borra UNA fila de actividad_producto, comprobando que pertenezca a la actividad indicada
+            delete("{actividadProductoId}") {
+                val actividadId = call.parameters["id"]?.toIntOrNull()
+                    ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                val apId = call.parameters["actividadProductoId"]?.toIntOrNull()
+                    ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+                val filasEliminadas = transaction {
+                    ActividadProductos.deleteWhere {
+                        (ActividadProductos.id eq apId) and
+                                (ActividadProductos.actividadId eq actividadId)
+                    }
+                }
+
+                if (filasEliminadas == 0) call.respond(HttpStatusCode.NotFound)
+                else call.respond(HttpStatusCode.NoContent)
+            }
         }
 
         // Semilla tratada de una actividad

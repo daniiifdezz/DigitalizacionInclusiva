@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.ActividadProducto
 import org.dferna14.project.domain.model.Result
 
 class ActividadDetalleVm(
@@ -23,6 +24,9 @@ class ActividadDetalleVm(
 
     private val _mensajeError = MutableStateFlow<String?>(null)
     val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
+
+    private val _productosActividad = MutableStateFlow<Result<List<ActividadProducto>>>(Result.Loading)
+    val productosActividad: StateFlow<Result<List<ActividadProducto>>> = _productosActividad.asStateFlow()
 
     fun cargarActividad(id: Int) {
         viewModelScope.launch {
@@ -138,6 +142,55 @@ class ActividadDetalleVm(
                 throw e
             } catch (e: Exception) {
                 _mensajeError.value = "Error al eliminar actividad: ${e.message}"
+            }
+        }
+    }
+
+    // Productos aplicados a la actividad
+
+    fun cargarProductosActividad(actividadId: Int) {
+        viewModelScope.launch {
+            _productosActividad.value = Result.Loading
+            try {
+                _productosActividad.value = repository.getActividadProductos(actividadId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _productosActividad.value = Result.Error("Error al cargar productos: ${e.message}")
+            }
+        }
+    }
+
+    fun añadirProducto(actividadId: Int, productoId: Int, dosis: Double) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.crearActividadProducto(actividadId, productoId, dosis)
+                when (resultado) {
+                    is Result.Success -> cargarProductosActividad(actividadId)
+                    is Result.Error -> _mensajeError.value = resultado.message
+                    else -> {}
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al añadir producto: ${e.message}"
+            }
+        }
+    }
+
+    fun eliminarProducto(actividadProductoId: Int, actividadId: Int) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.eliminarActividadProducto(actividadId, actividadProductoId)
+                when (resultado) {
+                    is Result.Success -> cargarProductosActividad(actividadId)
+                    is Result.Error -> _mensajeError.value = resultado.message
+                    else -> {}
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al eliminar producto: ${e.message}"
             }
         }
     }

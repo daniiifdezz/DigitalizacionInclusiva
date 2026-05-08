@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.flow
 import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.ActividadCreateDto
 import org.dferna14.project.data.remote.ActividadDto
+import org.dferna14.project.data.remote.ActividadProductoCreateDto
 import org.dferna14.project.data.remote.DatosAgronomicosCreateDto
 import org.dferna14.project.data.remote.EstadoActividadDto
 import org.dferna14.project.data.remote.ParcelaApi
@@ -14,6 +15,7 @@ import org.dferna14.project.data.remote.ProductoCreateDto
 import org.dferna14.project.data.remote.ReferenciaSigpacCreateDto
 import org.dferna14.project.data.remote.SemillaTratadaCreateDto
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.ActividadProducto
 import org.dferna14.project.domain.model.Cultivo
 import org.dferna14.project.domain.model.DatosAgronomicos
 import org.dferna14.project.domain.model.EquipoAplicacion
@@ -316,6 +318,66 @@ class ActividadRepository(
         return try {
             val exito = api.eliminarProducto(id)
             if (exito) Result.Success(Unit)
+            else Result.Error("No se pudo eliminar el producto")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al eliminar producto: ${e.message}")
+        }
+    }
+
+    // Productos aplicados a una actividad
+
+    suspend fun getActividadProductos(actividadId: Int): Result<List<ActividadProducto>> {
+        return try {
+            val productos = api.getActividadProductos(actividadId).map { dto ->
+                ActividadProducto(
+                    id          = dto.id,
+                    actividadId = dto.actividadId,
+                    productoId  = dto.productoId,
+                    dosis       = dto.dosis
+                )
+            }
+            Result.Success(productos)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al cargar productos de actividad: ${e.message}")
+        }
+    }
+
+    suspend fun crearActividadProducto(
+        actividadId: Int,
+        productoId: Int,
+        dosis: Double
+    ): Result<ActividadProducto> {
+        return try {
+            val dto = api.crearActividadProducto(
+                actividadId,
+                ActividadProductoCreateDto(productoId = productoId, dosis = dosis)
+            )
+            Result.Success(
+                ActividadProducto(
+                    id          = dto.id,
+                    actividadId = dto.actividadId,
+                    productoId  = dto.productoId,
+                    dosis       = dto.dosis
+                )
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al añadir producto: ${e.message}")
+        }
+    }
+
+    suspend fun eliminarActividadProducto(
+        actividadId: Int,
+        actividadProductoId: Int
+    ): Result<Unit> {
+        return try {
+            val ok = api.eliminarActividadProducto(actividadId, actividadProductoId)
+            if (ok) Result.Success(Unit)
             else Result.Error("No se pudo eliminar el producto")
         } catch (e: CancellationException) {
             throw e

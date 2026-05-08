@@ -136,6 +136,20 @@ data class FertilizacionCreateDto(
 )
 
 @Serializable
+data class ActividadProductoDto(
+    @SerialName("id")          val id          : Int,
+    @SerialName("actividadId") val actividadId : Int,
+    @SerialName("productoId")  val productoId  : Int,
+    @SerialName("dosis")       val dosis       : Double
+)
+
+@Serializable
+data class ActividadProductoCreateDto(
+    @SerialName("productoId") val productoId : Int,
+    @SerialName("dosis")      val dosis      : Double
+)
+
+@Serializable
 data class EquipoDto(
     @SerialName("id")                    val id                    : Int,
     @SerialName("explotacionId")         val explotacionId         : Int?    = null,
@@ -216,6 +230,28 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun devolverActividad(id: Int): Boolean {
         val response = client.post("$BASE_URL/api/actividades/$id/devolver")
         return response.status == HttpStatusCode.OK
+    }
+
+    // Productos aplicados a una actividad (actividad_producto)
+
+    suspend fun getActividadProductos(actividadId: Int): List<ActividadProductoDto> =
+        client.get("$BASE_URL/api/actividades/$actividadId/productos").body()
+
+    suspend fun crearActividadProducto(
+        actividadId: Int,
+        request: ActividadProductoCreateDto
+    ): ActividadProductoDto {
+        return client.post("$BASE_URL/api/actividades/$actividadId/productos") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun eliminarActividadProducto(actividadId: Int, actividadProductoId: Int): Boolean {
+        val response = client.delete(
+            "$BASE_URL/api/actividades/$actividadId/productos/$actividadProductoId"
+        )
+        return response.status == HttpStatusCode.NoContent
     }
 
     // Semillas tratadas
