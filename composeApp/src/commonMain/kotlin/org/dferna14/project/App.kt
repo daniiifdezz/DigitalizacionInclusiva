@@ -1,10 +1,20 @@
 package org.dferna14.project
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import org.dferna14.project.ui.screens.*
 import org.dferna14.project.ui.theme.AppTheme
+import org.dferna14.project.ui.theme.BlancoPuro
+import org.dferna14.project.ui.theme.NaranjaClaro
+import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.TextoTerciario
 import androidx.compose.ui.Modifier
 
 sealed class Screen {
@@ -139,16 +149,25 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
     }
 }
 
+private data class TabItem(val titulo: String, val icono: ImageVector)
+
 @Composable
 private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Actividades", "Parcelas", "Productos", "Ajustes")
+    val tabs = listOf(
+        TabItem("Actividades", Icons.Outlined.Assignment),
+        TabItem("Parcelas",    Icons.Outlined.Map),
+        TabItem("Productos",   Icons.Outlined.Science),
+        TabItem("Ajustes",     Icons.Outlined.Settings)
+    )
     val screen = currentScreen
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                tabs.forEachIndexed { index, title ->
+            NavigationBar(
+                containerColor = BlancoPuro
+            ) {
+                tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = selectedTab == index,
                         onClick = {
@@ -160,8 +179,15 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                                 3 -> onNavigate(Screen.Ajustes)
                             }
                         },
-                        icon = { Text(if (index == 0) "A" else if (index == 1) "P" else if (index == 2) "Pr" else "Aj") },
-                        label = { Text(title) }
+                        icon  = { Icon(tab.icono, contentDescription = tab.titulo) },
+                        label = { Text(tab.titulo) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor   = NaranjaPrimario,
+                            selectedTextColor   = NaranjaPrimario,
+                            unselectedIconColor = TextoTerciario,
+                            unselectedTextColor = TextoTerciario,
+                            indicatorColor      = NaranjaClaro
+                        )
                     )
                 }
             }

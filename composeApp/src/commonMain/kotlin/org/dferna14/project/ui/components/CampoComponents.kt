@@ -1,0 +1,317 @@
+package org.dferna14.project.ui.components
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.dferna14.project.domain.model.EstadoActividad
+import org.dferna14.project.ui.theme.AzulFondoPendiente
+import org.dferna14.project.ui.theme.AzulPendiente
+import org.dferna14.project.ui.theme.BlancoPuro
+import org.dferna14.project.ui.theme.BordeMedio
+import org.dferna14.project.ui.theme.BordeNaranjaSuave
+import org.dferna14.project.ui.theme.BordeSuave
+import org.dferna14.project.ui.theme.CremaSecundario
+import org.dferna14.project.ui.theme.GrisBorrador
+import org.dferna14.project.ui.theme.GrisFondoBorrador
+import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.TextoPrimario
+import org.dferna14.project.ui.theme.TextoTerciario
+import org.dferna14.project.ui.theme.TextoPlaceholder
+import org.dferna14.project.ui.theme.VerdeFondoInfo
+import org.dferna14.project.ui.theme.VerdeFondoValidada
+import org.dferna14.project.ui.theme.VerdeInfo
+import org.dferna14.project.ui.theme.VerdeValidada
+
+/**
+ * Componentes reutilizables del sistema de diseño "Campo". Cada uno encapsula
+ * los detalles visuales (colores, padding, border-radius) para que las pantallas
+ * los usen sin repetir constantes. Pensados para Android y Desktop sin
+ * dependencias específicas de plataforma.
+ */
+
+
+@Composable
+fun CampoCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val baseModifier = modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(14.dp))
+        .background(BlancoPuro)
+        .border(0.5.dp, BordeSuave, RoundedCornerShape(14.dp))
+
+    val finalModifier = if (onClick != null) {
+        baseModifier.clickable(onClick = onClick)
+    } else {
+        baseModifier
+    }
+
+    Column(
+        modifier = finalModifier.padding(horizontal = 12.dp, vertical = 12.dp),
+        content = content
+    )
+}
+
+
+@Composable
+fun CampoField(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(CremaSecundario)
+            .border(0.5.dp, BordeSuave, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = label,
+            color = TextoTerciario,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = value,
+            color = TextoPrimario,
+            fontSize = 14.sp
+        )
+    }
+}
+
+@Composable
+fun CampoTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    keyboardType: KeyboardType = KeyboardType.Text,
+    minLines: Int = 1,
+    trailingIcon: (@Composable () -> Unit)? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.fillMaxWidth(),
+        label = { Text(label, color = TextoTerciario, fontSize = 12.sp) },
+        placeholder = if (placeholder.isNotBlank()) {
+            { Text(placeholder, color = TextoPlaceholder, fontSize = 14.sp) }
+        } else null,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        minLines = minLines,
+        singleLine = minLines == 1,
+        trailingIcon = trailingIcon,
+        shape = RoundedCornerShape(12.dp),
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor   = NaranjaPrimario,
+            unfocusedBorderColor = BordeMedio,
+            disabledBorderColor  = BordeMedio,
+            focusedContainerColor   = BlancoPuro,
+            unfocusedContainerColor = BlancoPuro,
+            disabledContainerColor  = BlancoPuro,
+            focusedLabelColor   = NaranjaPrimario,
+            unfocusedLabelColor = TextoTerciario,
+            cursorColor = NaranjaPrimario
+        )
+    )
+}
+
+@Composable
+fun EstadoBadge(estado: EstadoActividad) {
+    val (fondo, texto, etiqueta) = when (estado) {
+        EstadoActividad.BORRADOR          -> Triple(GrisFondoBorrador, GrisBorrador, "Borrador")
+        EstadoActividad.PENDIENTE_VALIDAR -> Triple(AzulFondoPendiente, AzulPendiente, "Pendiente")
+        EstadoActividad.VALIDADA          -> Triple(VerdeFondoValidada, VerdeValidada, "Validada")
+    }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(fondo)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = etiqueta,
+            color = texto,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+
+@Composable
+fun CampoToggle(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(BlancoPuro)
+            .border(0.5.dp, BordeSuave, RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            color = TextoPrimario,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor   = BlancoPuro,
+                checkedTrackColor   = NaranjaPrimario,
+                uncheckedThumbColor = BlancoPuro,
+                uncheckedTrackColor = TextoTerciario
+            )
+        )
+    }
+}
+
+
+@Composable
+fun CampoAvisoInfo(
+    mensaje: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(VerdeFondoInfo)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = null,
+            tint = VerdeInfo,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = mensaje,
+            color = VerdeInfo,
+            fontSize = 11.sp
+        )
+    }
+}
+
+
+@Composable
+fun CampoPrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 52.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor         = NaranjaPrimario,
+            contentColor           = BlancoPuro,
+            disabledContainerColor = TextoTerciario,
+            disabledContentColor   = BlancoPuro
+        )
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+
+@Composable
+fun CampoSecondaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 48.dp),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, BordeNaranjaSuave),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = CremaSecundario,
+            contentColor   = NaranjaPrimario
+        )
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = NaranjaPrimario,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        Text(
+            text = text,
+            color = NaranjaPrimario,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}

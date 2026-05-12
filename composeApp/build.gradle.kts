@@ -47,6 +47,7 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
+            implementation(compose.materialIconsExtended)
 
             // ViewModel + Lifecycle (KMP)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
