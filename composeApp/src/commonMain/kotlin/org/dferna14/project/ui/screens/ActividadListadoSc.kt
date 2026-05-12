@@ -1,23 +1,40 @@
 package org.dferna14.project.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.Actividad
-import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoCard
+import org.dferna14.project.ui.components.CampoPrimaryButton
+import org.dferna14.project.ui.components.EstadoBadge
+import org.dferna14.project.ui.theme.BlancoPuro
+import org.dferna14.project.ui.theme.BordeSuave
+import org.dferna14.project.ui.theme.CremaSecundario
+import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.TextoPrimario
+import org.dferna14.project.ui.theme.TextoSecundario
+import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * Pantalla principal — listado de actividades agrícolas.
- * Diseñada para ser accesible: texto grande y botones amplios.
+ * Listado de actividades agrícolas. Diseño accesible para agricultores mayores:
+ * texto grande, tarjetas amplias, zonas táctiles generosas.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,9 +47,7 @@ fun ActividadListadoSc(
 ) {
     val actividadesState by viewModel.actividades.collectAsState()
 
-    // Refrescar la lista cada vez que se entra a la pantalla.
-    // El VM es factory pero compartido por ViewModelStoreOwner — sin esto,
-    // los cambios hechos desde Detalle (enviar/eliminar) no se reflejan al volver.
+    // Refrescar al entrar
     LaunchedEffect(Unit) {
         viewModel.cargarActividades()
     }
@@ -40,12 +55,10 @@ fun ActividadListadoSc(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Actividades", style = MaterialTheme.typography.headlineSmall) },
+                title = { Text("Mis actividades", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     if (isDesktop && onVolver != null) {
-                        TextButton(onClick = onVolver) {
-                            Text("< Menu")
-                        }
+                        TextButton(onClick = onVolver) { Text("< Menú") }
                     }
                 }
             )
@@ -54,7 +67,9 @@ fun ActividadListadoSc(
             ExtendedFloatingActionButton(
                 onClick = onNuevaActividad,
                 text = { Text("Nueva actividad") },
-                icon = { Text("+") }
+                icon = { Text("+", style = MaterialTheme.typography.titleMedium) },
+                containerColor = NaranjaPrimario,
+                contentColor = BlancoPuro
             )
         }
     ) { padding ->
@@ -66,43 +81,76 @@ fun ActividadListadoSc(
             when (val estado = actividadesState) {
                 is Result.Loading -> {
                     CircularProgressIndicator(
+                        color = NaranjaPrimario,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
                 is Result.Error -> {
                     Column(
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Error al cargar actividades",
-                            style = MaterialTheme.typography.bodyLarge
+                            text = "No se pudieron cargar las actividades",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextoSecundario
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.cargarActividades() }) {
-                            Text("Reintentar")
-                        }
+                        Spacer(Modifier.height(12.dp))
+                        CampoPrimaryButton(
+                            text = "Reintentar",
+                            onClick = { viewModel.cargarActividades() },
+                            modifier = Modifier.width(180.dp)
+                        )
                     }
                 }
                 is Result.Success -> {
-                    if (estado.data.isEmpty()) {
-                        Text(
-                            text = "No hay actividades registradas",
-                            modifier = Modifier.align(Alignment.Center),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    } else {
-                        LazyColumn(
+                    val actividades = estado.data
+                    if (actividades.isEmpty()) {
+                        Column(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            items(estado.data, key = { it.id }) { actividad ->
-                                ActividadCard(
-                                    actividad = actividad,
-                                    onClick = { onVerDetalle(actividad.id) },
-                                    onEliminar = { viewModel.eliminarActividad(actividad.id) }
-                                )
+                            Icon(
+                                imageVector = Icons.Outlined.Assignment,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = TextoTerciario
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = "No tienes actividades registradas",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = TextoTerciario
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "Pulsa + para crear tu primera actividad",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextoTerciario
+                            )
+                        }
+                    } else {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                text = "${actividades.size} registro${if (actividades.size != 1) "s" else ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextoTerciario,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                items(actividades, key = { it.id }) { actividad ->
+                                    ActividadCard(
+                                        actividad = actividad,
+                                        onClick = { onVerDetalle(actividad.id) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -112,89 +160,79 @@ fun ActividadListadoSc(
     }
 }
 
-/**
- * Tarjeta de una actividad individual.
- * Botones grandes para facilitar el uso en campo.
- */
 @Composable
-fun ActividadCard(
+private fun ActividadCard(
     actividad: Actividad,
-    onClick: () -> Unit,
-    onEliminar: () -> Unit
+    onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+    CampoCard(onClick = onClick) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Parcela ${actividad.parcelaId}",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                EstadoChip(estado = actividad.estado)
-            }
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Fecha: ${actividad.fechaInicio}",
-                style = MaterialTheme.typography.bodyMedium
+                text = "Parcela ${actividad.parcelaId}",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextoPrimario,
+                modifier = Modifier.weight(1f)
             )
-            actividad.problemaFitosanitario?.let {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Problema: $it",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            actividad.observaciones?.let {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Observaciones: $it",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+            EstadoBadge(actividad.estado)
+        }
+
+        Spacer(Modifier.height(6.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Outlined.CalendarToday,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = TextoTerciario
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = formatearFecha(actividad.fechaInicio),
+                fontSize = 12.sp,
+                color = TextoTerciario
+            )
+        }
+
+        val problema = actividad.problemaFitosanitario
+        if (!problema.isNullOrBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(CremaSecundario)
+                    .border(0.5.dp, BordeSuave, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                if (actividad.estado.esEditable()) {
-                    TextButton(onClick = onEliminar) {
-                        Text("Eliminar", color = MaterialTheme.colorScheme.error)
-                    }
-                }
+                Text(
+                    text = problema,
+                    fontSize = 12.sp,
+                    color = TextoSecundario
+                )
             }
         }
     }
 }
 
-@Composable
-fun EstadoChip(estado: EstadoActividad) {
-    val (color, texto) = when (estado) {
-        EstadoActividad.BORRADOR -> Pair(Color(0xFFFFA000), "Borrador")
-        EstadoActividad.PENDIENTE_VALIDAR -> Pair(Color(0xFF1976D2), "Pendiente")
-        EstadoActividad.VALIDADA -> Pair(Color(0xFF388E3C), "Validada")
-    }
-
-    Surface(
-        color = color.copy(alpha = 0.15f),
-        shape = MaterialTheme.shapes.small
-    ) {
-        Text(
-            text = texto,
-            color = color,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
+/** Convierte "2026-04-13" en "13 abr 2026". Si el formato no es el esperado devuelve la cadena tal cual. */
+private fun formatearFecha(fechaIso: String): String {
+    return try {
+        val partes = fechaIso.split("-")
+        val dia = partes[2].toInt()
+        val mes = when (partes[1]) {
+            "01" -> "ene"; "02" -> "feb"; "03" -> "mar"
+            "04" -> "abr"; "05" -> "may"; "06" -> "jun"
+            "07" -> "jul"; "08" -> "ago"; "09" -> "sep"
+            "10" -> "oct"; "11" -> "nov"; "12" -> "dic"
+            else -> partes[1]
+        }
+        val anio = partes[0]
+        "$dia $mes $anio"
+    } catch (e: Exception) {
+        fechaIso
     }
 }

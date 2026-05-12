@@ -1,16 +1,26 @@
 package org.dferna14.project.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoCard
+import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.theme.*
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -24,8 +34,6 @@ fun MisParcelasSc(
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
     var parcelaAEliminar by remember { mutableStateOf<Parcela?>(null) }
 
-    // Cuando el usuario abre el diálogo refrescamos la lista de explotaciones
-    // por si se ha creado una desde Desktop mientras la app móvil estaba abierta.
     LaunchedEffect(mostrarDialogoCrear) {
         if (mostrarDialogoCrear) viewModel.cargarExplotaciones()
     }
@@ -33,80 +41,91 @@ fun MisParcelasSc(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Parcelas") }
+                title = { Text("Mis parcelas", style = MaterialTheme.typography.titleLarge) }
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { mostrarDialogoCrear = true }
+                onClick = { mostrarDialogoCrear = true },
+                containerColor = NaranjaPrimario,
+                contentColor = BlancoPuro
             ) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Icon(Icons.Outlined.Add, contentDescription = "Nueva parcela")
             }
         }
     ) { padding ->
-        when (val state = parcelasState) {
-            is Result.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            when (val state = parcelasState) {
+                is Result.Loading -> {
+                    CircularProgressIndicator(
+                        color = NaranjaPrimario,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
-            }
-            is Result.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.cargarParcelas() }) {
-                            Text("Reintentar")
-                        }
+                is Result.Error -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No se pudieron cargar las parcelas",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextoSecundario
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = { viewModel.cargarParcelas() },
+                            colors = ButtonDefaults.buttonColors(containerColor = NaranjaPrimario)
+                        ) { Text("Reintentar") }
                     }
                 }
-            }
-            is Result.Success -> {
-                if (state.data.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("No hay parcelas")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(onClick = { mostrarDialogoCrear = true }) {
-                                Text("Crear primera parcela")
-                            }
-                        }
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        item {
+                is Result.Success -> {
+                    val parcelas = state.data
+                    if (parcelas.isEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Map,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = TextoTerciario
+                            )
+                            Spacer(Modifier.height(16.dp))
                             Text(
-                                text = "${state.data.size} parcela(s)",
+                                text = "No tienes parcelas registradas",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = TextoTerciario
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "Pulsa + para añadir tu primera parcela",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextoTerciario
                             )
                         }
-                        items(state.data, key = { it.id }) { parcela ->
-                            ParcelaCard(
-                                parcela = parcela,
-                                onEliminar = { parcelaAEliminar = parcela }
+                    } else {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                text = "${parcelas.size} parcela${if (parcelas.size != 1) "s" else ""} registrada${if (parcelas.size != 1) "s" else ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextoTerciario,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             )
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                items(parcelas, key = { it.id }) { parcela ->
+                                    ParcelaCard(
+                                        parcela = parcela,
+                                        onEliminar = { parcelaAEliminar = parcela }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -114,7 +133,7 @@ fun MisParcelasSc(
         }
     }
 
-    // Dialogo crear parcela — comportamiento depende del estado de explotaciones
+    // Diálogo crear parcela, depende de explotaciones
     if (mostrarDialogoCrear) {
         when (val expState = explotacionesState) {
             is Result.Loading -> CargandoExplotacionesDialog(onDismiss = { mostrarDialogoCrear = false })
@@ -150,25 +169,24 @@ fun MisParcelasSc(
         }
     }
 
-    // Dialogo confirmar eliminación
+    // Diálogo confirmar eliminación
     parcelaAEliminar?.let { parcela ->
+        val nombre = parcela.alias ?: "Parcela ${parcela.id}"
         AlertDialog(
             onDismissRequest = { parcelaAEliminar = null },
-            title = { Text("Eliminar parcela") },
-            text = { Text("¿Estás seguro de que quieres eliminar la parcela ${parcela.id}?") },
+            title = { Text("¿Eliminar parcela?") },
+            text = { Text("Esta acción no se puede deshacer. ¿Seguro que quieres eliminar \"$nombre\"?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.eliminarParcela(parcela.id)
-                        parcelaAEliminar = null
-                    }
-                ) {
-                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = {
+                    viewModel.eliminarParcela(parcela.id)
+                    parcelaAEliminar = null
+                }) {
+                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { parcelaAEliminar = null }) {
-                    Text("Cancelar")
+                    Text("Cancelar", color = TextoSecundario)
                 }
             }
         )
@@ -180,34 +198,51 @@ private fun ParcelaCard(
     parcela: Parcela,
     onEliminar: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    CampoCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(VerdeFondoInfo),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Place,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = VerdeValidada
+                )
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = parcela.alias ?: "Parcela ${parcela.id}",
-                    style = MaterialTheme.typography.titleMedium
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextoPrimario
                 )
-                if (parcela.sistemaAsesoramiento != null || parcela.zonaNitratos != null) {
+                val subtitulo = buildList {
+                    parcela.sistemaAsesoramiento?.let { add(it) }
+                    if (parcela.zonaNitratos == true) add("Zona nitratos")
+                }.joinToString(" · ")
+                if (subtitulo.isNotBlank()) {
                     Text(
-                        text = listOfNotNull(
-                            parcela.sistemaAsesoramiento,
-                            parcela.zonaNitratos?.let { if (it) "Zona nitratos" else null }
-                        ).joinToString(" - "),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = subtitulo,
+                        fontSize = 12.sp,
+                        color = TextoTerciario
                     )
                 }
             }
-            TextButton(onClick = onEliminar) {
-                Text("X", color = MaterialTheme.colorScheme.error)
+            IconButton(onClick = onEliminar) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "Eliminar parcela",
+                    tint = TextoTerciario
+                )
             }
         }
     }
@@ -221,8 +256,6 @@ private fun CrearParcelaDialog(
     onCreate: (alias: String?, explotacionId: Int) -> Unit
 ) {
     var alias by remember { mutableStateOf("") }
-    // Si solo hay una explotación se preselecciona automáticamente sin pedir nada al
-    // usuario. En cuanto haya login, esto se reemplazará por la explotación del JWT.
     var explotacionSeleccionada by remember(explotaciones) {
         mutableStateOf(explotaciones.firstOrNull())
     }
@@ -230,12 +263,13 @@ private fun CrearParcelaDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nueva Parcela") },
+        title = { Text("Nueva parcela") },
         text = {
             Column {
                 Text(
                     text = "Introduce un nombre para identificar la parcela",
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextoTerciario
                 )
 
                 if (explotaciones.size > 1) {
@@ -250,9 +284,7 @@ private fun CrearParcelaDialog(
                             readOnly = true,
                             label = { Text("Explotación *") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownAbierto) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
+                            modifier = Modifier.fillMaxWidth().menuAnchor()
                         )
                         ExposedDropdownMenu(
                             expanded = dropdownAbierto,
@@ -272,30 +304,28 @@ private fun CrearParcelaDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
+                CampoTextField(
+                    label = "Nombre / Alias",
                     value = alias,
                     onValueChange = { alias = it },
-                    label = { Text("Nombre/Alias") },
-                    placeholder = { Text("Ej: Parcela Norte") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = "Ej: Parcela Norte"
                 )
             }
         },
         confirmButton = {
-            Button(
+            TextButton(
                 onClick = {
-                    val expId = explotacionSeleccionada?.id ?: return@Button
+                    val expId = explotacionSeleccionada?.id ?: return@TextButton
                     onCreate(alias.ifBlank { null }, expId)
                 },
                 enabled = explotacionSeleccionada != null
             ) {
-                Text("Crear")
+                Text("Crear", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text("Cancelar", color = TextoSecundario)
             }
         }
     )
@@ -308,16 +338,14 @@ private fun CargandoExplotacionesDialog(onDismiss: () -> Unit) {
         title = { Text("Cargando…") },
         text = {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = NaranjaPrimario)
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) { Text("Cancelar", color = TextoSecundario) }
         }
     )
 }
@@ -333,7 +361,7 @@ private fun SinExplotacionesDialog(
         title = { Text(titulo) },
         text = { Text(mensaje) },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Entendido") }
+            TextButton(onClick = onDismiss) { Text("Entendido", color = NaranjaPrimario, fontWeight = FontWeight.Medium) }
         }
     )
 }
