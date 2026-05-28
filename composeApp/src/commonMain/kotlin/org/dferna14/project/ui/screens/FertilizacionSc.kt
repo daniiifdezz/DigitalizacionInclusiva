@@ -1,21 +1,58 @@
 package org.dferna14.project.ui.screens
 
-import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Fertilizacion
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoAvisoInfo
+import org.dferna14.project.ui.components.CampoDropdown
+import org.dferna14.project.ui.components.CampoField
+import org.dferna14.project.ui.components.CampoPrimaryButton
+import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.components.CampoToggle
+import org.dferna14.project.ui.components.formatearFecha
+import org.dferna14.project.ui.theme.BordeSuave
+import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.viewmodel.FertilizacionVm
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Opción de un desplegable de código corto + nombre completo */
+private data class OpcionCodigo(val codigo: String, val nombre: String) {
+    val etiqueta: String get() = "$codigo — $nombre"
+}
+
+private val TIPOS_PRODUCTO = listOf(
+    OpcionCodigo("EB", "Estiércol de bovino"),
+    OpcionCodigo("EO", "Estiércol de ovino/caprino"),
+    OpcionCodigo("EP", "Estiércol de porcino"),
+    OpcionCodigo("PP", "Purín de porcino"),
+    OpcionCodigo("G", "Gallinaza"),
+    OpcionCodigo("L", "Lodos de depuradora"),
+    OpcionCodigo("C", "Compost"),
+    OpcionCodigo("O", "Otros")
+)
+
+private val TIPOS_FERTILIZACION = listOf(
+    OpcionCodigo("F", "Fondo"),
+    OpcionCodigo("AF", "Aporte foliar"),
+    OpcionCodigo("AC", "Aporte cobertera")
+)
+
 @Composable
 fun FertilizacionSc(
     parcelaId: Int,
@@ -23,33 +60,23 @@ fun FertilizacionSc(
     onVolver: () -> Unit,
     viewModel: FertilizacionVm = koinViewModel()
 ) {
-    // Si parcelaId es 0 o inválido, mostramos error
     if (parcelaId <= 0) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Fertilización Básica") },
-                    navigationIcon = {
-                        TextButton(onClick = onVolver) {
-                            Text("< Volver")
-                        }
-                    }
-                )
-            }
-        ) { padding ->
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            NavBarFormulario(titulo = "Fertilización básica", onVolver = onVolver)
+            HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(24.dp)
+                ) {
                     Text(
-                        text = "Error: No hay parcela asociada",
-                        color = MaterialTheme.colorScheme.error,
+                        text = "No hay parcela asociada a esta actividad",
+                        color = RojoEliminar,
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Asocia una parcela a esta actividad antes de fertilizar.",
+                        text = "Asocia una parcela antes de registrar la fertilización.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -62,186 +89,148 @@ fun FertilizacionSc(
     var guardando by remember { mutableStateOf(false) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Fertilización Básica") },
-                navigationIcon = {
-                    TextButton(onClick = onVolver) {
-                        Text("< Volver")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FertilizacionForm(
-                parcelaId = parcelaId,
-                onGuardar = { nuevaFertilizacion ->
-                    scope.launch {
-                        guardando = true
-                        mensajeError = null
-                        val resultado = viewModel.crearFertilizacion(nuevaFertilizacion)
-                        guardando = false
-                        if (resultado is Result.Error) {
-                            mensajeError = resultado.message
-                        } else {
-                            onVolver()
-                        }
-                    }
-                }
-            )
-
-            if (guardando) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            }
-
-            mensajeError?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun FertilizacionForm(
-    parcelaId: Int,
-    onGuardar: (Fertilizacion) -> Unit
-) {
     val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
     var aplica by remember { mutableStateOf(false) }
-    var fechaInicio by remember { mutableStateOf(fechaHoy) }
-    var fechaFin by remember { mutableStateOf("") }
-    var tipoProducto by remember { mutableStateOf("") }
     var numeroAlbaran by remember { mutableStateOf("") }
+    var tipoProductoSel by remember { mutableStateOf<OpcionCodigo?>(null) }
     var riquezaNPK by remember { mutableStateOf("") }
     var dosis by remember { mutableStateOf("") }
-    var tipoFertilizacion by remember { mutableStateOf("") }
+    var tipoFertilizacionSel by remember { mutableStateOf<OpcionCodigo?>(null) }
     var observaciones by remember { mutableStateOf("") }
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("¿Aplica fertilización?", modifier = Modifier.weight(1f))
-            Switch(
-                checked = aplica,
-                onCheckedChange = { aplica = it }
-            )
-        }
+    Scaffold { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            NavBarFormulario(titulo = "Fertilización básica", onVolver = onVolver)
+            HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
 
-        if (aplica) {
-            OutlinedTextField(
-                value = fechaInicio,
-                onValueChange = { fechaInicio = it },
-                label = { Text("Fecha inicio") },
-                placeholder = { Text("YYYY-MM-DD") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = fechaFin,
-                onValueChange = { fechaFin = it },
-                label = { Text("Fecha fin (opcional)") },
-                placeholder = { Text("YYYY-MM-DD") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = tipoProducto,
-                onValueChange = { tipoProducto = it },
-                label = { Text("Tipo de producto") },
-                placeholder = { Text("Ej: Orgánico, Químico") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = numeroAlbaran,
-                onValueChange = { numeroAlbaran = it },
-                label = { Text("Número de albarán") },
-                placeholder = { Text("Ej: A-2024-001") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = riquezaNPK,
-                onValueChange = { riquezaNPK = it },
-                label = { Text("Riqueza NPK") },
-                placeholder = { Text("Ej: 15-15-15") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = dosis,
-                onValueChange = { dosis = it },
-                label = { Text("Dosis (kg/ha)") },
-                placeholder = { Text("Ej: 300") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = tipoFertilizacion,
-                onValueChange = { tipoFertilizacion = it },
-                label = { Text("Tipo de fertilización") },
-                placeholder = { Text("Ej: Foliar, Radicular") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = observaciones,
-                onValueChange = { observaciones = it },
-                label = { Text("Observaciones") },
-                placeholder = { Text("Notas adicionales...") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                // Enviamos null para cultivoId hasta que implementemos el vínculo real Cultivo
-                // La tabla Fertilizaciones tiene cultivoId nullable()
-                onGuardar(
-                    Fertilizacion(
-                        id = 0,
-                        cultivoId = null, // Siempre null hasta tener vínculo Cultivo
-                        aplica = aplica,
-                        fechaInicio = if (aplica) fechaInicio else null,
-                        fechaFin = if (aplica && fechaFin.isNotBlank()) fechaFin else null,
-                        tipoProducto = if (aplica) tipoProducto.ifBlank { null } else null,
-                        numeroAlbaran = if (aplica) numeroAlbaran.ifBlank { null } else null,
-                        riquezaNPK = if (aplica) riquezaNPK.ifBlank { null } else null,
-                        dosis = if (aplica) dosis.toDoubleOrNull() else null,
-                        tipoFertilizacion = if (aplica) tipoFertilizacion.ifBlank { null } else null,
-                        observaciones = if (aplica) observaciones.ifBlank { null } else null
-                    )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 12.dp, bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                CampoToggle(
+                    label = "¿Aplica fertilización?",
+                    checked = aplica,
+                    onCheckedChange = { aplica = it }
                 )
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Guardar")
+
+                AnimatedVisibility(visible = aplica) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CampoField(label = "Fecha de inicio", value = formatearFecha(fechaHoy))
+
+                        CampoTextField(
+                            label = "Número de albarán",
+                            value = numeroAlbaran,
+                            onValueChange = { numeroAlbaran = it },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = { /* TODO: OCR */ },
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.CameraAlt,
+                                        contentDescription = "Escanear albarán con cámara",
+                                        tint = NaranjaPrimario,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        )
+                        CampoAvisoInfo(
+                            mensaje = "Próximamente: escanea el albarán con la cámara automáticamente"
+                        )
+
+                        CampoDropdown(
+                            label = "Tipo de producto",
+                            selectedItem = tipoProductoSel,
+                            items = TIPOS_PRODUCTO,
+                            itemLabel = { it.etiqueta },
+                            onSelect = { tipoProductoSel = it },
+                            placeholder = "Selecciona tipo de producto"
+                        )
+
+                        CampoTextField(
+                            label = "Riqueza NPK",
+                            value = riquezaNPK,
+                            onValueChange = { riquezaNPK = it },
+                            placeholder = "p.ej. 15-15-15"
+                        )
+
+                        CampoTextField(
+                            label = "Dosis (kg/ha)",
+                            value = dosis,
+                            onValueChange = { dosis = it },
+                            keyboardType = KeyboardType.Decimal
+                        )
+
+                        CampoDropdown(
+                            label = "Tipo de fertilización",
+                            selectedItem = tipoFertilizacionSel,
+                            items = TIPOS_FERTILIZACION,
+                            itemLabel = { it.etiqueta },
+                            onSelect = { tipoFertilizacionSel = it },
+                            placeholder = "Selecciona tipo de fertilización"
+                        )
+
+                        CampoTextField(
+                            label = "Observaciones (opcional)",
+                            value = observaciones,
+                            onValueChange = { observaciones = it },
+                            minLines = 2
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                CampoPrimaryButton(
+                    text = "Guardar fertilización",
+                    onClick = {
+                        scope.launch {
+                            guardando = true
+                            mensajeError = null
+                            val resultado = viewModel.crearFertilizacion(
+                                Fertilizacion(
+                                    id                = 0,
+                                    cultivoId         = null, // sin vínculo Cultivo todavía
+                                    aplica            = aplica,
+                                    fechaInicio       = if (aplica) fechaHoy else null,
+                                    fechaFin          = null,
+                                    tipoProducto      = if (aplica) tipoProductoSel?.codigo else null,
+                                    numeroAlbaran     = if (aplica) numeroAlbaran.ifBlank { null } else null,
+                                    riquezaNPK        = if (aplica) riquezaNPK.ifBlank { null } else null,
+                                    dosis             = if (aplica) dosis.toDoubleOrNull() else null,
+                                    tipoFertilizacion = if (aplica) tipoFertilizacionSel?.codigo else null,
+                                    observaciones     = if (aplica) observaciones.ifBlank { null } else null
+                                )
+                            )
+                            guardando = false
+                            if (resultado is Result.Error) {
+                                mensajeError = resultado.message
+                            } else {
+                                onVolver()
+                            }
+                        }
+                    }
+                )
+
+                if (guardando) {
+                    CircularProgressIndicator(
+                        color = NaranjaPrimario,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+                mensajeError?.let { error ->
+                    Text(
+                        text = error,
+                        color = RojoEliminar,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         }
     }
 }

@@ -7,8 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,13 +21,8 @@ import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.EstadoBadge
-import org.dferna14.project.ui.theme.BlancoPuro
-import org.dferna14.project.ui.theme.BordeSuave
-import org.dferna14.project.ui.theme.CremaSecundario
-import org.dferna14.project.ui.theme.NaranjaPrimario
-import org.dferna14.project.ui.theme.TextoPrimario
-import org.dferna14.project.ui.theme.TextoSecundario
-import org.dferna14.project.ui.theme.TextoTerciario
+import org.dferna14.project.ui.components.formatearFecha
+import org.dferna14.project.ui.theme.*
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -218,21 +212,3 @@ private fun ActividadCard(
     }
 }
 
-/** Convierte "2026-04-13" en "13 abr 2026". Si el formato no es el esperado devuelve la cadena tal cual. */
-private fun formatearFecha(fechaIso: String): String {
-    return try {
-        val partes = fechaIso.split("-")
-        val dia = partes[2].toInt()
-        val mes = when (partes[1]) {
-            "01" -> "ene"; "02" -> "feb"; "03" -> "mar"
-            "04" -> "abr"; "05" -> "may"; "06" -> "jun"
-            "07" -> "jul"; "08" -> "ago"; "09" -> "sep"
-            "10" -> "oct"; "11" -> "nov"; "12" -> "dic"
-            else -> partes[1]
-        }
-        val anio = partes[0]
-        "$dia $mes $anio"
-    } catch (e: Exception) {
-        fechaIso
-    }
-}

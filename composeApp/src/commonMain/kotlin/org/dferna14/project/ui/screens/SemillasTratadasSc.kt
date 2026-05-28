@@ -1,26 +1,36 @@
 package org.dferna14.project.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
-import kotlin.time.Clock
 import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.SemillaTratada
+import org.dferna14.project.ui.components.CampoAvisoInfo
+import org.dferna14.project.ui.components.CampoDropdown
+import org.dferna14.project.ui.components.CampoField
+import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.components.CampoToggle
+import org.dferna14.project.ui.components.formatearFecha
+import org.dferna14.project.ui.theme.BordeSuave
+import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
 import org.dferna14.project.ui.viewmodel.SemillaVm
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.Clock
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SemillasTratadasSc(
     actividadId: Int,
@@ -31,304 +41,171 @@ fun SemillasTratadasSc(
 ) {
     val scope = rememberCoroutineScope()
     val semillaState by viewModel.semilla.collectAsState()
-    var mostrarFormulario by remember { mutableStateOf(false) }
     val productosState by productoVm.productos.collectAsState()
     val actividadState by actividadDetalleVm.actividadActual.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Feedback visual
-    var mostrarSnackbar by remember { mutableStateOf(false) }
-    var snackbarMensaje by remember { mutableStateOf("") }
-
-    // 1. Cargar la actividad para obtener el parcelaId asociado y la semilla
     LaunchedEffect(actividadId) {
         actividadDetalleVm.cargarActividad(actividadId)
         viewModel.cargarSemilla(actividadId)
     }
 
-    // Si la semilla ya existe, mostrar formulario con datos
-    LaunchedEffect(semillaState) {
-        val state = semillaState
-        if (state is Result.Success && state.data != null) {
-            mostrarFormulario = true
+    val parcelaId = (actividadState as? Result.Success)?.data?.parcelaId ?: 0
+    val productos = (productosState as? Result.Success)?.data.orEmpty()
+    val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
+
+    // La semilla existente (puede ser null si aún no hay registro).
+    val semillaExistente = (semillaState as? Result.Success)?.data
+
+    // Estado del formulario, re-inicializado cuando llega una semilla del backend.
+    var aplica by remember(semillaExistente) { mutableStateOf(semillaExistente?.aplica ?: false) }
+    var superficieHa by remember(semillaExistente) {
+        mutableStateOf(semillaExistente?.superficieHa?.toString() ?: "")
+    }
+    var cantidadSemillaKg by remember(semillaExistente) {
+        mutableStateOf(semillaExistente?.cantidadSemillaKg?.toString() ?: "")
+    }
+    var variedadSemilla by remember(semillaExistente) {
+        mutableStateOf(semillaExistente?.variedadSemilla ?: "")
+    }
+    var productoSeleccionado by remember(semillaExistente, productos) {
+        mutableStateOf(productos.find { it.id == semillaExistente?.productoId })
+    }
+
+    fun guardar() {
+        scope.launch {
+            val resultado = viewModel.crearSemillaTratada(
+                SemillaTratada(
+                    id                = semillaExistente?.id ?: 0,
+                    actividadId       = actividadId,
+                    parcelaId         = parcelaId,
+                    aplica            = aplica,
+                    fechaSiembra      = if (aplica) fechaHoy else null,
+                    superficieHa      = superficieHa.toDoubleOrNull(),
+                    cantidadSemillaKg = cantidadSemillaKg.toDoubleOrNull(),
+                    productoId        = if (aplica) productoSeleccionado?.id else null,
+                    variedadSemilla   = if (aplica) variedadSemilla.ifBlank { null } else null,
+                    cultivoId         = null
+                )
+            )
+            when (resultado) {
+                is Result.Success -> snackbarHostState.showSnackbar("Semilla tratada guardada correctamente")
+                is Result.Error   -> snackbarHostState.showSnackbar(resultado.message)
+                else -> {}
+            }
         }
     }
 
-    // Extraer parcelaId de la actividad cargada
-    val parcelaId = (actividadState as? Result.Success)?.data?.parcelaId ?: 0
-
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Semilla Tratada") },
-                navigationIcon = {
-                    TextButton(onClick = onVolver) {
-                        Text("< Volver")
-                    }
-                },
-                actions = {
-                    val state = semillaState
-                    if (state is Result.Success && state.data == null) {
-                        TextButton(onClick = { mostrarFormulario = true }) {
-                            Text("Añadir")
-                        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            NavBarFormulario(
+                titulo = "Semilla tratada",
+                onVolver = onVolver,
+                accionDerecha = {
+                    val habilitado = actividadState is Result.Success && parcelaId > 0
+                    TextButton(onClick = { guardar() }, enabled = habilitado) {
+                        Text(
+                            "Guardar",
+                            color = if (habilitado) NaranjaPrimario else BordeSuave,
+                            fontSize = 13.sp
+                        )
                     }
                 }
             )
-        },
-        snackbarHost = {
-            if (mostrarSnackbar) {
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    action = {
-                        TextButton(onClick = { mostrarSnackbar = false }) {
-                            Text("OK")
-                        }
-                    }
-                ) {
-                    Text(snackbarMensaje)
-                }
-            }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+            HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
+
             when (val state = semillaState) {
                 is Result.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = NaranjaPrimario)
                     }
                 }
                 is Result.Error -> {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = {
-                            viewModel.cargarSemilla(actividadId)
-                        }) {
-                            Text("Reintentar")
-                        }
+                        Text(
+                            text = "No se pudo cargar la semilla tratada",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = RojoEliminar
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = { viewModel.cargarSemilla(actividadId) },
+                            colors = ButtonDefaults.buttonColors(containerColor = NaranjaPrimario)
+                        ) { Text("Reintentar") }
                     }
                 }
                 is Result.Success -> {
-                    val semilla = state.data
-                    // No habilitar el form hasta que la actividad esté cargada — sin esto
-                    // se podía guardar con parcelaId=0 si el usuario era muy rápido y el
-                    // INSERT petaba con FK violation devolviendo 500 silencioso.
-                    val actividadCargada = actividadState is Result.Success && parcelaId > 0
-
-                    if (!actividadCargada) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+                    if (actividadState !is Result.Success || parcelaId <= 0) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = NaranjaPrimario)
                         }
-                    } else if (semilla != null || mostrarFormulario) {
-                        SemillaTratadaForm(
-                            semilla = semilla, // Si es null, el formulario saldrá vacío
-                            productosState = productosState,
-                            onGuardar = { semillaNueva ->
-                                scope.launch {
-                                    val semillaFinal = semillaNueva.copy(
-                                        actividadId = actividadId,
-                                        parcelaId = parcelaId
-                                    )
-                                    val resultado = viewModel.crearSemillaTratada(semillaFinal)
-                                    if (resultado is Result.Success) {
-                                        snackbarMensaje = "Registro guardado correctamente"
-                                        mostrarSnackbar = true
-                                        mostrarFormulario = false
-                                    } else if (resultado is Result.Error) {
-                                        snackbarMensaje = resultado.message ?: "Error al guardar"
-                                        mostrarSnackbar = true
-                                    }
-                                }
-                            }
-                        )
                     } else {
-                        // Mostrar pantalla vacía con botón para crear
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("No hay semilla tratada registrada")
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Button(onClick = { mostrarFormulario = true }) {
-                                    Text("Registrar semilla tratada")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SemillaTratadaForm(
-    semilla: SemillaTratada?,
-    productosState: Result<List<org.dferna14.project.domain.model.Producto>>,
-    onGuardar: (SemillaTratada) -> Unit
-) {
-    val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
-    var aplica by remember { mutableStateOf(semilla?.aplica ?: false) }
-    var fechaSiembra by remember { mutableStateOf(semilla?.fechaSiembra ?: fechaHoy) }
-    var superficieHa by remember { mutableStateOf(semilla?.superficieHa?.toString() ?: "") }
-    var cantidadSemillaKg by remember { mutableStateOf(semilla?.cantidadSemillaKg?.toString() ?: "") }
-    var productoId by remember { mutableStateOf(semilla?.productoId) }
-    var variedadSemilla by remember { mutableStateOf(semilla?.variedadSemilla ?: "") }
-    var cultivoId by remember { mutableStateOf(semilla?.cultivoId) }
-    var mostrarSelectorProducto by remember { mutableStateOf(false) }
-
-    // Obtener nombre del producto seleccionado
-    val productoSeleccionado = when (productosState) {
-        is Result.Success -> productosState.data.find { it.id == productoId }?.nombreComercial
-        else -> null
-    }
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("¿Aplica semilla tratada?", modifier = Modifier.weight(1f))
-            Switch(
-                checked = aplica,
-                onCheckedChange = { aplica = it }
-            )
-        }
-
-        if (aplica) {
-            OutlinedTextField(
-                value = fechaSiembra,
-                onValueChange = { fechaSiembra = it },
-                label = { Text("Fecha de siembra") },
-                placeholder = { Text("YYYY-MM-DD") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = superficieHa,
-                onValueChange = { superficieHa = it },
-                label = { Text("Superficie (ha)") },
-                placeholder = { Text("Ej: 10.5") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = cantidadSemillaKg,
-                onValueChange = { cantidadSemillaKg = it },
-                label = { Text("Cantidad de semilla (kg)") },
-                placeholder = { Text("Ej: 500") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = productoSeleccionado ?: "Seleccionar producto",
-                onValueChange = { },
-                label = { Text("Producto utilizado") },
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    TextButton(onClick = { mostrarSelectorProducto = true }) {
-                        Text("Seleccionar")
-                    }
-                }
-            )
-
-            OutlinedTextField(
-                value = variedadSemilla,
-                onValueChange = { variedadSemilla = it },
-                label = { Text("Variedad de Semilla") },
-                placeholder = { Text("Ej: Trigo R01") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                onGuardar(
-                    SemillaTratada(
-                        id = semilla?.id ?: 0,
-                        actividadId = semilla?.actividadId ?: 0,
-                        parcelaId = semilla?.parcelaId ?: 0,
-                        aplica = aplica,
-                        fechaSiembra = if (aplica) fechaSiembra else null,
-                        superficieHa = superficieHa.toDoubleOrNull(),
-                        cantidadSemillaKg = cantidadSemillaKg.toDoubleOrNull(),
-                        productoId = if (aplica) productoId else null,
-                        variedadSemilla = if (aplica) variedadSemilla else null,
-                        cultivoId = if (aplica) cultivoId else null
-                    )
-                )
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Guardar")
-        }
-    }
-
-    if (mostrarSelectorProducto) {
-        AlertDialog(
-            onDismissRequest = { mostrarSelectorProducto = false },
-            title = { Text("Seleccionar Producto") },
-            text = {
-                when (val state = productosState) {
-                    is Result.Loading -> {
-                        CircularProgressIndicator()
-                    }
-                    is Result.Success -> {
-                        LazyColumn(
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 300.dp)
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 12.dp, bottom = 80.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            items(state.data, key = { it.id }) { producto ->
-                                TextButton(
-                                    onClick = {
-                                        productoId = producto.id
-                                        mostrarSelectorProducto = false
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = producto.nombreComercial ?: "Producto ${producto.id}",
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Start
+                            if (semillaExistente != null) {
+                                CampoAvisoInfo(
+                                    mensaje = "Ya tienes datos de semilla guardados. Puedes modificarlos y guardar de nuevo."
+                                )
+                            }
+
+                            CampoToggle(
+                                label = "¿Aplica semilla tratada?",
+                                checked = aplica,
+                                onCheckedChange = { aplica = it }
+                            )
+
+                            CampoAvisoInfo(
+                                mensaje = "La fecha de siembra se registra automáticamente con el día de hoy"
+                            )
+
+                            AnimatedVisibility(visible = aplica) {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    CampoField(label = "Fecha de siembra", value = formatearFecha(fechaHoy))
+
+                                    CampoTextField(
+                                        label = "Superficie (ha)",
+                                        value = superficieHa,
+                                        onValueChange = { superficieHa = it },
+                                        keyboardType = KeyboardType.Decimal
+                                    )
+                                    CampoTextField(
+                                        label = "Cantidad de semilla (kg)",
+                                        value = cantidadSemillaKg,
+                                        onValueChange = { cantidadSemillaKg = it },
+                                        keyboardType = KeyboardType.Decimal
+                                    )
+                                    CampoDropdown(
+                                        label = "Producto utilizado",
+                                        selectedItem = productoSeleccionado,
+                                        items = productos,
+                                        itemLabel = { it.nombreComercial.ifBlank { "Producto ${it.id}" } },
+                                        onSelect = { productoSeleccionado = it },
+                                        placeholder = "Selecciona producto"
+                                    )
+                                    CampoTextField(
+                                        label = "Variedad de semilla",
+                                        value = variedadSemilla,
+                                        onValueChange = { variedadSemilla = it },
+                                        placeholder = "p.ej. Trigo R01"
                                     )
                                 }
                             }
                         }
                     }
-                    is Result.Error -> {
-                        Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { mostrarSelectorProducto = false }) {
-                    Text("Cerrar")
                 }
             }
-        )
+        }
     }
 }

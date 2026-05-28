@@ -22,6 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -31,10 +35,15 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -313,5 +322,93 @@ fun CampoSecondaryButton(
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium
         )
+    }
+}
+
+// Dropdown mejorado con CampoTextField
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> CampoDropdown(
+    label: String,
+    selectedItem: T?,
+    items: List<T>,
+    itemLabel: (T) -> String,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "Selecciona una opción"
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedItem?.let(itemLabel) ?: placeholder,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label, color = TextoTerciario, fontSize = 12.sp) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            shape = RoundedCornerShape(12.dp),
+            textStyle = TextStyle(
+                fontSize = 14.sp,
+                color = if (selectedItem != null) TextoPrimario else TextoPlaceholder
+            ),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = NaranjaPrimario,
+                unfocusedBorderColor = BordeMedio,
+                disabledBorderColor  = BordeMedio,
+                focusedContainerColor   = BlancoPuro,
+                unfocusedContainerColor = BlancoPuro,
+                disabledContainerColor  = BlancoPuro,
+                focusedLabelColor   = NaranjaPrimario,
+                unfocusedLabelColor = TextoTerciario,
+                focusedTrailingIconColor   = TextoTerciario,
+                unfocusedTrailingIconColor = TextoTerciario
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            if (items.isEmpty()) {
+                DropdownMenuItem(text = { Text("No hay opciones disponibles") }, onClick = {})
+            } else {
+                items.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(itemLabel(item)) },
+                        onClick = {
+                            onSelect(item)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Formateo de fecha, compartido
+
+/** Convierte "2026-04-13" en "13 abr 2026". Si el formato no es el esperado devuelve la cadena tal cual. */
+fun formatearFecha(fechaIso: String): String {
+    return try {
+        val partes = fechaIso.split("-")
+        val dia = partes[2].toInt()
+        val mes = when (partes[1]) {
+            "01" -> "ene"; "02" -> "feb"; "03" -> "mar"
+            "04" -> "abr"; "05" -> "may"; "06" -> "jun"
+            "07" -> "jul"; "08" -> "ago"; "09" -> "sep"
+            "10" -> "oct"; "11" -> "nov"; "12" -> "dic"
+            else -> partes[1]
+        }
+        val anio = partes[0]
+        "$dia $mes $anio"
+    } catch (e: Exception) {
+        fechaIso
     }
 }

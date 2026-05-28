@@ -46,9 +46,11 @@ fun ProductosSc(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Productos", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("Productos", style = MaterialTheme.typography.titleLarge)},
                 navigationIcon = {
-                    TextButton(onClick = onVolver) { Text("< Menú") }
+                    TextButton(onClick = onVolver){
+                        Text("< Menu")
+                    }
                 }
             )
         },
