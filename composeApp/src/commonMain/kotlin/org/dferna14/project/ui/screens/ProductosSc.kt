@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Science
@@ -48,8 +49,15 @@ fun ProductosSc(
             TopAppBar(
                 title = { Text("Productos", style = MaterialTheme.typography.titleLarge)},
                 navigationIcon = {
-                    TextButton(onClick = onVolver){
-                        Text("< Menu")
+                    TextButton(onClick = onVolver) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Volver al menú principal",
+                            tint = NaranjaPrimario,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text("Menú principal", color = NaranjaPrimario)
                     }
                 }
             )
