@@ -173,6 +173,17 @@ data class EquipoDto(
 )
 
 @Serializable
+data class EquipoCreateDto(
+    @SerialName("explotacionId")         val explotacionId         : Int?    = null,
+    @SerialName("tipo")                  val tipo                  : String,
+    @SerialName("marca")                 val marca                 : String? = null,
+    @SerialName("modelo")                val modelo                : String? = null,
+    @SerialName("numeroRoma")            val numeroRoma            : String? = null,
+    @SerialName("anyoFabricacion")       val anyoFabricacion       : Int?    = null,
+    @SerialName("fechaUltimaInspeccion") val fechaUltimaInspeccion : String? = null
+)
+
+@Serializable
 data class UsuarioDto(
     @SerialName("id")            val id            : Int,
     @SerialName("nombre")        val nombre        : String,
@@ -181,6 +192,15 @@ data class UsuarioDto(
     @SerialName("rol")           val rol           : String,
     @SerialName("explotacionId") val explotacionId : Int?    = null,
     @SerialName("fechaAlta")     val fechaAlta     : String? = null
+)
+
+@Serializable
+data class UsuarioCreateDto(
+    @SerialName("nombre")        val nombre        : String,
+    @SerialName("apellidos")     val apellidos     : String? = null,
+    @SerialName("email")         val email         : String,
+    @SerialName("rol")           val rol           : String? = null,
+    @SerialName("explotacionId") val explotacionId : Int?    = null
 )
 
 @Serializable
@@ -405,11 +425,50 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun getEquipos(): List<EquipoDto> =
         client.get("$BASE_URL/api/equipos").body<List<EquipoDto>>()
 
+    suspend fun crearEquipo(equipo: EquipoCreateDto): EquipoDto =
+        client.post("$BASE_URL/api/equipos") {
+            contentType(ContentType.Application.Json)
+            setBody(equipo)
+        }.body<EquipoDto>()
+
+    suspend fun eliminarEquipo(id: Int): Boolean {
+        val response = client.delete("$BASE_URL/api/equipos/$id")
+        if (response.status == HttpStatusCode.Conflict) {
+            val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
+                ?: "El equipo está asignado a actividades y no se puede eliminar"
+            throw ConflictException(msg)
+        }
+        return response.status == HttpStatusCode.NoContent
+    }
+
     // Usuarios (para dropdown de aplicador)
 
     suspend fun getUsuarios(rol: String? = null): List<UsuarioDto> {
         val url = if (rol != null) "$BASE_URL/api/usuarios?rol=$rol" else "$BASE_URL/api/usuarios"
         return client.get(url).body<List<UsuarioDto>>()
+    }
+
+    suspend fun crearUsuario(usuario: UsuarioCreateDto): UsuarioDto {
+        val response = client.post("$BASE_URL/api/usuarios") {
+            contentType(ContentType.Application.Json)
+            setBody(usuario)
+        }
+        if (response.status == HttpStatusCode.Conflict) {
+            val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
+                ?: "Ya existe un usuario con ese email"
+            throw ConflictException(msg)
+        }
+        return response.body<UsuarioDto>()
+    }
+
+    suspend fun eliminarUsuario(id: Int): Boolean {
+        val response = client.delete("$BASE_URL/api/usuarios/$id")
+        if (response.status == HttpStatusCode.Conflict) {
+            val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
+                ?: "El aplicador está asignado a actividades y no se puede eliminar"
+            throw ConflictException(msg)
+        }
+        return response.status == HttpStatusCode.NoContent
     }
 
     // Autenticación

@@ -339,7 +339,16 @@ data class EquipoResponse(
     val fechaUltimaInspeccion : String? = null
 )
 
-// Usuario (response-only por ahora; el sprint de auth añadirá login y POST)
+// Usuario
+
+@Serializable
+data class UsuarioRequest(
+    val nombre        : String,
+    val apellidos     : String? = null,
+    val email         : String,
+    val rol           : String? = null,
+    val explotacionId : Int?    = null
+)
 
 @Serializable
 data class UsuarioResponse(

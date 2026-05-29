@@ -568,19 +568,7 @@ class ActividadRepository(
 
     suspend fun getEquipos(): Result<List<EquipoAplicacion>> {
         return try {
-            val equipos = api.getEquipos().map { dto ->
-                EquipoAplicacion(
-                    id                    = dto.id,
-                    explotacionId         = dto.explotacionId,
-                    tipo                  = dto.tipo,
-                    marca                 = dto.marca,
-                    modelo                = dto.modelo,
-                    numeroRoma            = dto.numeroRoma,
-                    anyoFabricacion       = dto.anyoFabricacion,
-                    fechaUltimaInspeccion = dto.fechaUltimaInspeccion
-                )
-            }
-            Result.Success(equipos)
+            Result.Success(api.getEquipos().map { it.toDomain() })
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -588,28 +576,108 @@ class ActividadRepository(
         }
     }
 
+    suspend fun crearEquipo(equipo: EquipoAplicacion): Result<EquipoAplicacion> {
+        return try {
+            val dto = api.crearEquipo(
+                org.dferna14.project.data.remote.EquipoCreateDto(
+                    explotacionId         = equipo.explotacionId,
+                    tipo                  = equipo.tipo,
+                    marca                 = equipo.marca,
+                    modelo                = equipo.modelo,
+                    numeroRoma            = equipo.numeroRoma,
+                    anyoFabricacion       = equipo.anyoFabricacion,
+                    fechaUltimaInspeccion = equipo.fechaUltimaInspeccion
+                )
+            )
+            Result.Success(dto.toDomain())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al crear equipo: ${e.message}")
+        }
+    }
+
+    suspend fun eliminarEquipo(id: Int): Result<Unit> {
+        return try {
+            val ok = api.eliminarEquipo(id)
+            if (ok) Result.Success(Unit)
+            else Result.Error("No se pudo eliminar el equipo")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ConflictException) {
+            Result.Error(e.message ?: "El equipo está asignado a actividades y no se puede eliminar")
+        } catch (e: Exception) {
+            Result.Error("Error al eliminar equipo: ${e.message}")
+        }
+    }
+
+    private fun org.dferna14.project.data.remote.EquipoDto.toDomain() = EquipoAplicacion(
+        id                    = id,
+        explotacionId         = explotacionId,
+        tipo                  = tipo,
+        marca                 = marca,
+        modelo                = modelo,
+        numeroRoma            = numeroRoma,
+        anyoFabricacion       = anyoFabricacion,
+        fechaUltimaInspeccion = fechaUltimaInspeccion
+    )
+
     // Usuarios (para dropdown de aplicador)
 
     suspend fun getUsuarios(rol: String? = null): Result<List<Usuario>> {
         return try {
-            val usuarios = api.getUsuarios(rol).map { dto ->
-                Usuario(
-                    id            = dto.id,
-                    nombre        = dto.nombre,
-                    apellidos     = dto.apellidos,
-                    email         = dto.email,
-                    rol           = dto.rol,
-                    explotacionId = dto.explotacionId,
-                    fechaAlta     = dto.fechaAlta
-                )
-            }
-            Result.Success(usuarios)
+            Result.Success(api.getUsuarios(rol).map { it.toDomain() })
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Result.Error("Error al cargar usuarios: ${e.message}")
         }
     }
+
+    suspend fun crearUsuario(usuario: Usuario): Result<Usuario> {
+        return try {
+            val dto = api.crearUsuario(
+                org.dferna14.project.data.remote.UsuarioCreateDto(
+                    nombre        = usuario.nombre,
+                    apellidos     = usuario.apellidos,
+                    email         = usuario.email,
+                    rol           = usuario.rol,
+                    explotacionId = usuario.explotacionId
+                )
+            )
+            Result.Success(dto.toDomain())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ConflictException) {
+            Result.Error(e.message ?: "Ya existe un usuario con ese email")
+        } catch (e: Exception) {
+            Result.Error("Error al crear usuario: ${e.message}")
+        }
+    }
+
+    suspend fun eliminarUsuario(id: Int): Result<Unit> {
+        return try {
+            val ok = api.eliminarUsuario(id)
+            if (ok) Result.Success(Unit)
+            else Result.Error("No se pudo eliminar el aplicador")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ConflictException) {
+            Result.Error(e.message ?: "El aplicador está asignado a actividades y no se puede eliminar")
+        } catch (e: Exception) {
+            Result.Error("Error al eliminar aplicador: ${e.message}")
+        }
+    }
+
+    private fun org.dferna14.project.data.remote.UsuarioDto.toDomain() = Usuario(
+        id            = id,
+        nombre        = nombre,
+        apellidos     = apellidos,
+        email         = email,
+        rol           = rol,
+        explotacionId = explotacionId,
+        fechaAlta     = fechaAlta
+    )
 
     // Parcela completa (parcela + sigpac + agronómicos) y sus operaciones
 

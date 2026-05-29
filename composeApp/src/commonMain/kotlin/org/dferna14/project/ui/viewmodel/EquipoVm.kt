@@ -18,6 +18,9 @@ class EquipoVm(
     private val _equipos = MutableStateFlow<Result<List<EquipoAplicacion>>>(Result.Loading)
     val equipos: StateFlow<Result<List<EquipoAplicacion>>> = _equipos.asStateFlow()
 
+    private val _mensajeError = MutableStateFlow<String?>(null)
+    val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
+
     init {
         cargarEquipos()
     }
@@ -33,5 +36,43 @@ class EquipoVm(
                 _equipos.value = Result.Error("Error al cargar equipos: ${e.message}")
             }
         }
+    }
+
+    fun crearEquipo(equipo: EquipoAplicacion) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.crearEquipo(equipo)
+                if (resultado is Result.Success) {
+                    cargarEquipos()
+                } else if (resultado is Result.Error) {
+                    _mensajeError.value = resultado.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al crear equipo: ${e.message}"
+            }
+        }
+    }
+
+    fun eliminarEquipo(id: Int) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.eliminarEquipo(id)
+                if (resultado is Result.Success) {
+                    cargarEquipos()
+                } else if (resultado is Result.Error) {
+                    _mensajeError.value = resultado.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al eliminar equipo: ${e.message}"
+            }
+        }
+    }
+
+    fun limpiarMensajeError() {
+        _mensajeError.value = null
     }
 }

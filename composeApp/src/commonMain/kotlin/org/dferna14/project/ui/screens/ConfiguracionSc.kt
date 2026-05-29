@@ -1,17 +1,34 @@
 package org.dferna14.project.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.dferna14.project.domain.model.EquipoAplicacion
 import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Titular
+import org.dferna14.project.domain.model.Usuario
+import org.dferna14.project.ui.components.CampoAvisoInfo
+import org.dferna14.project.ui.components.CampoCard
+import org.dferna14.project.ui.components.CampoPrimaryButton
+import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
+import org.dferna14.project.ui.theme.TextoSecundario
+import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.ConfiguracionVm
+import org.dferna14.project.ui.viewmodel.EquipoVm
+import org.dferna14.project.ui.viewmodel.UsuarioVm
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,16 +72,14 @@ fun ConfiguracionSc(
                 .padding(padding)
         ) {
             TabRow(selectedTabIndex = selectedTab) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Titular") }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Explotación") }
-                )
+                listOf("Titular", "Explotación", "Equipos", "Aplicadores")
+                    .forEachIndexed { index, titulo ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = { Text(titulo) }
+                        )
+                    }
             }
 
             when (selectedTab) {
@@ -78,6 +93,8 @@ fun ConfiguracionSc(
                     onReintentar = { viewModel.cargarDatos() },
                     onGuardar = { viewModel.guardarExplotacion(it) }
                 )
+                2 -> PestanaEquipos(snackbarHostState = snackbarHostState)
+                3 -> PestanaAplicadores(snackbarHostState = snackbarHostState)
             }
         }
     }
@@ -392,4 +409,479 @@ private fun ExplotacionForm(
 
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+// ── Pestaña Equipos ─────────────────────────────────────────────────────────
+
+@Composable
+private fun PestanaEquipos(
+    snackbarHostState: SnackbarHostState,
+    equipoVm: EquipoVm = koinViewModel()
+) {
+    val equiposState by equipoVm.equipos.collectAsState()
+    val mensajeError by equipoVm.mensajeError.collectAsState()
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var equipoAEliminar by remember { mutableStateOf<EquipoAplicacion?>(null) }
+
+    LaunchedEffect(Unit) { equipoVm.cargarEquipos() }
+
+    LaunchedEffect(mensajeError) {
+        mensajeError?.let {
+            snackbarHostState.showSnackbar(it)
+            equipoVm.limpiarMensajeError()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Equipos de aplicación",
+                style = MaterialTheme.typography.titleMedium
+            )
+            CampoPrimaryButton(
+                text = "+ Nuevo equipo",
+                onClick = { mostrarDialogo = true },
+                modifier = Modifier.width(180.dp)
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        CampoAvisoInfo(
+            mensaje = "Añade los equipos de aplicación (tractores, pulverizadores) con su número de inscripción ROMA"
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        when (val estado = equiposState) {
+            is Result.Loading -> Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator(color = NaranjaPrimario) }
+            is Result.Error -> Text(
+                text = "Error al cargar equipos: ${estado.message}",
+                color = RojoEliminar
+            )
+            is Result.Success -> {
+                if (estado.data.isEmpty()) {
+                    Text(
+                        text = "No hay equipos registrados",
+                        color = TextoTerciario,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(estado.data, key = { it.id }) { equipo ->
+                            EquipoConfigCard(
+                                equipo = equipo,
+                                onEliminar = { equipoAEliminar = equipo }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (mostrarDialogo) {
+        NuevoEquipoDialog(
+            onDismiss = { mostrarDialogo = false },
+            onCrear = { nuevo ->
+                equipoVm.crearEquipo(nuevo)
+                mostrarDialogo = false
+            }
+        )
+    }
+
+    equipoAEliminar?.let { equipo ->
+        AlertDialog(
+            onDismissRequest = { equipoAEliminar = null },
+            title = { Text("¿Eliminar equipo?") },
+            text = {
+                Text("¿Seguro que quieres eliminar \"${equipo.descripcionLegible()}\"? Esta acción no se puede deshacer.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    equipoVm.eliminarEquipo(equipo.id)
+                    equipoAEliminar = null
+                }) {
+                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { equipoAEliminar = null }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            }
+        )
+    }
+}
+
+private fun EquipoAplicacion.descripcionLegible(): String =
+    listOfNotNull(tipo, marca, modelo).joinToString(" ").ifBlank { "Equipo $id" }
+
+@Composable
+private fun EquipoConfigCard(
+    equipo: EquipoAplicacion,
+    onEliminar: () -> Unit
+) {
+    CampoCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = equipo.descripcionLegible(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                equipo.numeroRoma?.let {
+                    Text(
+                        text = "ROMA: $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextoTerciario
+                    )
+                }
+                equipo.fechaUltimaInspeccion?.let {
+                    Text(
+                        text = "Última inspección: $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextoTerciario
+                    )
+                }
+            }
+            IconButton(
+                onClick = onEliminar,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    tint = TextoTerciario,
+                    contentDescription = "Eliminar equipo"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NuevoEquipoDialog(
+    onDismiss: () -> Unit,
+    onCrear: (EquipoAplicacion) -> Unit
+) {
+    var tipo by remember { mutableStateOf("") }
+    var marca by remember { mutableStateOf("") }
+    var modelo by remember { mutableStateOf("") }
+    var numeroRoma by remember { mutableStateOf("") }
+    var anyoFabricacion by remember { mutableStateOf("") }
+    var fechaInspeccion by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Nuevo equipo de aplicación") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                CampoTextField(
+                    label = "Tipo *",
+                    value = tipo,
+                    onValueChange = { tipo = it },
+                    placeholder = "Ej: Pulverizador"
+                )
+                CampoTextField(
+                    label = "Marca",
+                    value = marca,
+                    onValueChange = { marca = it },
+                    placeholder = "Ej: John Deere"
+                )
+                CampoTextField(
+                    label = "Modelo",
+                    value = modelo,
+                    onValueChange = { modelo = it },
+                    placeholder = "Ej: 4030"
+                )
+                CampoTextField(
+                    label = "Número ROMA",
+                    value = numeroRoma,
+                    onValueChange = { numeroRoma = it },
+                    placeholder = "Ej: ROMA-12345"
+                )
+                CampoTextField(
+                    label = "Año de fabricación",
+                    value = anyoFabricacion,
+                    onValueChange = { anyoFabricacion = it.filter { c -> c.isDigit() } },
+                    placeholder = "Ej: 2018"
+                )
+                CampoTextField(
+                    label = "Fecha última inspección",
+                    value = fechaInspeccion,
+                    onValueChange = { fechaInspeccion = it },
+                    placeholder = "AAAA-MM-DD"
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = tipo.isNotBlank(),
+                onClick = {
+                    onCrear(
+                        EquipoAplicacion(
+                            id                    = 0,
+                            tipo                  = tipo.trim(),
+                            marca                 = marca.trim().ifBlank { null },
+                            modelo                = modelo.trim().ifBlank { null },
+                            numeroRoma            = numeroRoma.trim().ifBlank { null },
+                            anyoFabricacion       = anyoFabricacion.toIntOrNull(),
+                            fechaUltimaInspeccion = fechaInspeccion.trim().ifBlank { null }
+                        )
+                    )
+                }
+            ) {
+                Text("Crear equipo", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = TextoSecundario)
+            }
+        }
+    )
+}
+
+// ── Pestaña Aplicadores ─────────────────────────────────────────────────────
+
+@Composable
+private fun PestanaAplicadores(
+    snackbarHostState: SnackbarHostState,
+    usuarioVm: UsuarioVm = koinViewModel()
+) {
+    val usuariosState by usuarioVm.usuarios.collectAsState()
+    val mensajeError by usuarioVm.mensajeError.collectAsState()
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var aplicadorAEliminar by remember { mutableStateOf<Usuario?>(null) }
+
+    LaunchedEffect(Unit) { usuarioVm.cargarUsuarios() }
+
+    LaunchedEffect(mensajeError) {
+        mensajeError?.let {
+            snackbarHostState.showSnackbar(it)
+            usuarioVm.limpiarMensajeError()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Aplicadores",
+                style = MaterialTheme.typography.titleMedium
+            )
+            CampoPrimaryButton(
+                text = "+ Nuevo aplicador",
+                onClick = { mostrarDialogo = true },
+                modifier = Modifier.width(200.dp)
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        CampoAvisoInfo(
+            mensaje = "Añade los aplicadores autorizados. El email es obligatorio para que el aplicador pueda registrarse después en la app."
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        when (val estado = usuariosState) {
+            is Result.Loading -> Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator(color = NaranjaPrimario) }
+            is Result.Error -> Text(
+                text = "Error al cargar aplicadores: ${estado.message}",
+                color = RojoEliminar
+            )
+            is Result.Success -> {
+                if (estado.data.isEmpty()) {
+                    Text(
+                        text = "No hay aplicadores registrados",
+                        color = TextoTerciario,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(estado.data, key = { it.id }) { usuario ->
+                            AplicadorConfigCard(
+                                usuario = usuario,
+                                onEliminar = { aplicadorAEliminar = usuario }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (mostrarDialogo) {
+        NuevoAplicadorDialog(
+            onDismiss = { mostrarDialogo = false },
+            onCrear = { nuevo ->
+                usuarioVm.crearAplicador(nuevo)
+                mostrarDialogo = false
+            }
+        )
+    }
+
+    aplicadorAEliminar?.let { usuario ->
+        AlertDialog(
+            onDismissRequest = { aplicadorAEliminar = null },
+            title = { Text("¿Eliminar aplicador?") },
+            text = {
+                Text("¿Seguro que quieres eliminar a \"${usuario.nombreLegible()}\"? Esta acción no se puede deshacer.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    usuarioVm.eliminarAplicador(usuario.id)
+                    aplicadorAEliminar = null
+                }) {
+                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { aplicadorAEliminar = null }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            }
+        )
+    }
+}
+
+private fun Usuario.nombreLegible(): String =
+    listOfNotNull(nombre, apellidos).joinToString(" ").ifBlank { email }
+
+@Composable
+private fun AplicadorConfigCard(
+    usuario: Usuario,
+    onEliminar: () -> Unit
+) {
+    CampoCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = usuario.nombreLegible(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = usuario.email,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextoTerciario
+                )
+                Text(
+                    text = "Rol: ${usuario.rol}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextoTerciario
+                )
+            }
+            IconButton(
+                onClick = onEliminar,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    tint = TextoTerciario,
+                    contentDescription = "Eliminar aplicador"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NuevoAplicadorDialog(
+    onDismiss: () -> Unit,
+    onCrear: (Usuario) -> Unit
+) {
+    var nombre by remember { mutableStateOf("") }
+    var apellidos by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+
+    val emailValido = email.isBlank() || email.contains("@")
+    val confirmHabilitado = nombre.isNotBlank() && email.isNotBlank() && emailValido
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Nuevo aplicador") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                CampoTextField(
+                    label = "Nombre *",
+                    value = nombre,
+                    onValueChange = { nombre = it }
+                )
+                CampoTextField(
+                    label = "Apellidos",
+                    value = apellidos,
+                    onValueChange = { apellidos = it }
+                )
+                CampoTextField(
+                    label = "Email *",
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = "aplicador@dominio.com"
+                )
+                if (email.isNotBlank() && !emailValido) {
+                    Text(
+                        text = "Introduce un email válido",
+                        color = RojoEliminar,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = confirmHabilitado,
+                onClick = {
+                    onCrear(
+                        Usuario(
+                            id            = 0,
+                            nombre        = nombre.trim(),
+                            apellidos     = apellidos.trim().ifBlank { null },
+                            email         = email.trim().lowercase(),
+                            rol           = "AGRICULTOR"
+                        )
+                    )
+                }
+            ) {
+                Text("Crear aplicador", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = TextoSecundario)
+            }
+        }
+    )
 }

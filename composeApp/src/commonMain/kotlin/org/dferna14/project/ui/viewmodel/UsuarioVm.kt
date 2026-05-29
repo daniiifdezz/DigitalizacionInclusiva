@@ -18,6 +18,9 @@ class UsuarioVm(
     private val _usuarios = MutableStateFlow<Result<List<Usuario>>>(Result.Loading)
     val usuarios: StateFlow<Result<List<Usuario>>> = _usuarios.asStateFlow()
 
+    private val _mensajeError = MutableStateFlow<String?>(null)
+    val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
+
     init {
         cargarUsuarios()
     }
@@ -33,5 +36,43 @@ class UsuarioVm(
                 _usuarios.value = Result.Error("Error al cargar usuarios: ${e.message}")
             }
         }
+    }
+
+    fun crearAplicador(usuario: Usuario) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.crearUsuario(usuario)
+                if (resultado is Result.Success) {
+                    cargarUsuarios()
+                } else if (resultado is Result.Error) {
+                    _mensajeError.value = resultado.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al crear aplicador: ${e.message}"
+            }
+        }
+    }
+
+    fun eliminarAplicador(id: Int) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.eliminarUsuario(id)
+                if (resultado is Result.Success) {
+                    cargarUsuarios()
+                } else if (resultado is Result.Error) {
+                    _mensajeError.value = resultado.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al eliminar aplicador: ${e.message}"
+            }
+        }
+    }
+
+    fun limpiarMensajeError() {
+        _mensajeError.value = null
     }
 }
