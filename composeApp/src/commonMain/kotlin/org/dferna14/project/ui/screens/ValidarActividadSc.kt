@@ -276,7 +276,7 @@ private fun PestanaDatos(act: Actividad) {
             )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                FieldView("Parcela", "Parcela ${act.parcelaId}")
+                FieldView("Parcela", act.parcelaAlias ?: "Parcela ${act.parcelaId}")
                 FieldView("Fecha inicio", act.fechaInicio)
                 act.fechaFin?.let { FieldView("Fecha fin", it) }
                 act.superficieTratada?.let { FieldView("Superficie tratadas", "$it ha") }

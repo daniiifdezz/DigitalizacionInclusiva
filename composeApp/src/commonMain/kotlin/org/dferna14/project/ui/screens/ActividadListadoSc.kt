@@ -166,7 +166,7 @@ private fun ActividadCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Parcela ${actividad.parcelaId}",
+                text = actividad.parcelaAlias ?: "Parcela ${actividad.parcelaId}",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 color = TextoPrimario,

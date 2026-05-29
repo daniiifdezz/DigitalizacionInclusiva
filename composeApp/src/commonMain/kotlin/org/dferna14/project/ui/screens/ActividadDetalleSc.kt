@@ -96,9 +96,10 @@ fun ActividadDetalleSc(
                 }
                 is Result.Success -> {
                     val act = estado.data
-                    val nombreParcela = (parcelasState as? Result.Success)?.data
-                        ?.find { it.id == act.parcelaId }
-                        ?.let { it.alias ?: "Parcela ${it.orden ?: it.id}" }
+                    val nombreParcela = act.parcelaAlias
+                        ?: (parcelasState as? Result.Success)?.data
+                            ?.find { it.id == act.parcelaId }
+                            ?.let { it.alias ?: "Parcela ${it.orden ?: it.id}" }
                         ?: "Parcela ${act.parcelaId}"
 
                     Column(

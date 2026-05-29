@@ -34,6 +34,7 @@ data class ActividadRequest(
 data class ActividadResponse(
     val id                   : Int,
     val parcelaId            : Int,
+    val parcelaAlias         : String?  = null,
     val equipoId             : Int?     = null,
     val aplicadorId          : Int?     = null,
     val fechaInicio          : String,

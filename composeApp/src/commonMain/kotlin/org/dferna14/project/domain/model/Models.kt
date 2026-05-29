@@ -30,6 +30,7 @@ data class Producto(
 data class Actividad(
     val id                   : Int           = 0,
     val parcelaId            : Int,
+    val parcelaAlias         : String?  = null,
     val equipoId             : Int?     = null,
     val aplicadorId          : Int?     = null,
     val fechaInicio          : String,

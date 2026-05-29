@@ -6,6 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.ActividadProductos
+import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.model.ActividadProductoRequest
 import org.dferna14.project.backend.model.ActividadProductoResponse
@@ -24,13 +25,15 @@ fun Route.actividadRoutes() {
 
         // GET /api/actividades
         // Filtro opcional: ?estado=BORRADOR|PENDIENTE_VALIDAR|VALIDADA
+        // LEFT JOIN  con parcelas
         get {
             val estadoParam = call.request.queryParameters["estado"]
             val actividades = transaction {
+                val base = (Actividades leftJoin Parcelas).selectAll()
                 val query = if (estadoParam != null) {
-                    Actividades.selectAll().where { Actividades.estado eq estadoParam }
+                    base.where { Actividades.estado eq estadoParam }
                 } else {
-                    Actividades.selectAll()
+                    base
                 }
                 query.map { it.toActividadResponse() }
             }
@@ -41,7 +44,7 @@ fun Route.actividadRoutes() {
         // Devuelve solo actividades pendientes de validar (para desktop)
         get("pendientes") {
             val actividades = transaction {
-                Actividades.selectAll()
+                (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.estado eq EstadoActividad.PENDIENTE_VALIDAR.name }
                     .map { it.toActividadResponse() }
             }
@@ -54,7 +57,7 @@ fun Route.actividadRoutes() {
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val actividad = transaction {
-                Actividades.selectAll()
+                (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq id }
                     .singleOrNull()
                     ?.toActividadResponse()
@@ -84,7 +87,7 @@ fun Route.actividadRoutes() {
                     it[estado] = request.estado.name
                 }.value
 
-                Actividades.selectAll()
+                (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq nuevaId }
                     .single()
                     .toActividadResponse()
@@ -132,7 +135,7 @@ fun Route.actividadRoutes() {
                     it[estado] = EstadoActividad.PENDIENTE_VALIDAR.name
                 }
                 if (filasActualizadas == 0) null
-                else Actividades.selectAll()
+                else (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq id }
                     .single()
                     .toActividadResponse()
@@ -153,7 +156,7 @@ fun Route.actividadRoutes() {
                     it[estado] = EstadoActividad.VALIDADA.name
                 }
                 if (filasActualizadas == 0) null
-                else Actividades.selectAll()
+                else (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq id }
                     .single()
                     .toActividadResponse()
@@ -349,21 +352,26 @@ fun Route.actividadRoutes() {
     }
 }
 
-private fun ResultRow.toActividadResponse() = ActividadResponse(
-    id                    = this[Actividades.id].value,
-    parcelaId             = this[Actividades.parcelaId],
-    equipoId              = this[Actividades.equipoId],
-    aplicadorId           = this[Actividades.aplicadorId],
-    fechaInicio           = this[Actividades.fechaInicio]?.toString() ?: "",
-    fechaFin              = this[Actividades.fechaFin]?.toString(),
-    superficieTratada     = this[Actividades.superficieTratada],
-    problemaFitosanitario = this[Actividades.problemaFitosanitario],
-    eficacia              = this[Actividades.eficacia],
-    observaciones         = this[Actividades.observaciones],
-    estado                = runCatching {
-        EstadoActividad.valueOf(this[Actividades.estado] ?: "BORRADOR")
-    }.getOrDefault(EstadoActividad.BORRADOR)
-)
+private fun ResultRow.toActividadResponse(): ActividadResponse {
+    // Si la fila viene de un JOIN con Parcelas leemos el alias; si no, queda null.
+    val alias = runCatching { this[Parcelas.alias] }.getOrNull()
+    return ActividadResponse(
+        id                    = this[Actividades.id].value,
+        parcelaId             = this[Actividades.parcelaId],
+        parcelaAlias          = alias,
+        equipoId              = this[Actividades.equipoId],
+        aplicadorId           = this[Actividades.aplicadorId],
+        fechaInicio           = this[Actividades.fechaInicio]?.toString() ?: "",
+        fechaFin              = this[Actividades.fechaFin]?.toString(),
+        superficieTratada     = this[Actividades.superficieTratada],
+        problemaFitosanitario = this[Actividades.problemaFitosanitario],
+        eficacia              = this[Actividades.eficacia],
+        observaciones         = this[Actividades.observaciones],
+        estado                = runCatching {
+            EstadoActividad.valueOf(this[Actividades.estado] ?: "BORRADOR")
+        }.getOrDefault(EstadoActividad.BORRADOR)
+    )
+}
 
 private fun ResultRow.toSemillaResponse() = SemillaTratadaResponse(
     id                = this[SemillasTratadas.id].value,

@@ -392,6 +392,7 @@ class ActividadRepository(
     private fun ActividadDto.toDomain() = Actividad(
         id                    = id,
         parcelaId             = parcelaId,
+        parcelaAlias          = parcelaAlias,
         equipoId              = equipoId,
         aplicadorId           = aplicadorId,
         fechaInicio           = fechaInicio,

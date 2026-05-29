@@ -183,7 +183,7 @@ private fun ActividadPendienteCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Parcela ${actividad.parcelaId}",
+                    text = actividad.parcelaAlias ?: "Parcela ${actividad.parcelaId}",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
