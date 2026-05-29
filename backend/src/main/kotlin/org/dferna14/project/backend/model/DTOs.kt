@@ -95,6 +95,7 @@ data class SemillaTratadaResponse(
 
 @Serializable
 data class FertilizacionRequest(
+    val actividadId      : Int?    = null,
     val cultivoId        : Int?    = null,
     val aplica           : Boolean = false,
     val fechaInicio      : String? = null,
@@ -110,6 +111,7 @@ data class FertilizacionRequest(
 @Serializable
 data class FertilizacionResponse(
     val id               : Int,
+    val actividadId      : Int?    = null,
     val cultivoId        : Int?    = null,
     val aplica           : Boolean,
     val fechaInicio      : String? = null,

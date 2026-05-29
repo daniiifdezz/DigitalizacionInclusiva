@@ -97,6 +97,27 @@ fun FertilizacionSc(
     var dosis by remember { mutableStateOf("") }
     var tipoFertilizacionSel by remember { mutableStateOf<OpcionCodigo?>(null) }
     var observaciones by remember { mutableStateOf("") }
+    var camposPrecargados by remember { mutableStateOf(false) }
+
+    val fertilizacionState by viewModel.fertilizacion.collectAsState()
+
+    LaunchedEffect(actividadId) {
+        if (actividadId > 0) viewModel.cargarFertilizacion(actividadId)
+    }
+
+    // Prellenamos campos cuando el backend devuelve una fertilización guardada
+    LaunchedEffect(fertilizacionState) {
+        if (camposPrecargados) return@LaunchedEffect
+        val fert = (fertilizacionState as? Result.Success)?.data ?: return@LaunchedEffect
+        aplica = fert.aplica
+        numeroAlbaran = fert.numeroAlbaran.orEmpty()
+        tipoProductoSel = TIPOS_PRODUCTO.find { it.codigo == fert.tipoProducto }
+        riquezaNPK = fert.riquezaNPK.orEmpty()
+        dosis = fert.dosis?.toString().orEmpty()
+        tipoFertilizacionSel = TIPOS_FERTILIZACION.find { it.codigo == fert.tipoFertilizacion }
+        observaciones = fert.observaciones.orEmpty()
+        camposPrecargados = true
+    }
 
     Scaffold { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -192,9 +213,11 @@ fun FertilizacionSc(
                         scope.launch {
                             guardando = true
                             mensajeError = null
-                            val resultado = viewModel.crearFertilizacion(
-                                Fertilizacion(
+                            val resultado = viewModel.guardarFertilizacion(
+                                actividadId = actividadId,
+                                fertilizacion = Fertilizacion(
                                     id                = 0,
+                                    actividadId       = actividadId,
                                     cultivoId         = null, // sin vínculo Cultivo todavía
                                     aplica            = aplica,
                                     fechaInicio       = if (aplica) fechaHoy else null,

@@ -110,6 +110,7 @@ data class SemillaTratadaCreateDto(
 @Serializable
 data class FertilizacionDto(
     @SerialName("id")                val id                : Int,
+    @SerialName("actividadId")       val actividadId       : Int?    = null,
     @SerialName("cultivoId")         val cultivoId         : Int?    = null,
     @SerialName("aplica")            val aplica            : Boolean = false,
     @SerialName("fechaInicio")       val fechaInicio       : String? = null,
@@ -124,6 +125,7 @@ data class FertilizacionDto(
 
 @Serializable
 data class FertilizacionCreateDto(
+    @SerialName("actividadId")       val actividadId       : Int?    = null,
     @SerialName("cultivoId")         val cultivoId         : Int?    = null,
     @SerialName("aplica")            val aplica            : Boolean = false,
     @SerialName("fechaInicio")       val fechaInicio       : String? = null,
@@ -345,10 +347,11 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun getFertilizaciones(): List<FertilizacionDto> =
         client.get("$BASE_URL/api/fertilizaciones").body<List<FertilizacionDto>>()
 
-    suspend fun getFertilizacionByCultivo(cultivoId: Int): FertilizacionDto? {
+    suspend fun getFertilizacionByActividad(actividadId: Int): FertilizacionDto? {
         return try {
-            client.get("$BASE_URL/api/fertilizaciones").body<List<FertilizacionDto>>()
-                .find { it.cultivoId == cultivoId }
+            val response = client.get("$BASE_URL/api/actividades/$actividadId/fertilizacion")
+            if (response.status == HttpStatusCode.NotFound) null
+            else response.body<FertilizacionDto>()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -356,8 +359,11 @@ class ActividadApi(private val client: HttpClient) {
         }
     }
 
-    suspend fun crearFertilizacion(fertilizacion: FertilizacionCreateDto): FertilizacionDto {
-        return client.post("$BASE_URL/api/fertilizaciones") {
+    suspend fun upsertFertilizacionDeActividad(
+        actividadId: Int,
+        fertilizacion: FertilizacionCreateDto
+    ): FertilizacionDto {
+        return client.post("$BASE_URL/api/actividades/$actividadId/fertilizacion") {
             contentType(ContentType.Application.Json)
             setBody(fertilizacion)
         }.body<FertilizacionDto>()

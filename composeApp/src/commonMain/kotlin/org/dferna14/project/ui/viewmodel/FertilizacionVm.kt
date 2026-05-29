@@ -24,11 +24,11 @@ class FertilizacionVm(
     private val _mensajeError = MutableStateFlow<String?>(null)
     val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
 
-    fun cargarFertilizacion(cultivoId: Int) {
+    fun cargarFertilizacion(actividadId: Int) {
         viewModelScope.launch {
             _fertilizacion.value = Result.Loading
             try {
-                _fertilizacion.value = repository.getFertilizacion(cultivoId)
+                _fertilizacion.value = repository.getFertilizacionPorActividad(actividadId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -37,9 +37,12 @@ class FertilizacionVm(
         }
     }
 
-    suspend fun crearFertilizacion(fertilizacion: Fertilizacion): Result<Fertilizacion> {
+    suspend fun guardarFertilizacion(
+        actividadId: Int,
+        fertilizacion: Fertilizacion
+    ): Result<Fertilizacion> {
         return try {
-            val resultado = repository.crearFertilizacion(fertilizacion)
+            val resultado = repository.guardarFertilizacion(actividadId, fertilizacion)
             if (resultado is Result.Success) {
                 _operacionExitosa.value = true
                 _fertilizacion.value = Result.Success(resultado.data)
@@ -50,7 +53,7 @@ class FertilizacionVm(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Result.Error("Error al crear fertilización: ${e.message}")
+            Result.Error("Error al guardar fertilización: ${e.message}")
         }
     }
 

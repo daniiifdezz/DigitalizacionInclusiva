@@ -482,28 +482,11 @@ class ActividadRepository(
 
 
     // Fertilizacion functions
-    suspend fun getFertilizacion(cultivoId: Int): Result<Fertilizacion?> {
+    suspend fun getFertilizacionPorActividad(actividadId: Int): Result<Fertilizacion?> {
         return try {
-            val dto = api.getFertilizacionByCultivo(cultivoId)
-            if (dto == null) {
-                Result.Success(null)
-            } else {
-                Result.Success(
-                    Fertilizacion(
-                        id                = dto.id,
-                        cultivoId         = dto.cultivoId,
-                        aplica            = dto.aplica,
-                        fechaInicio       = dto.fechaInicio,
-                        fechaFin          = dto.fechaFin,
-                        tipoProducto      = dto.tipoProducto,
-                        numeroAlbaran     = dto.numeroAlbaran,
-                        riquezaNPK        = dto.riquezaNPK,
-                        dosis             = dto.dosis,
-                        tipoFertilizacion = dto.tipoFertilizacion,
-                        observaciones     = dto.observaciones
-                    )
-                )
-            }
+            val dto = api.getFertilizacionByActividad(actividadId)
+            if (dto == null) Result.Success(null)
+            else Result.Success(dto.toDomain())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -511,11 +494,15 @@ class ActividadRepository(
         }
     }
 
-    suspend fun crearFertilizacion(fertilizacion: Fertilizacion): Result<Fertilizacion> {
+    suspend fun guardarFertilizacion(
+        actividadId: Int,
+        fertilizacion: Fertilizacion
+    ): Result<Fertilizacion> {
         return try {
-            println("DEBUG REPO: Enviando Fertilizacion al servidor: $fertilizacion")
-            val dto = api.crearFertilizacion(
+            val dto = api.upsertFertilizacionDeActividad(
+                actividadId,
                 FertilizacionCreateDto(
+                    actividadId       = actividadId,
                     cultivoId         = fertilizacion.cultivoId,
                     aplica            = fertilizacion.aplica,
                     fechaInicio       = fertilizacion.fechaInicio,
@@ -528,28 +515,28 @@ class ActividadRepository(
                     observaciones     = fertilizacion.observaciones
                 )
             )
-            println("DEBUG REPO: Respuesta Fertilizacion recibida: $dto")
-            Result.Success(
-                Fertilizacion(
-                    id                = dto.id,
-                    cultivoId         = dto.cultivoId,
-                    aplica            = dto.aplica,
-                    fechaInicio       = dto.fechaInicio,
-                    fechaFin          = dto.fechaFin,
-                    tipoProducto      = dto.tipoProducto,
-                    numeroAlbaran     = dto.numeroAlbaran,
-                    riquezaNPK        = dto.riquezaNPK,
-                    dosis             = dto.dosis,
-                    tipoFertilizacion = dto.tipoFertilizacion,
-                    observaciones     = dto.observaciones
-                )
-            )
+            Result.Success(dto.toDomain())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Result.Error("Error al crear fertilización: ${e.message ?: "Error desconocido"}")
+            Result.Error("Error al guardar fertilización: ${e.message ?: "Error desconocido"}")
         }
     }
+
+    private fun org.dferna14.project.data.remote.FertilizacionDto.toDomain() = Fertilizacion(
+        id                = id,
+        actividadId       = actividadId,
+        cultivoId         = cultivoId,
+        aplica            = aplica,
+        fechaInicio       = fechaInicio,
+        fechaFin          = fechaFin,
+        tipoProducto      = tipoProducto,
+        numeroAlbaran     = numeroAlbaran,
+        riquezaNPK        = riquezaNPK,
+        dosis             = dosis,
+        tipoFertilizacion = tipoFertilizacion,
+        observaciones     = observaciones
+    )
 
     // Equipos de aplicación
 

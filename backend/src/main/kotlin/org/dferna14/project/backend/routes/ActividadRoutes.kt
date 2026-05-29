@@ -6,6 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.ActividadProductos
+import org.dferna14.project.backend.db.Fertilizaciones
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.model.ActividadProductoRequest
@@ -195,6 +196,7 @@ fun Route.actividadRoutes() {
             val filasEliminadas = transaction {
                 SemillasTratadas.deleteWhere { SemillasTratadas.actividadId eq id }
                 ActividadProductos.deleteWhere { ActividadProductos.actividadId eq id }
+                Fertilizaciones.deleteWhere { Fertilizaciones.actividadId eq id }
                 Actividades.deleteWhere { Actividades.id eq id }
             }
 
