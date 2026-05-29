@@ -31,14 +31,23 @@ fun MisParcelasSc(
 ) {
     val parcelasState by viewModel.parcelas.collectAsState()
     val explotacionesState by viewModel.explotaciones.collectAsState()
+    val mensajeError by viewModel.mensajeError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
     var parcelaAEliminar by remember { mutableStateOf<Parcela?>(null) }
 
     LaunchedEffect(mostrarDialogoCrear) {
         if (mostrarDialogoCrear) viewModel.cargarExplotaciones()
     }
+    LaunchedEffect(mensajeError) {
+        mensajeError?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.limpiarMensajeError()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Mis parcelas", style = MaterialTheme.typography.titleLarge) }

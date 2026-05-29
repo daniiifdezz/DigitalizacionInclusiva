@@ -190,6 +190,14 @@ data class RegisterRequest(
 )
 
 /**
+ * Excepción específica para conflictos 409 del backend.
+ */
+class ConflictException(message: String) : RuntimeException(message)
+
+@Serializable
+private data class ErrorMessage(val message: String? = null)
+
+/**
  * Fuente de datos remota — encapsula todas las llamadas HTTP.
  * El repositorio usa esta clase, nunca HttpClient directamente.
  */
@@ -315,6 +323,11 @@ class ActividadApi(private val client: HttpClient) {
 
     suspend fun eliminarParcela(id: Int): Boolean {
         val response = client.delete("$BASE_URL/api/parcelas/$id")
+        if (response.status == HttpStatusCode.Conflict) {
+            val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
+                ?: "La parcela tiene datos asociados y no se puede eliminar"
+            throw ConflictException(msg)
+        }
         return response.status == HttpStatusCode.NoContent
     }
 
@@ -340,6 +353,11 @@ class ActividadApi(private val client: HttpClient) {
 
     suspend fun eliminarProducto(id: Int): Boolean {
         val response = client.delete("$BASE_URL/api/productos/$id")
+        if (response.status == HttpStatusCode.Conflict) {
+            val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
+                ?: "El producto está siendo usado y no se puede eliminar"
+            throw ConflictException(msg)
+        }
         return response.status == HttpStatusCode.NoContent
     }
 

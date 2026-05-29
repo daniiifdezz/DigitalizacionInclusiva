@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.ActividadCreateDto
+import org.dferna14.project.data.remote.ConflictException
 import org.dferna14.project.data.remote.ActividadDto
 import org.dferna14.project.data.remote.ActividadProductoCreateDto
 import org.dferna14.project.data.remote.DatosAgronomicosCreateDto
@@ -267,6 +268,8 @@ class ActividadRepository(
             else Result.Error("No se pudo eliminar la parcela")
         } catch (e: CancellationException) {
             throw e
+        } catch (e: ConflictException) {
+            Result.Error(e.message ?: "La parcela tiene datos asociados y no se puede eliminar")
         } catch (e: Exception) {
             Result.Error("Error al eliminar parcela: ${e.message}")
         }
@@ -324,6 +327,8 @@ class ActividadRepository(
             else Result.Error("No se pudo eliminar el producto")
         } catch (e: CancellationException) {
             throw e
+        } catch (e: ConflictException) {
+            Result.Error(e.message ?: "El producto está siendo usado y no se puede eliminar")
         } catch (e: Exception) {
             Result.Error("Error al eliminar producto: ${e.message}")
         }

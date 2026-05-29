@@ -41,10 +41,20 @@ fun ProductosSc(
     onVolver: () -> Unit
 ) {
     val productosState by viewModel.productos.collectAsState()
+    val mensajeError by viewModel.mensajeError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
     var productoAEliminar by remember { mutableStateOf<Producto?>(null) }
 
+    LaunchedEffect(mensajeError) {
+        mensajeError?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.limpiarMensajeError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Productos", style = MaterialTheme.typography.titleLarge)},
