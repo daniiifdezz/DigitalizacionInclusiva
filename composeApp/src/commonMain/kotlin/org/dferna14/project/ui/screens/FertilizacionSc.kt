@@ -12,10 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
-import org.dferna14.project.domain.model.Fertilizacion
+import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.CampoDropdown
@@ -31,28 +30,11 @@ import org.dferna14.project.ui.viewmodel.FertilizacionVm
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
-/** Opción de un desplegable de código corto + nombre completo */
-private data class OpcionCodigo(val codigo: String, val nombre: String) {
-    val etiqueta: String get() = "$codigo — $nombre"
-}
-
-private val TIPOS_PRODUCTO = listOf(
-    OpcionCodigo("EB", "Estiércol de bovino"),
-    OpcionCodigo("EO", "Estiércol de ovino/caprino"),
-    OpcionCodigo("EP", "Estiércol de porcino"),
-    OpcionCodigo("PP", "Purín de porcino"),
-    OpcionCodigo("G", "Gallinaza"),
-    OpcionCodigo("L", "Lodos de depuradora"),
-    OpcionCodigo("C", "Compost"),
-    OpcionCodigo("O", "Otros")
-)
-
-private val TIPOS_FERTILIZACION = listOf(
-    OpcionCodigo("F", "Fondo"),
-    OpcionCodigo("AF", "Aporte foliar"),
-    OpcionCodigo("AC", "Aporte cobertera")
-)
-
+/**
+ * Pantalla móvil de fertilización. El agricultor elige fertilizante
+ * del catálogo y rellena albarán, dosis y observaciones. Los campos técnicos
+ * (NPK, tipoFertilizacion, tipoProducto) los completa el técnico desde Desktop.
+ */
 @Composable
 fun FertilizacionSc(
     parcelaId: Int,
@@ -85,41 +67,53 @@ fun FertilizacionSc(
         return
     }
 
-    val scope = rememberCoroutineScope()
-    var guardando by remember { mutableStateOf(false) }
-    var mensajeError by remember { mutableStateOf<String?>(null) }
+    val fertilizacionState by viewModel.fertilizacion.collectAsState()
+    val fertilizantesState by viewModel.fertilizantes.collectAsState()
+    val mensajeError by viewModel.mensajeError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
     var aplica by remember { mutableStateOf(false) }
+    var fertilizanteSeleccionado by remember { mutableStateOf<Producto?>(null) }
     var numeroAlbaran by remember { mutableStateOf("") }
-    var tipoProductoSel by remember { mutableStateOf<OpcionCodigo?>(null) }
-    var riquezaNPK by remember { mutableStateOf("") }
     var dosis by remember { mutableStateOf("") }
-    var tipoFertilizacionSel by remember { mutableStateOf<OpcionCodigo?>(null) }
     var observaciones by remember { mutableStateOf("") }
     var camposPrecargados by remember { mutableStateOf(false) }
-
-    val fertilizacionState by viewModel.fertilizacion.collectAsState()
 
     LaunchedEffect(actividadId) {
         if (actividadId > 0) viewModel.cargarFertilizacion(actividadId)
     }
 
-    // Prellenamos campos cuando el backend devuelve una fertilización guardada
-    LaunchedEffect(fertilizacionState) {
+    // Precarga al volver a entrar. Espera a que el catálogo de fertilizantes
+    // esté cargado para poder resolver productoId → Producto en el dropdown.
+    LaunchedEffect(fertilizacionState, fertilizantesState) {
         if (camposPrecargados) return@LaunchedEffect
         val fert = (fertilizacionState as? Result.Success)?.data ?: return@LaunchedEffect
+        val catalogo = (fertilizantesState as? Result.Success)?.data ?: return@LaunchedEffect
         aplica = fert.aplica
         numeroAlbaran = fert.numeroAlbaran.orEmpty()
-        tipoProductoSel = TIPOS_PRODUCTO.find { it.codigo == fert.tipoProducto }
-        riquezaNPK = fert.riquezaNPK.orEmpty()
         dosis = fert.dosis?.toString().orEmpty()
-        tipoFertilizacionSel = TIPOS_FERTILIZACION.find { it.codigo == fert.tipoFertilizacion }
         observaciones = fert.observaciones.orEmpty()
+        fertilizanteSeleccionado = fert.productoId?.let { pid -> catalogo.find { it.id == pid } }
         camposPrecargados = true
     }
 
-    Scaffold { padding ->
+    LaunchedEffect(Unit) {
+        viewModel.guardadoExitoso.collect { _ ->
+            onVolver()
+        }
+    }
+
+    LaunchedEffect(mensajeError) {
+        mensajeError?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.limpiarMensajeError()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             NavBarFormulario(titulo = "Fertilización básica", onVolver = onVolver)
             HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
@@ -142,13 +136,48 @@ fun FertilizacionSc(
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         CampoField(label = "Fecha de inicio", value = formatearFecha(fechaHoy))
 
+                        CampoAvisoInfo(
+                            mensaje = "Selecciona el fertilizante del catálogo. Si no está, pide al técnico que lo añada desde el escritorio."
+                        )
+
+                        // Dropdown de fertilizantes del catálogo.
+                        when (val estado = fertilizantesState) {
+                            is Result.Loading -> {
+                                CampoField(
+                                    label = "Fertilizante utilizado",
+                                    value = "Cargando catálogo…"
+                                )
+                            }
+                            is Result.Error -> {
+                                CampoField(
+                                    label = "Fertilizante utilizado",
+                                    value = "No se pudo cargar el catálogo"
+                                )
+                            }
+                            is Result.Success -> {
+                                CampoDropdown(
+                                    label = "Fertilizante utilizado",
+                                    selectedItem = fertilizanteSeleccionado,
+                                    items = estado.data,
+                                    itemLabel = { p ->
+                                        val sufijo = p.riquezaNpk?.let { " · NPK $it" }.orEmpty()
+                                        "${p.nombreComercial}$sufijo"
+                                    },
+                                    onSelect = { fertilizanteSeleccionado = it },
+                                    placeholder = if (estado.data.isEmpty())
+                                        "No hay fertilizantes en el catálogo"
+                                    else "Selecciona fertilizante"
+                                )
+                            }
+                        }
+
                         CampoTextField(
                             label = "Número de albarán",
                             value = numeroAlbaran,
                             onValueChange = { numeroAlbaran = it },
                             trailingIcon = {
                                 IconButton(
-                                    onClick = { /* TODO: OCR */ },
+                                    onClick = { /* TODO: OCR — implementación futura */ },
                                     modifier = Modifier.size(40.dp)
                                 ) {
                                     Icon(
@@ -164,36 +193,11 @@ fun FertilizacionSc(
                             mensaje = "Próximamente: escanea el albarán con la cámara automáticamente"
                         )
 
-                        CampoDropdown(
-                            label = "Tipo de producto",
-                            selectedItem = tipoProductoSel,
-                            items = TIPOS_PRODUCTO,
-                            itemLabel = { it.etiqueta },
-                            onSelect = { tipoProductoSel = it },
-                            placeholder = "Selecciona tipo de producto"
-                        )
-
                         CampoTextField(
-                            label = "Riqueza NPK",
-                            value = riquezaNPK,
-                            onValueChange = { riquezaNPK = it },
-                            placeholder = "p.ej. 15-15-15"
-                        )
-
-                        CampoTextField(
-                            label = "Dosis (kg/ha)",
+                            label = "Dosis aplicada (kg/ha)",
                             value = dosis,
                             onValueChange = { dosis = it },
                             keyboardType = KeyboardType.Decimal
-                        )
-
-                        CampoDropdown(
-                            label = "Tipo de fertilización",
-                            selectedItem = tipoFertilizacionSel,
-                            items = TIPOS_FERTILIZACION,
-                            itemLabel = { it.etiqueta },
-                            onSelect = { tipoFertilizacionSel = it },
-                            placeholder = "Selecciona tipo de fertilización"
                         )
 
                         CampoTextField(
@@ -210,49 +214,17 @@ fun FertilizacionSc(
                 CampoPrimaryButton(
                     text = "Guardar fertilización",
                     onClick = {
-                        scope.launch {
-                            guardando = true
-                            mensajeError = null
-                            val resultado = viewModel.guardarFertilizacion(
-                                actividadId = actividadId,
-                                fertilizacion = Fertilizacion(
-                                    id                = 0,
-                                    actividadId       = actividadId,
-                                    cultivoId         = null, // sin vínculo Cultivo todavía
-                                    aplica            = aplica,
-                                    fechaInicio       = if (aplica) fechaHoy else null,
-                                    fechaFin          = null,
-                                    tipoProducto      = if (aplica) tipoProductoSel?.codigo else null,
-                                    numeroAlbaran     = if (aplica) numeroAlbaran.ifBlank { null } else null,
-                                    riquezaNPK        = if (aplica) riquezaNPK.ifBlank { null } else null,
-                                    dosis             = if (aplica) dosis.toDoubleOrNull() else null,
-                                    tipoFertilizacion = if (aplica) tipoFertilizacionSel?.codigo else null,
-                                    observaciones     = if (aplica) observaciones.ifBlank { null } else null
-                                )
-                            )
-                            guardando = false
-                            if (resultado is Result.Error) {
-                                mensajeError = resultado.message
-                            } else {
-                                onVolver()
-                            }
-                        }
+                        viewModel.guardarFertilizacion(
+                            actividadId   = actividadId,
+                            aplica        = aplica,
+                            productoId    = if (aplica) fertilizanteSeleccionado?.id else null,
+                            numeroAlbaran = if (aplica) numeroAlbaran.ifBlank { null } else null,
+                            dosis         = if (aplica) dosis.toDoubleOrNull() else null,
+                            observaciones = if (aplica) observaciones.ifBlank { null } else null,
+                            fechaInicio   = if (aplica) fechaHoy else null
+                        )
                     }
                 )
-
-                if (guardando) {
-                    CircularProgressIndicator(
-                        color = NaranjaPrimario,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                }
-                mensajeError?.let { error ->
-                    Text(
-                        text = error,
-                        color = RojoEliminar,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
             }
         }
     }

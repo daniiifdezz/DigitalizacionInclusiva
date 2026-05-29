@@ -47,6 +47,7 @@ fun Route.fertilizacionRoutes() {
             val creada = transaction {
                 val nuevaId = Fertilizaciones.insertAndGetId {
                     it[actividadId] = request.actividadId
+                    it[productoId] = request.productoId
                     it[cultivoId] = request.cultivoId
                     it[aplica] = request.aplica
                     it[fechaInicio] = fechaInicioLocalDate
@@ -79,6 +80,7 @@ fun Route.fertilizacionRoutes() {
             val filasActualizadas = transaction {
                 Fertilizaciones.update({ Fertilizaciones.id eq id }) {
                     it[actividadId] = request.actividadId
+                    it[productoId] = request.productoId
                     it[cultivoId] = request.cultivoId
                     it[aplica] = request.aplica
                     it[fechaInicio] = fechaInicioLocalDate
@@ -147,6 +149,7 @@ fun Route.fertilizacionRoutes() {
                 if (existente != null) {
                     val idExistente = existente[Fertilizaciones.id].value
                     Fertilizaciones.update({ Fertilizaciones.id eq idExistente }) {
+                        it[productoId]        = request.productoId
                         it[cultivoId]         = request.cultivoId
                         it[aplica]            = request.aplica
                         it[fechaInicio]       = fechaInicioLocalDate
@@ -162,6 +165,7 @@ fun Route.fertilizacionRoutes() {
                 } else {
                     val nuevoId = Fertilizaciones.insertAndGetId {
                         it[Fertilizaciones.actividadId] = actId
+                        it[productoId]                  = request.productoId
                         it[cultivoId]                   = request.cultivoId
                         it[aplica]                      = request.aplica
                         it[fechaInicio]                 = fechaInicioLocalDate
@@ -192,6 +196,7 @@ fun Route.fertilizacionRoutes() {
 private fun ResultRow.toFertilizacionResponse() = FertilizacionResponse(
     id               = this[Fertilizaciones.id].value,
     actividadId      = this[Fertilizaciones.actividadId],
+    productoId       = this[Fertilizaciones.productoId],
     cultivoId        = this[Fertilizaciones.cultivoId],
     aplica           = this[Fertilizaciones.aplica],
     fechaInicio      = this[Fertilizaciones.fechaInicio]?.toString(),

@@ -5,6 +5,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.ActividadProductos
+import org.dferna14.project.backend.db.Fertilizaciones
 import org.dferna14.project.backend.db.Productos
 import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.model.ProductoRequest
@@ -101,20 +102,25 @@ fun Route.productoRoutes() {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
-            val (enActividades, enSemillas) = transaction {
-                val enActs = !ActividadProductos.selectAll()
-                    .where { ActividadProductos.productoId eq id }
-                    .empty()
-                val enSems = !SemillasTratadas.selectAll()
-                    .where { SemillasTratadas.productoId eq id }
-                    .empty()
-                enActs to enSems
+            val refs = transaction {
+                Triple(
+                    !ActividadProductos.selectAll()
+                        .where { ActividadProductos.productoId eq id }
+                        .empty(),
+                    !SemillasTratadas.selectAll()
+                        .where { SemillasTratadas.productoId eq id }
+                        .empty(),
+                    !Fertilizaciones.selectAll()
+                        .where { Fertilizaciones.productoId eq id }
+                        .empty()
+                )
             }
+            val (enActividades, enSemillas, enFertilizaciones) = refs
 
-            if (enActividades || enSemillas) {
+            if (enActividades || enSemillas || enFertilizaciones) {
                 return@delete call.respond(
                     HttpStatusCode.Conflict,
-                    mapOf("message" to "No se puede eliminar el producto porque está siendo usado en actividades o semillas")
+                    mapOf("message" to "No se puede eliminar el producto porque está siendo usado en actividades, semillas o fertilizaciones")
                 )
             }
 

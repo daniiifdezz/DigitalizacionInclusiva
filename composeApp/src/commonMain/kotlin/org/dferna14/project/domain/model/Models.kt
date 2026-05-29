@@ -69,6 +69,7 @@ data class SemillaTratada(
 data class Fertilizacion(
     val id                 : Int     = 0,
     val actividadId        : Int?    = null,
+    val productoId         : Int?    = null,
     val cultivoId          : Int?    = null,
     val aplica             : Boolean = false,
     val fechaInicio        : String? = null,

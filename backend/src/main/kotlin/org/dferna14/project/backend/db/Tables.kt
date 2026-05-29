@@ -126,6 +126,7 @@ object Fertilizaciones : IntIdTable("fertilizacion") {
     // Vincula la fertilización con la actividad agrícola que la originó.
     // Es nullable para no romper datos previos a la migración (registros sin actividad).
     val actividadId       = integer("actividad_id").references(Actividades.id).nullable()
+    val productoId        = integer("producto_id").references(Productos.id).nullable()
     val cultivoId         = integer("cultivo_id").references(Cultivos.id).nullable()
     val aplica            = bool("aplica").default(false)
     val fechaInicio       = date("fecha_inicio").nullable()

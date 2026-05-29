@@ -527,6 +527,7 @@ class ActividadRepository(
                 actividadId,
                 FertilizacionCreateDto(
                     actividadId       = actividadId,
+                    productoId        = fertilizacion.productoId,
                     cultivoId         = fertilizacion.cultivoId,
                     aplica            = fertilizacion.aplica,
                     fechaInicio       = fertilizacion.fechaInicio,
@@ -550,6 +551,7 @@ class ActividadRepository(
     private fun org.dferna14.project.data.remote.FertilizacionDto.toDomain() = Fertilizacion(
         id                = id,
         actividadId       = actividadId,
+        productoId        = productoId,
         cultivoId         = cultivoId,
         aplica            = aplica,
         fechaInicio       = fechaInicio,

@@ -117,6 +117,7 @@ data class SemillaTratadaCreateDto(
 data class FertilizacionDto(
     @SerialName("id")                val id                : Int,
     @SerialName("actividadId")       val actividadId       : Int?    = null,
+    @SerialName("productoId")        val productoId        : Int?    = null,
     @SerialName("cultivoId")         val cultivoId         : Int?    = null,
     @SerialName("aplica")            val aplica            : Boolean = false,
     @SerialName("fechaInicio")       val fechaInicio       : String? = null,
@@ -132,6 +133,7 @@ data class FertilizacionDto(
 @Serializable
 data class FertilizacionCreateDto(
     @SerialName("actividadId")       val actividadId       : Int?    = null,
+    @SerialName("productoId")        val productoId        : Int?    = null,
     @SerialName("cultivoId")         val cultivoId         : Int?    = null,
     @SerialName("aplica")            val aplica            : Boolean = false,
     @SerialName("fechaInicio")       val fechaInicio       : String? = null,
