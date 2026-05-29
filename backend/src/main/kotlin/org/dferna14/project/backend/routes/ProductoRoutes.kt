@@ -10,24 +10,25 @@ import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.model.ProductoRequest
 import org.dferna14.project.backend.model.ProductoResponse
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Route.productoRoutes() {
 
     route("/api/productos") {
 
-        // GET /api/productos
+        // GET /api/productos[?tipo=FITOSANITARIO|FERTILIZANTE]
+        // Catálogo unificado: el query param permite a las pantallas de fertilización
+        // pedir solo fertilizantes y a las de tratamiento solo fitosanitarios.
         get {
+            val tipoFiltro = call.request.queryParameters["tipo"]
             val productos = transaction {
-                Productos.selectAll().map {
-                    ProductoResponse(
-                        id              = it[Productos.id].value,
-                        nombreComercial = it[Productos.nombreComercial],
-                        materiaActiva    = it[Productos.materiaActiva],
-                        numeroRegistro  = it[Productos.numeroRegistro]
-                    )
+                val query = if (tipoFiltro != null) {
+                    Productos.selectAll().where { Productos.tipo eq tipoFiltro }
+                } else {
+                    Productos.selectAll()
                 }
+                query.map { it.toProductoResponse() }
             }
             call.respond(productos)
         }
@@ -41,51 +42,37 @@ fun Route.productoRoutes() {
                 Productos.selectAll()
                     .where { Productos.id eq id }
                     .singleOrNull()
-                    ?.let {
-                        ProductoResponse(
-                            id              = it[Productos.id].value,
-                            nombreComercial = it[Productos.nombreComercial],
-                            materiaActiva    = it[Productos.materiaActiva],
-                            numeroRegistro  = it[Productos.numeroRegistro]
-                        )
-                    }
+                    ?.toProductoResponse()
             }
 
-            if (producto == null) {
-                call.respond(HttpStatusCode.NotFound)
-            } else {
-                call.respond(producto)
-            }
+            if (producto == null) call.respond(HttpStatusCode.NotFound)
+            else call.respond(producto)
         }
 
-        // POST /api/productos - Crear nuevo producto
+        // POST /api/productos
         post {
             val request = call.receive<ProductoRequest>()
 
             val creado = transaction {
                 val nuevoId = Productos.insertAndGetId {
-                    it[nombreComercial] = request.nombreComercial
-                    it[materiaActiva] = request.materiaActiva
-                    it[numeroRegistro] = request.numeroRegistro
+                    it[nombreComercial]  = request.nombreComercial
+                    it[materiaActiva]    = request.materiaActiva
+                    it[numeroRegistro]   = request.numeroRegistro
+                    it[tipo]             = request.tipo
+                    it[riquezaNpk]       = request.riquezaNpk
+                    it[tipoFertilizante] = request.tipoFertilizante
                 }.value
 
                 Productos.selectAll()
                     .where { Productos.id eq nuevoId }
                     .single()
-                    .let {
-                        ProductoResponse(
-                            id = it[Productos.id].value,
-                            nombreComercial = it[Productos.nombreComercial],
-                            materiaActiva = it[Productos.materiaActiva],
-                            numeroRegistro = it[Productos.numeroRegistro]
-                        )
-                    }
+                    .toProductoResponse()
             }
 
             call.respond(HttpStatusCode.Created, creado)
         }
 
-        // PUT /api/productos/{id} - Actualizar producto
+        // PUT /api/productos/{id}
         put("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
@@ -94,21 +81,22 @@ fun Route.productoRoutes() {
 
             val filasActualizadas = transaction {
                 Productos.update({ Productos.id eq id }) {
-                    it[nombreComercial] = request.nombreComercial
-                    it[materiaActiva] = request.materiaActiva
-                    it[numeroRegistro] = request.numeroRegistro
+                    it[nombreComercial]  = request.nombreComercial
+                    it[materiaActiva]    = request.materiaActiva
+                    it[numeroRegistro]   = request.numeroRegistro
+                    it[tipo]             = request.tipo
+                    it[riquezaNpk]       = request.riquezaNpk
+                    it[tipoFertilizante] = request.tipoFertilizante
                 }
             }
 
-            if (filasActualizadas == 0) {
-                call.respond(HttpStatusCode.NotFound)
-            } else {
-                call.respond(HttpStatusCode.OK)
-            }
+            if (filasActualizadas == 0) call.respond(HttpStatusCode.NotFound)
+            else call.respond(HttpStatusCode.OK)
         }
 
-        // DELETE /api/productos/{id} - Eliminar producto
-        // Devolvemos 409 para que la UI pueda mostrar un mensaje claro al usuario.
+        // DELETE /api/productos/{id}
+        // Devolvemos 409 para que la UI muestre un mensaje claro cuando el producto
+        // esté siendo usado en actividades o semillas.
         delete("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
@@ -134,11 +122,18 @@ fun Route.productoRoutes() {
                 Productos.deleteWhere { Productos.id eq id }
             }
 
-            if (filasEliminadas == 0) {
-                call.respond(HttpStatusCode.NotFound)
-            } else {
-                call.respond(HttpStatusCode.NoContent)
-            }
+            if (filasEliminadas == 0) call.respond(HttpStatusCode.NotFound)
+            else call.respond(HttpStatusCode.NoContent)
         }
     }
 }
+
+private fun ResultRow.toProductoResponse() = ProductoResponse(
+    id               = this[Productos.id].value,
+    nombreComercial  = this[Productos.nombreComercial],
+    materiaActiva    = this[Productos.materiaActiva],
+    numeroRegistro   = this[Productos.numeroRegistro],
+    tipo             = this[Productos.tipo],
+    riquezaNpk       = this[Productos.riquezaNpk],
+    tipoFertilizante = this[Productos.tipoFertilizante]
+)

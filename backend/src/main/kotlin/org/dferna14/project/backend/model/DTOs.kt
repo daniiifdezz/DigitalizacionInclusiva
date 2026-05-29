@@ -231,7 +231,10 @@ data class CultivoResponse(
 data class ProductoRequest(
     val nombreComercial : String? = null,
     val materiaActiva   : String? = null,
-    val numeroRegistro  : String? = null
+    val numeroRegistro  : String? = null,
+    val tipo            : String  = "FITOSANITARIO",
+    val riquezaNpk      : String? = null,
+    val tipoFertilizante: String? = null
 )
 
 @Serializable
@@ -239,7 +242,10 @@ data class ProductoResponse(
     val id              : Int,
     val nombreComercial : String? = null,
     val materiaActiva   : String? = null,
-    val numeroRegistro  : String? = null
+    val numeroRegistro  : String? = null,
+    val tipo            : String  = "FITOSANITARIO",
+    val riquezaNpk      : String? = null,
+    val tipoFertilizante: String? = null
 )
 
 // Titular

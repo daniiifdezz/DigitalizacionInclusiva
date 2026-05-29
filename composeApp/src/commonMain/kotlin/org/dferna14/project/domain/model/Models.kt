@@ -24,7 +24,10 @@ data class Producto(
     val id: Int,
     val nombreComercial: String,
     val materiaActiva: String? = null,
-    val numeroRegistro: String? = null
+    val numeroRegistro: String? = null,
+    val tipo: String = "FITOSANITARIO",
+    val riquezaNpk: String? = null,
+    val tipoFertilizante: String? = null
 )
 
 data class Actividad(

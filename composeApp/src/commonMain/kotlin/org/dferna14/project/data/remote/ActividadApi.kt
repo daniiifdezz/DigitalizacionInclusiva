@@ -70,14 +70,20 @@ data class ProductoDto(
     @SerialName("id")               val id              : Int,
     @SerialName("nombreComercial")  val nombreComercial : String? = null,
     @SerialName("materiaActiva")    val materiaActiva   : String? = null,
-    @SerialName("numeroRegistro")   val numeroRegistro  : String? = null
+    @SerialName("numeroRegistro")   val numeroRegistro  : String? = null,
+    @SerialName("tipo")             val tipo            : String  = "FITOSANITARIO",
+    @SerialName("riquezaNpk")       val riquezaNpk      : String? = null,
+    @SerialName("tipoFertilizante") val tipoFertilizante: String? = null
 )
 
 @Serializable
 data class ProductoCreateDto(
     @SerialName("nombreComercial")  val nombreComercial : String? = null,
     @SerialName("materiaActiva")    val materiaActiva   : String? = null,
-    @SerialName("numeroRegistro")   val numeroRegistro  : String? = null
+    @SerialName("numeroRegistro")   val numeroRegistro  : String? = null,
+    @SerialName("tipo")             val tipo            : String  = "FITOSANITARIO",
+    @SerialName("riquezaNpk")       val riquezaNpk      : String? = null,
+    @SerialName("tipoFertilizante") val tipoFertilizante: String? = null
 )
 
 @Serializable
@@ -335,6 +341,11 @@ class ActividadApi(private val client: HttpClient) {
 
     suspend fun getProductos(): List<ProductoDto> =
         client.get("$BASE_URL/api/productos").body<List<ProductoDto>>()
+
+    suspend fun getProductosPorTipo(tipo: String): List<ProductoDto> =
+        client.get("$BASE_URL/api/productos") {
+            parameter("tipo", tipo)
+        }.body<List<ProductoDto>>()
 
     suspend fun crearProducto(producto: ProductoCreateDto): ProductoDto {
         return client.post("$BASE_URL/api/productos") {

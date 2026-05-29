@@ -18,6 +18,14 @@ class ProductoVm(
     private val _productos = MutableStateFlow<Result<List<Producto>>>(Result.Loading)
     val productos: StateFlow<Result<List<Producto>>> = _productos.asStateFlow()
 
+    // Estados filtrados por tipo: las pantallas de tratamiento usan fitosanitarios
+    // y las de fertilización fertilizantes. Se cargan bajo demanda.
+    private val _fitosanitarios = MutableStateFlow<Result<List<Producto>>>(Result.Loading)
+    val fitosanitarios: StateFlow<Result<List<Producto>>> = _fitosanitarios.asStateFlow()
+
+    private val _fertilizantes = MutableStateFlow<Result<List<Producto>>>(Result.Loading)
+    val fertilizantes: StateFlow<Result<List<Producto>>> = _fertilizantes.asStateFlow()
+
     private val _operacionExitosa = MutableStateFlow(false)
     val operacionExitosa: StateFlow<Boolean> = _operacionExitosa.asStateFlow()
 
@@ -32,6 +40,32 @@ class ProductoVm(
         viewModelScope.launch {
             repository.getProductos().collect { resultado ->
                 _productos.value = resultado
+            }
+        }
+    }
+
+    fun cargarFitosanitarios() {
+        viewModelScope.launch {
+            _fitosanitarios.value = Result.Loading
+            try {
+                _fitosanitarios.value = repository.getFitosanitarios()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _fitosanitarios.value = Result.Error("Error al cargar fitosanitarios: ${e.message}")
+            }
+        }
+    }
+
+    fun cargarFertilizantes() {
+        viewModelScope.launch {
+            _fertilizantes.value = Result.Loading
+            try {
+                _fertilizantes.value = repository.getFertilizantes()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _fertilizantes.value = Result.Error("Error al cargar fertilizantes: ${e.message}")
             }
         }
     }

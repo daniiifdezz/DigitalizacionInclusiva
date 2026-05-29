@@ -280,14 +280,7 @@ class ActividadRepository(
     fun getProductos(): Flow<Result<List<Producto>>> = flow {
         emit(Result.Loading)
         try {
-            val productos = api.getProductos().map { dto ->
-                Producto(
-                    id = dto.id,
-                    nombreComercial = dto.nombreComercial ?: "Sin nombre",
-                    materiaActiva = dto.materiaActiva,
-                    numeroRegistro = dto.numeroRegistro
-                )
-            }
+            val productos = api.getProductos().map { it.toDomain() }
             emit(Result.Success(productos))
         } catch (e: CancellationException) {
             throw e
@@ -296,29 +289,55 @@ class ActividadRepository(
         }
     }
 
+    suspend fun getFitosanitarios(): Result<List<Producto>> {
+        return try {
+            Result.Success(api.getProductosPorTipo("FITOSANITARIO").map { it.toDomain() })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al cargar fitosanitarios: ${e.message}")
+        }
+    }
+
+    suspend fun getFertilizantes(): Result<List<Producto>> {
+        return try {
+            Result.Success(api.getProductosPorTipo("FERTILIZANTE").map { it.toDomain() })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al cargar fertilizantes: ${e.message}")
+        }
+    }
+
     suspend fun crearProducto(producto: Producto): Result<Producto> {
         return try {
             val dto = api.crearProducto(
                 ProductoCreateDto(
-                    nombreComercial = producto.nombreComercial,
-                    materiaActiva = producto.materiaActiva,
-                    numeroRegistro = producto.numeroRegistro
+                    nombreComercial  = producto.nombreComercial,
+                    materiaActiva    = producto.materiaActiva,
+                    numeroRegistro   = producto.numeroRegistro,
+                    tipo             = producto.tipo,
+                    riquezaNpk       = producto.riquezaNpk,
+                    tipoFertilizante = producto.tipoFertilizante
                 )
             )
-            Result.Success(
-                Producto(
-                    id = dto.id,
-                    nombreComercial = dto.nombreComercial ?: "Sin nombre",
-                    materiaActiva = dto.materiaActiva,
-                    numeroRegistro = dto.numeroRegistro
-                )
-            )
+            Result.Success(dto.toDomain())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Result.Error("Error al crear producto: ${e.message}")
         }
     }
+
+    private fun org.dferna14.project.data.remote.ProductoDto.toDomain() = Producto(
+        id               = id,
+        nombreComercial  = nombreComercial ?: "Sin nombre",
+        materiaActiva    = materiaActiva,
+        numeroRegistro   = numeroRegistro,
+        tipo             = tipo,
+        riquezaNpk       = riquezaNpk,
+        tipoFertilizante = tipoFertilizante
+    )
 
     suspend fun eliminarProducto(id: Int): Result<Unit> {
         return try {

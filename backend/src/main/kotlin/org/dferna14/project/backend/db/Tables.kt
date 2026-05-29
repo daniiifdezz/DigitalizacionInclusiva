@@ -30,6 +30,13 @@ object Productos : IntIdTable("producto") {
     val nombreComercial = varchar("nombre_comercial", 100).nullable()
     val materiaActiva   = varchar("materia_activa", 100).nullable()
     val numeroRegistro  = varchar("numero_registro", 50).nullable()
+    // Catálogo unificado: FITOSANITARIO | FERTILIZANTE. Default mantiene
+    // compatibilidad con los registros previos (todos eran fitosanitarios).
+    val tipo             = varchar("tipo", 20).default("FITOSANITARIO")
+    // Solo se usan cuando tipo = FERTILIZANTE. Códigos válidos:
+    // EB, EO, EP, PP, G, L, C, O.
+    val riquezaNpk       = varchar("riqueza_npk", 20).nullable()
+    val tipoFertilizante = varchar("tipo_fertilizante", 5).nullable()
 }
 
 object Cultivos : IntIdTable("cultivo") {
