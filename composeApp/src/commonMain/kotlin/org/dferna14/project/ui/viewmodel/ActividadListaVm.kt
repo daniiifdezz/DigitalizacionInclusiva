@@ -72,6 +72,38 @@ class ActividadListaVm(
         }
     }
 
+    // Crea la actividad y asocia varios productos en cascada.
+    // usuario selecciona N productos con dosis y todos quedan persistidos al pulsar "Guardar actividad".
+    fun crearActividadConProductos(
+        actividad: Actividad,
+        productos: List<Pair<Int, Double>>
+    ) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.crearActividad(actividad)
+                if (resultado is Result.Success) {
+                    val actividadId = resultado.data.id
+                    productos.forEach { (productoId, dosis) ->
+                        val r = repository.crearActividadProducto(actividadId, productoId, dosis)
+                        if (r is Result.Error) {
+                            _mensajeError.value = r.message
+                        }
+                    }
+                    _operacionExitosa.value = true
+                    cargarActividades()
+                    cargarActividadesPendientes()
+                } else if (resultado is Result.Error) {
+                    _operacionExitosa.value = false
+                    _mensajeError.value = resultado.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al crear actividad: ${e.message}"
+            }
+        }
+    }
+
     fun eliminarActividad(id: Int) {
         viewModelScope.launch {
             val resultado = repository.eliminarActividad(id)

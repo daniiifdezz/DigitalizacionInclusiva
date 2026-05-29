@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,14 +19,17 @@ import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoDropdown
 import org.dferna14.project.ui.components.CampoField
 import org.dferna14.project.ui.components.CampoPrimaryButton
+import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeSuave
 import org.dferna14.project.ui.theme.NaranjaPrimario
 import org.dferna14.project.ui.theme.TextoPrimario
+import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
@@ -33,8 +37,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
 /**
- * Registro de una nueva actividad agrícola. Diseño accesible:
- * pocos campos, etiquetas claras, botón de guardar grande.
+ * Registro de una nueva actividad agrícola. Permite asociar N productos con dosis;
+ * todos se persisten al pulsar "Guardar actividad".
  */
 @Composable
 fun NuevaActividadSc(
@@ -50,6 +54,9 @@ fun NuevaActividadSc(
     var parcelaSeleccionada by remember { mutableStateOf<Parcela?>(null) }
     var productoSeleccionado by remember { mutableStateOf<Producto?>(null) }
     var dosis by remember { mutableStateOf("") }
+    var productosSeleccionados by remember {
+        mutableStateOf<List<Pair<Producto, Double>>>(emptyList())
+    }
     var superficieTratada by remember { mutableStateOf("") }
     var problemaFitosanitario by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
@@ -107,8 +114,49 @@ fun NuevaActividadSc(
                     minLines = 2
                 )
 
+                // Lista de productos ya añadidos. Cada item se puede eliminar
+                // antes de guardar la actividad.
+                if (productosSeleccionados.isNotEmpty()) {
+                    Text(
+                        text = "Productos añadidos",
+                        fontSize = 13.sp,
+                        color = TextoTerciario
+                    )
+                    productosSeleccionados.forEachIndexed { index, (prod, dosisProd) ->
+                        CampoCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = prod.nombreComercial.ifBlank { "Producto ${prod.id}" },
+                                        color = TextoPrimario,
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = "$dosisProd kg/ha",
+                                        color = TextoTerciario,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    productosSeleccionados = productosSeleccionados
+                                        .filterIndexed { i, _ -> i != index }
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Delete,
+                                        contentDescription = "Quitar producto",
+                                        tint = TextoTerciario
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 CampoDropdown(
-                    label = "Producto usado",
+                    label = "Añadir producto",
                     selectedItem = productoSeleccionado,
                     items = productos,
                     itemLabel = { it.nombreComercial.ifBlank { "Producto ${it.id}" } },
@@ -122,6 +170,19 @@ fun NuevaActividadSc(
                         value = dosis,
                         onValueChange = { dosis = it },
                         keyboardType = KeyboardType.Decimal
+                    )
+
+                    CampoSecondaryButton(
+                        text = "Añadir a la actividad",
+                        onClick = {
+                            val prod = productoSeleccionado
+                            val dosisNum = dosis.toDoubleOrNull()
+                            if (prod != null && dosisNum != null) {
+                                productosSeleccionados = productosSeleccionados + (prod to dosisNum)
+                                productoSeleccionado = null
+                                dosis = ""
+                            }
+                        }
                     )
                 }
 
@@ -138,14 +199,15 @@ fun NuevaActividadSc(
                     text = "Guardar actividad",
                     onClick = {
                         parcelaSeleccionada?.let { parcela ->
-                            viewModel.crearActividad(
-                                Actividad(
+                            viewModel.crearActividadConProductos(
+                                actividad = Actividad(
                                     parcelaId             = parcela.id,
                                     fechaInicio           = fechaHoy,
                                     superficieTratada     = superficieTratada.toDoubleOrNull(),
                                     problemaFitosanitario = problemaFitosanitario.ifBlank { null },
                                     observaciones         = observaciones.ifBlank { null }
-                                )
+                                ),
+                                productos = productosSeleccionados.map { (p, d) -> p.id to d }
                             )
                         }
                     },
