@@ -8,6 +8,7 @@ import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.DatosAgronomicos
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.ReferenciaSigpac
+import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.model.DatosAgronomicosResponse
 import org.dferna14.project.backend.model.ParcelaCompletaResponse
 import org.dferna14.project.backend.model.ParcelaRequest
@@ -190,20 +191,45 @@ fun Route.parcelaRoutes() {
         }
 
         // DELETE /api/parcelas/{id} - Eliminar parcela
+        // Bloqueo con 409 en parcela referenciada en cualquier tabla hija
         delete("{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
-            val tieneActividades = transaction {
-                !Actividades.selectAll()
-                    .where { Actividades.parcelaId eq id }
-                    .empty()
+            data class Refs(
+                val actividades: Boolean,
+                val semillas: Boolean,
+                val sigpac: Boolean,
+                val agronomicos: Boolean
+            )
+
+            val refs = transaction {
+                Refs(
+                    actividades = !Actividades.selectAll()
+                        .where { Actividades.parcelaId eq id }
+                        .empty(),
+                    semillas = !SemillasTratadas.selectAll()
+                        .where { SemillasTratadas.parcelaId eq id }
+                        .empty(),
+                    sigpac = !ReferenciaSigpac.selectAll()
+                        .where { ReferenciaSigpac.parcelaId eq id }
+                        .empty(),
+                    agronomicos = !DatosAgronomicos.selectAll()
+                        .where { DatosAgronomicos.parcelaId eq id }
+                        .empty()
+                )
             }
 
-            if (tieneActividades) {
+            if (refs.actividades || refs.semillas || refs.sigpac || refs.agronomicos) {
+                val detalle = buildList {
+                    if (refs.actividades) add("actividades")
+                    if (refs.semillas)    add("semillas tratadas")
+                    if (refs.sigpac)      add("referencia SIGPAC")
+                    if (refs.agronomicos) add("datos agronómicos")
+                }.joinToString(", ")
                 return@delete call.respond(
                     HttpStatusCode.Conflict,
-                    mapOf("message" to "No se puede eliminar la parcela porque tiene actividades asociadas")
+                    mapOf("message" to "No se puede eliminar la parcela porque tiene datos asociados: $detalle")
                 )
             }
 
