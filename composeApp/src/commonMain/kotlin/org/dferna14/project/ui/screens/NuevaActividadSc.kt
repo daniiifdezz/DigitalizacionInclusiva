@@ -19,6 +19,7 @@ import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoDropdown
 import org.dferna14.project.ui.components.CampoField
@@ -58,8 +59,25 @@ fun NuevaActividadSc(
         mutableStateOf<List<Pair<Producto, Double>>>(emptyList())
     }
     var superficieTratada by remember { mutableStateOf("") }
+    // Marca si el valor actual de superficie viene del pre-relleno SIGPAC
+    // (para mostrar el aviso). Se reinicia si el usuario edita el campo o
+    // si se ha rellenado a mano antes de elegir parcela.
+    var superficieDeSigpac by remember { mutableStateOf(false) }
     var problemaFitosanitario by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
+
+    // Pre-rellena la superficie con la SIGPAC al elegir parcela, solo si el
+    // campo está vacío. El campo sigue siendo editable después.
+    LaunchedEffect(parcelaSeleccionada) {
+        val parcela = parcelaSeleccionada
+        if (parcela != null && superficieTratada.isBlank()) {
+            val sup = viewModel.getSuperficieParcela(parcela.id)
+            if (sup != null && sup > 0.0) {
+                superficieTratada = sup.toString()
+                superficieDeSigpac = true
+            }
+        }
+    }
 
     val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
 
@@ -103,9 +121,18 @@ fun NuevaActividadSc(
                 CampoTextField(
                     label = "Superficie tratada (ha)",
                     value = superficieTratada,
-                    onValueChange = { superficieTratada = it },
+                    onValueChange = {
+                        superficieTratada = it
+                        superficieDeSigpac = false
+                    },
                     keyboardType = KeyboardType.Decimal
                 )
+
+                if (superficieDeSigpac && superficieTratada.isNotBlank()) {
+                    CampoAvisoInfo(
+                        mensaje = "Pre-rellenado con la superficie SIGPAC de la parcela. Modifícalo si no aplicas en toda la parcela."
+                    )
+                }
 
                 CampoTextField(
                     label = "Problema fitosanitario",

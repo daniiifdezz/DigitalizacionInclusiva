@@ -681,6 +681,24 @@ class ActividadRepository(
 
     // Parcela completa (parcela + sigpac + agronómicos) y sus operaciones
 
+    /**
+     * Devuelve la superficie SIGPAC (ha) de la parcela o null si no tiene
+     * SIGPAC registrado. Lo usan los formularios para pre-rellenar el campo
+     * de superficie tratada por defecto al elegir parcela.
+     */
+    suspend fun getSuperficieParcela(parcelaId: Int): Double? {
+        return try {
+            val resultado = getParcelaCompleta(parcelaId)
+            if (resultado is Result.Success) {
+                resultado.data?.referenciaSigpac?.superficieHa
+            } else null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun getParcelaCompleta(id: Int): Result<ParcelaCompleta?> {
         return try {
             val dto = parcelaApi.getParcelaCompleta(id)

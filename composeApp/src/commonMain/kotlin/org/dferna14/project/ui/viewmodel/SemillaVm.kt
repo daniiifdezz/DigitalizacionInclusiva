@@ -54,6 +54,10 @@ class SemillaVm(
         }
     }
 
+    // Pre-relleno de superficie en el formulario al cargar la actividad.
+    suspend fun getSuperficieParcela(parcelaId: Int): Double? =
+        repository.getSuperficieParcela(parcelaId)
+
     fun resetOperacionExitosa() {
         _operacionExitosa.value = false
     }

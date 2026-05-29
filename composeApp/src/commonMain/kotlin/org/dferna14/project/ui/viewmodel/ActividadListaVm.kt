@@ -116,6 +116,10 @@ class ActividadListaVm(
         }
     }
 
+    // Pre-relleno de superficie en formularios al elegir parcela.
+    suspend fun getSuperficieParcela(parcelaId: Int): Double? =
+        repository.getSuperficieParcela(parcelaId)
+
     fun resetOperacionExitosa() {
         _operacionExitosa.value = false
     }

@@ -62,6 +62,7 @@ fun SemillasTratadasSc(
     var superficieHa by remember(semillaExistente) {
         mutableStateOf(semillaExistente?.superficieHa?.toString() ?: "")
     }
+    var superficieDeSigpac by remember(semillaExistente) { mutableStateOf(false) }
     var cantidadSemillaKg by remember(semillaExistente) {
         mutableStateOf(semillaExistente?.cantidadSemillaKg?.toString() ?: "")
     }
@@ -70,6 +71,18 @@ fun SemillasTratadasSc(
     }
     var productoSeleccionado by remember(semillaExistente, productos) {
         mutableStateOf(productos.find { it.id == semillaExistente?.productoId })
+    }
+
+    // Pre-rellena la superficie SIGPAC al conocer la parcela, solo si el campo
+    // está vacío (no había semilla guardada previa con su propia superficie).
+    LaunchedEffect(parcelaId) {
+        if (parcelaId > 0 && superficieHa.isBlank()) {
+            val sup = viewModel.getSuperficieParcela(parcelaId)
+            if (sup != null && sup > 0.0) {
+                superficieHa = sup.toString()
+                superficieDeSigpac = true
+            }
+        }
     }
 
     fun guardar() {
@@ -177,9 +190,17 @@ fun SemillasTratadasSc(
                                     CampoTextField(
                                         label = "Superficie (ha)",
                                         value = superficieHa,
-                                        onValueChange = { superficieHa = it },
+                                        onValueChange = {
+                                            superficieHa = it
+                                            superficieDeSigpac = false
+                                        },
                                         keyboardType = KeyboardType.Decimal
                                     )
+                                    if (superficieDeSigpac && superficieHa.isNotBlank()) {
+                                        CampoAvisoInfo(
+                                            mensaje = "Pre-rellenado con la superficie SIGPAC de la parcela. Modifícalo si no aplicas en toda la parcela."
+                                        )
+                                    }
                                     CampoTextField(
                                         label = "Cantidad de semilla (kg)",
                                         value = cantidadSemillaKg,
