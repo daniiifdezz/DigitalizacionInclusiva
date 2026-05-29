@@ -48,7 +48,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.dferna14.project.domain.model.EquipoAplicacion
 import org.dferna14.project.domain.model.EstadoActividad
+import org.dferna14.project.domain.model.Result
+import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.ui.theme.AzulFondoPendiente
 import org.dferna14.project.ui.theme.AzulPendiente
 import org.dferna14.project.ui.theme.BlancoPuro
@@ -387,6 +390,120 @@ fun <T> CampoDropdown(
                         }
                     )
                 }
+            }
+        }
+    }
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EquipoDropdown(
+    equipoSeleccionado: EquipoAplicacion?,
+    equiposState: Result<List<EquipoAplicacion>>,
+    expandido: Boolean,
+    onExpandidoChange: (Boolean) -> Unit,
+    onSeleccionar: (EquipoAplicacion?) -> Unit,
+    label: String = "Equipo de aplicación"
+) {
+    ExposedDropdownMenuBox(
+        expanded = expandido,
+        onExpandedChange = onExpandidoChange
+    ) {
+        OutlinedTextField(
+            value = equipoSeleccionado?.let { eq ->
+                listOfNotNull(eq.tipo, eq.marca, eq.modelo).joinToString(" ").ifBlank { "Equipo ${eq.id}" }
+            } ?: "Sin asignar",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandido) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expandido,
+            onDismissRequest = { onExpandidoChange(false) }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Sin asignar") },
+                onClick = { onSeleccionar(null) }
+            )
+            when (val s = equiposState) {
+                is Result.Success -> s.data.forEach { eq ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(listOfNotNull(eq.tipo, eq.marca, eq.modelo).joinToString(" ").ifBlank { "Equipo ${eq.id}" })
+                        },
+                        onClick = { onSeleccionar(eq) }
+                    )
+                }
+                is Result.Error -> DropdownMenuItem(
+                    text = { Text("Error al cargar equipos") },
+                    onClick = {}
+                )
+                is Result.Loading -> DropdownMenuItem(
+                    text = { Text("Cargando equipos...") },
+                    onClick = {}
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AplicadorDropdown(
+    aplicadorSeleccionado: Usuario?,
+    usuariosState: Result<List<Usuario>>,
+    expandido: Boolean,
+    onExpandidoChange: (Boolean) -> Unit,
+    onSeleccionar: (Usuario?) -> Unit,
+    label: String = "Aplicador"
+) {
+    ExposedDropdownMenuBox(
+        expanded = expandido,
+        onExpandedChange = onExpandidoChange
+    ) {
+        OutlinedTextField(
+            value = aplicadorSeleccionado?.let { u ->
+                listOfNotNull(u.nombre, u.apellidos).joinToString(" ")
+            } ?: "Sin asignar",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandido) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expandido,
+            onDismissRequest = { onExpandidoChange(false) }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Sin asignar") },
+                onClick = { onSeleccionar(null) }
+            )
+            when (val s = usuariosState) {
+                is Result.Success -> s.data.forEach { u ->
+                    DropdownMenuItem(
+                        text = { Text(listOfNotNull(u.nombre, u.apellidos).joinToString(" ")) },
+                        onClick = { onSeleccionar(u) }
+                    )
+                }
+                is Result.Error -> DropdownMenuItem(
+                    text = { Text("Error al cargar usuarios") },
+                    onClick = {}
+                )
+                is Result.Loading -> DropdownMenuItem(
+                    text = { Text("Cargando usuarios...") },
+                    onClick = {}
+                )
             }
         }
     }

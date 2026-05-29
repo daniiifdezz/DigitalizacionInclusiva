@@ -24,7 +24,8 @@ import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.ReferenciaSigpac
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Usuario
-
+import org.dferna14.project.ui.components.AplicadorDropdown
+import org.dferna14.project.ui.components.EquipoDropdown
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm

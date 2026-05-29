@@ -106,11 +106,10 @@ fun Route.actividadRoutes() {
             val fechaInicioLocalDate = java.time.LocalDate.parse(request.fechaInicio)
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 
+
             val filasActualizadas = transaction {
                 Actividades.update({ Actividades.id eq id }) {
                     it[parcelaId]= request.parcelaId
-                    it[equipoId]= request.equipoId
-                    it[aplicadorId]= request.aplicadorId
                     it[fechaInicio]= fechaInicioLocalDate
                     it[fechaFin] = fechaFinLocalDate
                     it[superficieTratada]= request.superficieTratada
@@ -118,6 +117,8 @@ fun Route.actividadRoutes() {
                     it[eficacia] = request.eficacia
                     it[observaciones] = request.observaciones
                     it[estado] = request.estado.name
+                    if (request.equipoId != null) it[equipoId] = request.equipoId
+                    if (request.aplicadorId != null) it[aplicadorId] = request.aplicadorId
                 }
             }
 
