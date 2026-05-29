@@ -172,6 +172,20 @@ data class UsuarioDto(
     @SerialName("fechaAlta")     val fechaAlta     : String? = null
 )
 
+@Serializable
+data class LoginRequest(
+    @SerialName("email")    val email    : String,
+    @SerialName("password") val password : String
+)
+
+@Serializable
+data class RegisterRequest(
+    @SerialName("email")    val email    : String,
+    @SerialName("password") val password : String,
+    @SerialName("nombre")   val nombre   : String,
+    @SerialName("rol")      val rol      : String? = null
+)
+
 /**
  * Fuente de datos remota — encapsula todas las llamadas HTTP.
  * El repositorio usa esta clase, nunca HttpClient directamente.
@@ -358,5 +372,38 @@ class ActividadApi(private val client: HttpClient) {
     suspend fun getUsuarios(rol: String? = null): List<UsuarioDto> {
         val url = if (rol != null) "$BASE_URL/api/usuarios?rol=$rol" else "$BASE_URL/api/usuarios"
         return client.get(url).body<List<UsuarioDto>>()
+    }
+
+    // Autenticación
+
+    suspend fun login(request: LoginRequest): UsuarioDto {
+        val response = client.post("$BASE_URL/api/auth/login") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        if (response.status != HttpStatusCode.OK) {
+            throw IllegalStateException(
+                if (response.status == HttpStatusCode.Unauthorized) "Credenciales inválidas"
+                else "Error al iniciar sesión (${response.status.value})"
+            )
+        }
+        return response.body<UsuarioDto>()
+    }
+
+    suspend fun register(request: RegisterRequest): UsuarioDto {
+        val response = client.post("$BASE_URL/api/auth/register") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        if (response.status != HttpStatusCode.Created && response.status != HttpStatusCode.OK) {
+            throw IllegalStateException(
+                when (response.status) {
+                    HttpStatusCode.Conflict   -> "Ya existe un usuario con ese email"
+                    HttpStatusCode.BadRequest -> "Datos de registro inválidos"
+                    else -> "Error al registrar (${response.status.value})"
+                }
+            )
+        }
+        return response.body<UsuarioDto>()
     }
 }

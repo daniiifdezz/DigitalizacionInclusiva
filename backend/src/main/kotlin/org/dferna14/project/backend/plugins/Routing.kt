@@ -4,6 +4,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.routes.actividadRoutes
+import org.dferna14.project.backend.routes.authRoutes
 import org.dferna14.project.backend.routes.cultivoRoutes
 import org.dferna14.project.backend.routes.equipoRoutes
 import org.dferna14.project.backend.routes.explotacionRoutes
@@ -27,6 +28,7 @@ fun Application.configureRouting() {
         }
 
         // Rutas de la API
+        authRoutes()
         actividadRoutes()
         parcelaRoutes()
         sigpacRoutes()

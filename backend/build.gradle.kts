@@ -32,6 +32,9 @@ dependencies {
     // ── Logging ───────────────────────────────────────────────────────────────
     implementation(libs.logback.classic)
 
+    // ── Hashing de contraseñas (BCrypt) ──────────────────────────────────────
+    implementation("org.mindrot:jbcrypt:0.4")
+
     // ── Testing ───────────────────────────────────────────────────────────────
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.testHost)

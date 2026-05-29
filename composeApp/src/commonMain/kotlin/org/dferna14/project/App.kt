@@ -18,6 +18,10 @@ import org.dferna14.project.ui.theme.TextoTerciario
 import androidx.compose.ui.Modifier
 
 sealed class Screen {
+    // Auth
+    object Login : Screen()
+    object Registro : Screen()
+
     // Mobile tabs
     object MisActividades : Screen()
     object NuevaActividad : Screen()
@@ -43,15 +47,34 @@ sealed class Screen {
 
 @Composable
 fun App(isDesktop: Boolean = false) {
-    var currentScreen by remember { mutableStateOf<Screen>(
-        if (isDesktop) Screen.DesktopHome else Screen.MisActividades
-    ) }
+    // Arranca SIEMPRE en Login (móvil y desktop) hasta que el usuario se autentique
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Login) }
 
     AppTheme {
-        if (isDesktop) {
-            DesktopApp(currentScreen) { currentScreen = it }
-        } else {
-            MobileApp(currentScreen) { currentScreen = it }
+        when (currentScreen) {
+            is Screen.Login -> {
+                LoginScreen(
+                    onLoginExitoso = {
+                        currentScreen = if (isDesktop) Screen.DesktopHome else Screen.NuevaActividad
+                    },
+                    onIrARegistro = { currentScreen = Screen.Registro }
+                )
+            }
+            is Screen.Registro -> {
+                RegisterScreen(
+                    onRegistroExitoso = {
+                        currentScreen = if (isDesktop) Screen.DesktopHome else Screen.NuevaActividad
+                    },
+                    onIrALogin = { currentScreen = Screen.Login }
+                )
+            }
+            else -> {
+                if (isDesktop) {
+                    DesktopApp(currentScreen) { currentScreen = it }
+                } else {
+                    MobileApp(currentScreen) { currentScreen = it }
+                }
+            }
         }
     }
 }

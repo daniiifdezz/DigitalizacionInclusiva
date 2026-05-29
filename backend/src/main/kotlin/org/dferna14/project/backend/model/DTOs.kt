@@ -340,3 +340,19 @@ data class UsuarioResponse(
     val explotacionId : Int?    = null,
     val fechaAlta     : String? = null
 )
+
+// Auth — registro y login
+
+@Serializable
+data class RegisterRequest(
+    val email    : String,
+    val password : String,
+    val nombre   : String,
+    val rol      : String? = null
+)
+
+@Serializable
+data class LoginRequest(
+    val email    : String,
+    val password : String
+)

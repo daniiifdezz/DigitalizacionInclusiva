@@ -9,11 +9,14 @@ import org.dferna14.project.data.remote.ActividadDto
 import org.dferna14.project.data.remote.ActividadProductoCreateDto
 import org.dferna14.project.data.remote.DatosAgronomicosCreateDto
 import org.dferna14.project.data.remote.EstadoActividadDto
+import org.dferna14.project.data.remote.LoginRequest
 import org.dferna14.project.data.remote.ParcelaApi
 import org.dferna14.project.data.remote.ParcelaCreateDto
 import org.dferna14.project.data.remote.ProductoCreateDto
 import org.dferna14.project.data.remote.ReferenciaSigpacCreateDto
+import org.dferna14.project.data.remote.RegisterRequest
 import org.dferna14.project.data.remote.SemillaTratadaCreateDto
+import org.dferna14.project.data.remote.UsuarioDto
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.ActividadProducto
 import org.dferna14.project.domain.model.Cultivo
@@ -705,6 +708,34 @@ class ActividadRepository(
             throw e
         } catch (e: Exception) {
             Result.Error("Error al guardar datos agronómicos: ${e.message}")
+        }
+    }
+
+    // Autenticación — flujos asíncronos para Login y Registro.
+    // Devolvemos UsuarioDto tal cual para mantener este sprint aislado del
+    // resto del dominio (todavía no persistimos sesión).
+
+    fun login(request: LoginRequest): Flow<Result<UsuarioDto>> = flow {
+        emit(Result.Loading)
+        try {
+            val usuario = api.login(request)
+            emit(Result.Success(usuario))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emit(Result.Error(e.message ?: "Error al iniciar sesión"))
+        }
+    }
+
+    fun register(request: RegisterRequest): Flow<Result<UsuarioDto>> = flow {
+        emit(Result.Loading)
+        try {
+            val usuario = api.register(request)
+            emit(Result.Success(usuario))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emit(Result.Error(e.message ?: "Error al registrar usuario"))
         }
     }
 
