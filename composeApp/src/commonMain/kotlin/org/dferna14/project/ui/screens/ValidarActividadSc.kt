@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.ActividadProducto
 import org.dferna14.project.domain.model.Cultivo
@@ -25,7 +26,10 @@ import org.dferna14.project.domain.model.ReferenciaSigpac
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.ui.components.AplicadorDropdown
+import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.EquipoDropdown
+import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
@@ -222,7 +226,18 @@ fun ValidarActividadSc(
                             observaciones = observaciones,
                             errorFecha = errorFecha,
                             errorEficacia = errorEficacia,
-                            onFechaFinChange = { fechaFin = it },
+                            onFechaFinChange = { nuevo ->
+                                fechaFin = nuevo
+                                errorFecha = when {
+                                    nuevo.isBlank() ->
+                                        null
+                                    !validarFormatoFecha(nuevo) ->
+                                        "Formato incorrecto. Usa AAAA-MM-DD (ej: 2026-05-29)"
+                                    !esFechaPosterior(nuevo, act.fechaInicio) ->
+                                        "La fecha fin no puede ser anterior a la fecha de inicio"
+                                    else -> null
+                                }
+                            },
                             onEficaciaChange = { eficacia = it },
                             onAplicadorChange = { aplicadorSeleccionado = it },
                             onEquipoChange = { equipoSeleccionado = it },
@@ -730,24 +745,24 @@ private fun PestanaValidar(
 
         OutlinedTextField(
             value = fechaFin,
-            onValueChange = { newValue ->
-                onFechaFinChange(newValue)
-            },
+            onValueChange = { newValue -> onFechaFinChange(newValue) },
             label = { Text("Fecha fin *") },
+            placeholder = { Text("AAAA-MM-DD") },
             isError = errorFecha != null,
-            supportingText = errorFecha?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
             modifier = Modifier.fillMaxWidth()
         )
+        if (errorFecha != null) {
+            Text(
+                text = errorFecha,
+                color = RojoEliminar,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+            )
+        }
 
-        OutlinedTextField(
-            value = eficacia,
-            onValueChange = { newValue ->
-                onEficaciaChange(newValue.uppercase())
-            },
-            label = { Text("Eficacia *") },
-            isError = errorEficacia != null,
-            supportingText = errorEficacia?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-            modifier = Modifier.fillMaxWidth()
+        EficaciaDropdown(
+            eficaciaActual = eficacia,
+            onSeleccionar = { onEficaciaChange(it) }
         )
 
         AplicadorDropdown(
@@ -780,6 +795,9 @@ private fun PestanaValidar(
             minLines = 3,
             modifier = Modifier.fillMaxWidth()
         )
+        CampoAvisoInfo(
+            mensaje = "Añade cualquier observación técnica relevante para el cuaderno oficial: condiciones meteorológicas, incidencias, justificación del tratamiento..."
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -794,10 +812,13 @@ private fun PestanaValidar(
                 Text("Devolver")
             }
 
+            // El botón solo exige fecha fin válida y posterior a la de inicio.
+            // La eficacia es opcional desde Desktop (el técnico puede dejarla en
+            // blanco si todavía no tiene criterio).
             val esValido = fechaFin.isNotBlank() &&
+                    errorFecha == null &&
                     validarFormatoFecha(fechaFin) &&
-                    esFechaPosterior(fechaFin, act.fechaInicio) &&
-                    validarEficaciaValue(eficacia)
+                    esFechaPosterior(fechaFin, act.fechaInicio)
 
             Button(
                 onClick = onValidar,
@@ -826,5 +847,55 @@ private fun FieldView(label: String, value: String) {
             text = value,
             style = MaterialTheme.typography.bodyLarge
         )
+    }
+}
+
+private val OPCIONES_EFICACIA = listOf(
+    "ALTA"  to "Alta — tratamiento muy efectivo",
+    "MEDIA" to "Media — tratamiento parcialmente efectivo",
+    "BAJA"  to "Baja — tratamiento poco efectivo",
+    "NULA"  to "Nula — tratamiento sin efecto"
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EficaciaDropdown(
+    eficaciaActual: String,
+    onSeleccionar: (String) -> Unit
+) {
+    var abierto by remember { mutableStateOf(false) }
+    val etiqueta = OPCIONES_EFICACIA.find { it.first == eficaciaActual.uppercase() }?.second
+
+    ExposedDropdownMenuBox(
+        expanded = abierto,
+        onExpandedChange = { abierto = it }
+    ) {
+        OutlinedTextField(
+            value = etiqueta ?: "Selecciona eficacia del tratamiento",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Eficacia del tratamiento") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = abierto) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = NaranjaPrimario
+            )
+        )
+        ExposedDropdownMenu(
+            expanded = abierto,
+            onDismissRequest = { abierto = false }
+        ) {
+            OPCIONES_EFICACIA.forEach { (valor, etiqueta) ->
+                DropdownMenuItem(
+                    text = { Text(etiqueta, fontSize = 13.sp) },
+                    onClick = {
+                        onSeleccionar(valor)
+                        abierto = false
+                    }
+                )
+            }
+        }
     }
 }

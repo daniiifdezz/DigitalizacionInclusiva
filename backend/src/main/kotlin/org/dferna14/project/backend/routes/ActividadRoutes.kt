@@ -127,24 +127,45 @@ fun Route.actividadRoutes() {
         }
 
         // POST /api/actividades/{id}/enviar
-        // Móvil: envía la actividad para validación (BORRADOR -> PENDIENTE_VALIDAR)
+        // Móvil: envía la actividad para validación (BORRADOR -> PENDIENTE_VALIDAR).
+        // Si la actividad no tiene fechaFin todavía, se rellena automáticamente con
+        // la fecha de hoy — el técnico puede modificarla después desde Desktop.
         post("{id}/enviar") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@post call.respond(HttpStatusCode.BadRequest)
 
-            val actividad = transaction {
-                val filasActualizadas = Actividades.update({ Actividades.id eq id }) {
+            val (filas, actividad) = transaction {
+                val fechaFinActual = Actividades.selectAll()
+                    .where { Actividades.id eq id }
+                    .firstOrNull()
+                    ?.get(Actividades.fechaFin)
+
+                val filasActualizadas = Actividades.update({
+                    (Actividades.id eq id) and (Actividades.estado eq EstadoActividad.BORRADOR.name)
+                }) {
                     it[estado] = EstadoActividad.PENDIENTE_VALIDAR.name
+                    if (fechaFinActual == null) {
+                        it[fechaFin] = java.time.LocalDate.now()
+                    }
                 }
-                if (filasActualizadas == 0) null
+
+                val act = if (filasActualizadas == 0) null
                 else (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq id }
                     .single()
                     .toActividadResponse()
+
+                filasActualizadas to act
             }
 
-            if (actividad == null) call.respond(HttpStatusCode.NotFound)
-            else call.respond(actividad)
+            when {
+                filas == 0 -> call.respond(
+                    HttpStatusCode.Conflict,
+                    mapOf("message" to "La actividad no existe o no está en estado BORRADOR")
+                )
+                actividad == null -> call.respond(HttpStatusCode.NotFound)
+                else -> call.respond(actividad)
+            }
         }
 
         // POST /api/actividades/{id}/validar

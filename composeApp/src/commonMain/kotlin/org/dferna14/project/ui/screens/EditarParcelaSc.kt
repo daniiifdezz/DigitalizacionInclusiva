@@ -17,6 +17,7 @@ import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.ParcelaCompleta
 import org.dferna14.project.domain.model.ReferenciaSigpac
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -239,6 +240,9 @@ private fun DatosBasicosTab(
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
+        CampoAvisoInfo(
+            mensaje = "Indica si el agricultor tiene asesoramiento individual, grupal o pertenece a una agrupación de defensa fitosanitaria (ADF)."
+        )
 
         Row(
             modifier = Modifier
@@ -320,6 +324,9 @@ private fun SigpacTab(
         OutlinedTextField(value = terminoMunicipal, onValueChange = { terminoMunicipal = it }, label = { Text("Término municipal") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = codigoAgregado,   onValueChange = { codigoAgregado = it },   label = { Text("Código agregado") },   singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = zona,             onValueChange = { zona = it },             label = { Text("Zona") },              singleLine = true, modifier = Modifier.fillMaxWidth())
+        CampoAvisoInfo(
+            mensaje = "La zona es el código catastral SIGPAC asignado a la parcela. Consúltalo en tu documentación de la PAC."
+        )
         OutlinedTextField(value = numeroPoligono,   onValueChange = { numeroPoligono = it },   label = { Text("Número polígono") },   singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = numeroParcela,    onValueChange = { numeroParcela = it },    label = { Text("Número parcela") },    singleLine = true, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = numeroRecinto,    onValueChange = { numeroRecinto = it },    label = { Text("Número recinto") },    singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -411,6 +418,9 @@ private fun AgronomicosTab(
             expanded = ecoOpen,
             onExpandedChange = { ecoOpen = it },
             onSeleccionar = { ecoregimenPractica = it; ecoOpen = false }
+        )
+        CampoAvisoInfo(
+            mensaje = "P1: Rotación de cultivos · P2A: Cubierta vegetal · P3: Sin labranza · P4: Cultivos fijadores · P5: Poda · P6: Gestión nutrientes · P7: Pastoreo"
         )
 
         DropdownTextField(

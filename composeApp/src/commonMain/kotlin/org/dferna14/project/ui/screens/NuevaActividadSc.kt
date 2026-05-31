@@ -140,6 +140,9 @@ fun NuevaActividadSc(
                     onValueChange = { problemaFitosanitario = it },
                     minLines = 2
                 )
+                CampoAvisoInfo(
+                    mensaje = "Describe la plaga, enfermedad o mala hierba detectada. Ej: Pulgón verde en trigo, Oídio en vid, Malas hierbas gramíneas."
+                )
 
                 // Lista de productos ya añadidos. Cada item se puede eliminar
                 // antes de guardar la actividad.
