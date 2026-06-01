@@ -343,22 +343,24 @@ data class EquipoResponse(
 
 @Serializable
 data class UsuarioRequest(
-    val nombre        : String,
-    val apellidos     : String? = null,
-    val email         : String,
-    val rol           : String? = null,
-    val explotacionId : Int?    = null
+    val nombre         : String,
+    val apellidos      : String? = null,
+    val email          : String,
+    val rol            : String? = null,
+    val explotacionId  : Int?    = null,
+    val tipoCarnetRopo : String? = null
 )
 
 @Serializable
 data class UsuarioResponse(
-    val id            : Int,
-    val nombre        : String,
-    val apellidos     : String? = null,
-    val email         : String,
-    val rol           : String,
-    val explotacionId : Int?    = null,
-    val fechaAlta     : String? = null
+    val id             : Int,
+    val nombre         : String,
+    val apellidos      : String? = null,
+    val email          : String,
+    val rol            : String,
+    val explotacionId  : Int?    = null,
+    val fechaAlta      : String? = null,
+    val tipoCarnetRopo : String? = null
 )
 
 // Auth — registro y login
@@ -375,4 +377,58 @@ data class RegisterRequest(
 data class LoginRequest(
     val email    : String,
     val password : String
+)
+
+// ============================================================
+// DTOs unificados para generacion del Cuaderno Oficial (PDF)
+// ============================================================
+//
+// Agregados que consolidan datos de varias tablas para la generacion del
+// PDF del cuaderno oficial. El servicio de PDF consumira CuadernoCompletoDto
+// como entrada, sin tener que orquestar el JOIN cliente-side.
+
+@Serializable
+data class CuadernoCompletoDto(
+    val fechaGeneracion : String,                      // ISO date "YYYY-MM-DD"
+    val periodo         : PeriodoDto,
+    val titular         : TitularResponse?,
+    val explotacion     : ExplotacionResponse?,
+    val parcelas        : List<ParcelaCompletaDto>,
+    val actividades     : List<ActividadCompletaDto>,
+    val resumen         : ResumenCuadernoDto
+)
+
+@Serializable
+data class PeriodoDto(
+    val fechaInicio : String,   // ISO date
+    val fechaFin    : String    // ISO date
+)
+
+// Estructura plana parcela + sub-objetos satelite. Comparte forma con
+// ParcelaCompletaResponse pero se mantiene como DTO propio del cuaderno
+// para desacoplar el contrato del PDF de los endpoints CRUD existentes.
+@Serializable
+data class ParcelaCompletaDto(
+    val parcela          : ParcelaResponse,
+    val referenciaSigpac : ReferenciaSigpacResponse?,
+    val datosAgronomicos : DatosAgronomicosResponse?
+)
+
+@Serializable
+data class ActividadCompletaDto(
+    val actividad           : ActividadResponse,
+    val productosAplicados  : List<ActividadProductoResponse>,
+    val semillaTratada      : SemillaTratadaResponse?,
+    val fertilizacion       : FertilizacionResponse?,
+    val equipoUsado         : EquipoResponse?,
+    val aplicador           : UsuarioResponse?
+)
+
+@Serializable
+data class ResumenCuadernoDto(
+    val totalActividades          : Int,
+    val totalActividadesValidadas : Int,
+    val totalParcelas             : Int,
+    val superficieTotalTratada    : Double,
+    val productosUnicosUsados     : Int
 )

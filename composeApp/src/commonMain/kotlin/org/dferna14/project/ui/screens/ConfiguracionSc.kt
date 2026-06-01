@@ -1,9 +1,11 @@
 package org.dferna14.project.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.EquipoAplicacion
 import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Result
@@ -22,6 +25,8 @@ import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.theme.NaranjaClaro
+import org.dferna14.project.ui.theme.NaranjaOscuro
 import org.dferna14.project.ui.theme.NaranjaPrimario
 import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.TextoSecundario
@@ -803,6 +808,21 @@ private fun AplicadorConfigCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = TextoTerciario
                 )
+                usuario.tipoCarnetRopo?.let { tipo ->
+                    Spacer(Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(NaranjaClaro, RoundedCornerShape(10.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "Carné: ${etiquetaCortaCarnet(tipo)}",
+                            fontSize = 10.sp,
+                            color = NaranjaOscuro,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
             IconButton(
                 onClick = onEliminar,
@@ -818,6 +838,22 @@ private fun AplicadorConfigCard(
     }
 }
 
+private fun etiquetaCortaCarnet(tipo: String): String = when (tipo) {
+    "BASICO"      -> "Básico"
+    "CUALIFICADO" -> "Cualificado"
+    "FUMIGADOR"   -> "Fumigador"
+    "PILOTO"      -> "Piloto"
+    else          -> tipo
+}
+
+private val OPCIONES_CARNET_ROPO = listOf(
+    "BASICO"      to "Básico — manipulación general",
+    "CUALIFICADO" to "Cualificado — productos tóxicos",
+    "FUMIGADOR"   to "Fumigador — gases y vapores",
+    "PILOTO"      to "Piloto — aplicación aérea"
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NuevoAplicadorDialog(
     onDismiss: () -> Unit,
@@ -826,6 +862,8 @@ private fun NuevoAplicadorDialog(
     var nombre by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var tipoCarnet by remember { mutableStateOf<String?>(null) }
+    var desplegableCarnet by remember { mutableStateOf(false) }
 
     val emailValido = email.isBlank() || email.contains("@")
     val confirmHabilitado = nombre.isNotBlank() && email.isNotBlank() && emailValido
@@ -858,6 +896,54 @@ private fun NuevoAplicadorDialog(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
+
+                ExposedDropdownMenuBox(
+                    expanded = desplegableCarnet,
+                    onExpandedChange = { desplegableCarnet = it }
+                ) {
+                    OutlinedTextField(
+                        value = OPCIONES_CARNET_ROPO.find { it.first == tipoCarnet }?.second
+                            ?: "Selecciona tipo de carné (opcional)",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Tipo de carné ROPO") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = desplegableCarnet)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NaranjaPrimario
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = desplegableCarnet,
+                        onDismissRequest = { desplegableCarnet = false }
+                    ) {
+                        OPCIONES_CARNET_ROPO.forEach { (valor, etiqueta) ->
+                            DropdownMenuItem(
+                                text = { Text(etiqueta, fontSize = 13.sp) },
+                                onClick = {
+                                    tipoCarnet = valor
+                                    desplegableCarnet = false
+                                }
+                            )
+                        }
+                        if (tipoCarnet != null) {
+                            DropdownMenuItem(
+                                text = { Text("Quitar selección", fontSize = 13.sp, color = TextoTerciario) },
+                                onClick = {
+                                    tipoCarnet = null
+                                    desplegableCarnet = false
+                                }
+                            )
+                        }
+                    }
+                }
+                CampoAvisoInfo(
+                    mensaje = "El carné ROPO es obligatorio para aplicar fitosanitarios según el RD 1311/2012"
+                )
             }
         },
         confirmButton = {
@@ -866,11 +952,12 @@ private fun NuevoAplicadorDialog(
                 onClick = {
                     onCrear(
                         Usuario(
-                            id            = 0,
-                            nombre        = nombre.trim(),
-                            apellidos     = apellidos.trim().ifBlank { null },
-                            email         = email.trim().lowercase(),
-                            rol           = "AGRICULTOR"
+                            id             = 0,
+                            nombre         = nombre.trim(),
+                            apellidos      = apellidos.trim().ifBlank { null },
+                            email          = email.trim().lowercase(),
+                            rol            = "AGRICULTOR",
+                            tipoCarnetRopo = tipoCarnet
                         )
                     )
                 }

@@ -13,6 +13,8 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDate
 
+private val VALORES_VALIDOS_CARNET = setOf("BASICO", "CUALIFICADO", "FUMIGADOR", "PILOTO")
+
 /**
  * Lectura y mantenimiento de usuarios. El alta vía POST aquí cubre el caso de
  * "aplicador dado de alta por el técnico desde Desktop": el usuario no tiene
@@ -65,6 +67,12 @@ fun Route.usuarioRoutes() {
                     mapOf("message" to "nombre y email son obligatorios")
                 )
             }
+            if (request.tipoCarnetRopo != null && request.tipoCarnetRopo !in VALORES_VALIDOS_CARNET) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "Tipo de carné inválido. Valores permitidos: BASICO, CUALIFICADO, FUMIGADOR, PILOTO")
+                )
+            }
             val emailNorm = request.email.trim().lowercase()
 
             val resultado = transaction {
@@ -74,12 +82,13 @@ fun Route.usuarioRoutes() {
                 if (yaExiste) return@transaction null
 
                 val nuevoId = Usuarios.insertAndGetId {
-                    it[nombre]        = request.nombre.trim()
-                    it[apellidos]     = request.apellidos?.trim()
-                    it[email]         = emailNorm
-                    it[rol]           = request.rol?.takeIf { r -> r.isNotBlank() } ?: "AGRICULTOR"
-                    it[explotacionId] = request.explotacionId
-                    it[fechaAlta]     = LocalDate.now()
+                    it[nombre]         = request.nombre.trim()
+                    it[apellidos]      = request.apellidos?.trim()
+                    it[email]          = emailNorm
+                    it[rol]            = request.rol?.takeIf { r -> r.isNotBlank() } ?: "AGRICULTOR"
+                    it[explotacionId]  = request.explotacionId
+                    it[fechaAlta]      = LocalDate.now()
+                    it[tipoCarnetRopo] = request.tipoCarnetRopo
                 }.value
 
                 Usuarios.selectAll()
@@ -124,11 +133,12 @@ fun Route.usuarioRoutes() {
 }
 
 private fun ResultRow.toUsuarioResponse() = UsuarioResponse(
-    id            = this[Usuarios.id].value,
-    nombre        = this[Usuarios.nombre],
-    apellidos     = this[Usuarios.apellidos],
-    email         = this[Usuarios.email],
-    rol           = this[Usuarios.rol],
-    explotacionId = this[Usuarios.explotacionId],
-    fechaAlta     = this[Usuarios.fechaAlta]?.toString()
+    id             = this[Usuarios.id].value,
+    nombre         = this[Usuarios.nombre],
+    apellidos      = this[Usuarios.apellidos],
+    email          = this[Usuarios.email],
+    rol            = this[Usuarios.rol],
+    explotacionId  = this[Usuarios.explotacionId],
+    fechaAlta      = this[Usuarios.fechaAlta]?.toString(),
+    tipoCarnetRopo = this[Usuarios.tipoCarnetRopo]
 )

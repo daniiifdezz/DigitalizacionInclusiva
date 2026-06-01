@@ -123,13 +123,14 @@ data class EquipoAplicacion(
 )
 
 data class Usuario(
-    val id            : Int     = 0,
-    val nombre        : String,
-    val apellidos     : String? = null,
-    val email         : String,
-    val rol           : String  = "AGRICULTOR",
-    val explotacionId : Int?    = null,
-    val fechaAlta     : String? = null
+    val id             : Int     = 0,
+    val nombre         : String,
+    val apellidos      : String? = null,
+    val email          : String,
+    val rol            : String  = "AGRICULTOR",
+    val explotacionId  : Int?    = null,
+    val fechaAlta      : String? = null,
+    val tipoCarnetRopo : String? = null
 )
 
 data class Cultivo(

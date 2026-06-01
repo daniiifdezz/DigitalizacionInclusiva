@@ -102,11 +102,12 @@ fun Route.authRoutes() {
 }
 
 private fun ResultRow.toUsuarioResponse() = UsuarioResponse(
-    id            = this[Usuarios.id].value,
-    nombre        = this[Usuarios.nombre],
-    apellidos     = this[Usuarios.apellidos],
-    email         = this[Usuarios.email],
-    rol           = this[Usuarios.rol],
-    explotacionId = this[Usuarios.explotacionId],
-    fechaAlta     = this[Usuarios.fechaAlta]?.toString()
+    id             = this[Usuarios.id].value,
+    nombre         = this[Usuarios.nombre],
+    apellidos      = this[Usuarios.apellidos],
+    email          = this[Usuarios.email],
+    rol            = this[Usuarios.rol],
+    explotacionId  = this[Usuarios.explotacionId],
+    fechaAlta      = this[Usuarios.fechaAlta]?.toString(),
+    tipoCarnetRopo = this[Usuarios.tipoCarnetRopo]
 )

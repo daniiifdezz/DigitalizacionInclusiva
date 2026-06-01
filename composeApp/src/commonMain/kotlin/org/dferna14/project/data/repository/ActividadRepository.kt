@@ -638,11 +638,12 @@ class ActividadRepository(
         return try {
             val dto = api.crearUsuario(
                 org.dferna14.project.data.remote.UsuarioCreateDto(
-                    nombre        = usuario.nombre,
-                    apellidos     = usuario.apellidos,
-                    email         = usuario.email,
-                    rol           = usuario.rol,
-                    explotacionId = usuario.explotacionId
+                    nombre         = usuario.nombre,
+                    apellidos      = usuario.apellidos,
+                    email          = usuario.email,
+                    rol            = usuario.rol,
+                    explotacionId  = usuario.explotacionId,
+                    tipoCarnetRopo = usuario.tipoCarnetRopo
                 )
             )
             Result.Success(dto.toDomain())
@@ -669,14 +670,15 @@ class ActividadRepository(
         }
     }
 
-    private fun org.dferna14.project.data.remote.UsuarioDto.toDomain() = Usuario(
-        id            = id,
-        nombre        = nombre,
-        apellidos     = apellidos,
-        email         = email,
-        rol           = rol,
-        explotacionId = explotacionId,
-        fechaAlta     = fechaAlta
+    private fun UsuarioDto.toDomain() = Usuario(
+        id             = id,
+        nombre         = nombre,
+        apellidos      = apellidos,
+        email          = email,
+        rol            = rol,
+        explotacionId  = explotacionId,
+        fechaAlta      = fechaAlta,
+        tipoCarnetRopo = tipoCarnetRopo
     )
 
     // Parcela completa (parcela + sigpac + agronómicos) y sus operaciones
