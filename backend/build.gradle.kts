@@ -38,6 +38,9 @@ dependencies {
     // ── Testing ───────────────────────────────────────────────────────────────
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.testHost)
+
+    // pdfBOX
+    implementation("org.apache.pdfbox:pdfbox:3.0.3")
 }
 
 application {
