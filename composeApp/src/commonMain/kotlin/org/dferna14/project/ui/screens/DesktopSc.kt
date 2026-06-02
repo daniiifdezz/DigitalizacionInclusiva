@@ -8,6 +8,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.EstadoActividad
+import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.viewmodel.ActividadListaVm
+import org.dferna14.project.ui.viewmodel.ProductoVm
+import org.dferna14.project.ui.viewmodel.ParcelaVm
+import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.Clock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,9 +27,38 @@ fun DesktopMainSc(
     onVerParcelas: () -> Unit,
     onVerProductos: () -> Unit,
     onVerValidar: (Int) -> Unit,
-    onVerConfiguracion: () -> Unit
+    onVerConfiguracion: () -> Unit,
+    actividadListaVm: ActividadListaVm = koinViewModel(),
+    parcelaVm: ParcelaVm = koinViewModel(),
+    productoVm: ProductoVm = koinViewModel()
 ) {
     var selectedItem by remember { mutableStateOf(0) }
+
+    val actividadesState by actividadListaVm.actividades.collectAsState()
+
+    val parcelasState by parcelaVm.parcelas.collectAsState()
+    val productosState by productoVm.productos.collectAsState()
+
+    LaunchedEffect(Unit) {
+        actividadListaVm.cargarActividades()
+        parcelaVm.cargarParcelas()
+        productoVm.cargarProductos()
+    }
+
+    // Cálculo de las 3 métricas que muestra el dashboard.
+    // "—" mientras cargan, "?" si la carga falla.
+    val hoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
+    val mesActual = remember(hoy) { hoy.substring(0, 7) } // "YYYY-MM"
+
+    val pendientesTexto = estadisticaActividades(actividadesState) { lista ->
+        lista.count { it.estado == EstadoActividad.PENDIENTE_VALIDAR }
+    }
+    val validadasHoyTexto = estadisticaActividades(actividadesState) { lista ->
+        lista.count { it.estado == EstadoActividad.VALIDADA && it.esDeHoy(hoy) }
+    }
+    val totalMesTexto = estadisticaActividades(actividadesState) { lista ->
+        lista.count { it.fechaInicio.startsWith(mesActual) }
+    }
 
     Row(modifier = Modifier.fillMaxSize()) {
         // Menu lateral
@@ -99,24 +138,23 @@ fun DesktopMainSc(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Quick stats (revisar, ya que esta hardcodeado, mirar posteriormente)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 StatCard(
                     title = "Pendientes",
-                    value = "12",
+                    value = pendientesTexto,
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = "Validadas hoy",
-                    value = "5",
+                    value = validadasHoyTexto,
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = "Total mes",
-                    value = "45",
+                    value = totalMesTexto,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -174,6 +212,29 @@ private fun MenuItem(
                    else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+}
+
+/**
+ * Devuelve la representación textual de una estadística derivada de la lista
+ * de actividades: "—" mientras carga, "?" si hubo error, el número en caso
+ * de éxito.
+ */
+private fun estadisticaActividades(
+    estado: Result<List<Actividad>>,
+    contador: (List<Actividad>) -> Int
+): String = when (estado) {
+    is Result.Loading -> "—"
+    is Result.Error   -> "?"
+    is Result.Success -> contador(estado.data).toString()
+}
+
+/**
+ * Una actividad es "de hoy" si su fechaFin o, en su defecto, su fechaInicio
+ * coincide con la fecha actual (formato YYYY-MM-DD).
+ */
+private fun Actividad.esDeHoy(hoy: String): Boolean {
+    val fechaReferencia = fechaFin?.takeIf { it.isNotBlank() } ?: fechaInicio
+    return fechaReferencia == hoy
 }
 
 @Composable
