@@ -5,8 +5,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Titulares
+import org.dferna14.project.backend.mapper.toTitularResponse
 import org.dferna14.project.backend.model.TitularRequest
-import org.dferna14.project.backend.model.TitularResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -111,15 +111,3 @@ fun Route.titularRoutes() {
     }
 }
 
-private fun ResultRow.toTitularResponse() = TitularResponse(
-    id           = this[Titulares.id].value,
-    nombre       = this[Titulares.nombre],
-    apellidos    = this[Titulares.apellidos],
-    nif          = this[Titulares.nif],
-    direccion    = this[Titulares.direccion],
-    localidad    = this[Titulares.localidad],
-    codigoPostal = this[Titulares.codigoPostal],
-    provincia    = this[Titulares.provincia],
-    telefono     = this[Titulares.telefono],
-    email        = this[Titulares.email]
-)

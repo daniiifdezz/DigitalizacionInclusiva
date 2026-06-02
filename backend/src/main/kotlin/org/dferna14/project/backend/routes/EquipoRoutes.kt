@@ -6,8 +6,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.EquiposAplicacion
+import org.dferna14.project.backend.mapper.toEquipoResponse
 import org.dferna14.project.backend.model.EquipoRequest
-import org.dferna14.project.backend.model.EquipoResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -120,13 +120,3 @@ fun Route.equipoRoutes() {
     }
 }
 
-private fun ResultRow.toEquipoResponse() = EquipoResponse(
-    id                    = this[EquiposAplicacion.id].value,
-    explotacionId         = this[EquiposAplicacion.explotacionId],
-    tipo                  = this[EquiposAplicacion.tipo],
-    marca                 = this[EquiposAplicacion.marca],
-    modelo                = this[EquiposAplicacion.modelo],
-    numeroRoma            = this[EquiposAplicacion.numeroRoma],
-    anyoFabricacion       = this[EquiposAplicacion.anyoFabricacion],
-    fechaUltimaInspeccion = this[EquiposAplicacion.fechaUltimaInspeccion]?.toString()
-)

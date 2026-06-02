@@ -8,8 +8,8 @@ import org.dferna14.project.backend.db.EquiposAplicacion
 import org.dferna14.project.backend.db.Explotaciones
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.Usuarios
+import org.dferna14.project.backend.mapper.toExplotacionResponse
 import org.dferna14.project.backend.model.ExplotacionRequest
-import org.dferna14.project.backend.model.ExplotacionResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -133,18 +133,3 @@ fun Route.explotacionRoutes() {
     }
 }
 
-private fun ResultRow.toExplotacionResponse() = ExplotacionResponse(
-    id                 = this[Explotaciones.id].value,
-    nombre             = this[Explotaciones.nombre],
-    titularId          = this[Explotaciones.titularId],
-    nifEmpresa         = this[Explotaciones.nifEmpresa],
-    registroNacional   = this[Explotaciones.registroNacional],
-    registroAutonomico = this[Explotaciones.registroAutonomico],
-    direccion          = this[Explotaciones.direccion],
-    municipio          = this[Explotaciones.municipio],
-    provincia          = this[Explotaciones.provincia],
-    codigoPostal       = this[Explotaciones.codigoPostal],
-    telefonoFijo       = this[Explotaciones.telefonoFijo],
-    telefonoMovil      = this[Explotaciones.telefonoMovil],
-    email              = this[Explotaciones.email]
-)

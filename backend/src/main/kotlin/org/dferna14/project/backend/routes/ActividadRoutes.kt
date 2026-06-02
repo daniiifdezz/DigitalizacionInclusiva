@@ -9,10 +9,12 @@ import org.dferna14.project.backend.db.ActividadProductos
 import org.dferna14.project.backend.db.Fertilizaciones
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.SemillasTratadas
+import org.dferna14.project.backend.mapper.toActividadProductoResponse
+import org.dferna14.project.backend.mapper.toActividadResponse
+import org.dferna14.project.backend.mapper.toSemillaTratadaResponse
 import org.dferna14.project.backend.model.ActividadProductoRequest
 import org.dferna14.project.backend.model.ActividadProductoResponse
 import org.dferna14.project.backend.model.ActividadRequest
-import org.dferna14.project.backend.model.ActividadResponse
 import org.dferna14.project.backend.model.EstadoActividad
 import org.dferna14.project.backend.model.SemillaTratadaRequest
 import org.dferna14.project.backend.model.SemillaTratadaResponse
@@ -307,7 +309,7 @@ fun Route.actividadRoutes() {
                         .where { SemillasTratadas.actividadId eq actividadId }
                         .orderBy(SemillasTratadas.id to SortOrder.DESC)
                         .firstOrNull()
-                        ?.toSemillaResponse()
+                        ?.toSemillaTratadaResponse()
                 }
 
                 if (semilla == null) call.respond(HttpStatusCode.NotFound)
@@ -376,36 +378,3 @@ fun Route.actividadRoutes() {
     }
 }
 
-private fun ResultRow.toActividadResponse(): ActividadResponse {
-    // Si la fila viene de un JOIN con Parcelas leemos el alias; si no, queda null.
-    val alias = runCatching { this[Parcelas.alias] }.getOrNull()
-    return ActividadResponse(
-        id                    = this[Actividades.id].value,
-        parcelaId             = this[Actividades.parcelaId],
-        parcelaAlias          = alias,
-        equipoId              = this[Actividades.equipoId],
-        aplicadorId           = this[Actividades.aplicadorId],
-        fechaInicio           = this[Actividades.fechaInicio]?.toString() ?: "",
-        fechaFin              = this[Actividades.fechaFin]?.toString(),
-        superficieTratada     = this[Actividades.superficieTratada],
-        problemaFitosanitario = this[Actividades.problemaFitosanitario],
-        eficacia              = this[Actividades.eficacia],
-        observaciones         = this[Actividades.observaciones],
-        estado                = runCatching {
-            EstadoActividad.valueOf(this[Actividades.estado] ?: "BORRADOR")
-        }.getOrDefault(EstadoActividad.BORRADOR)
-    )
-}
-
-private fun ResultRow.toSemillaResponse() = SemillaTratadaResponse(
-    id                = this[SemillasTratadas.id].value,
-    actividadId       = this[SemillasTratadas.actividadId],
-    parcelaId         = this[SemillasTratadas.parcelaId],
-    aplica            = this[SemillasTratadas.aplica],
-    fechaSiembra      = this[SemillasTratadas.fechaSiembra]?.toString(),
-    superficieHa      = this[SemillasTratadas.superficieHa],
-    cantidadSemillaKg = this[SemillasTratadas.cantidadSemillaKg],
-    productoId        = this[SemillasTratadas.productoId],
-    variedadSemilla   = this[SemillasTratadas.variedadSemilla],
-    cultivoId         = this[SemillasTratadas.cultivoId]
-)

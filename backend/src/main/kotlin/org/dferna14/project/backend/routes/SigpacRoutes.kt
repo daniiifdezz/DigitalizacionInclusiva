@@ -7,10 +7,10 @@ import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.DatosAgronomicos
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.ReferenciaSigpac
+import org.dferna14.project.backend.mapper.toDatosAgronomicosResponse
+import org.dferna14.project.backend.mapper.toReferenciaSigpacResponse
 import org.dferna14.project.backend.model.DatosAgronomicosRequest
-import org.dferna14.project.backend.model.DatosAgronomicosResponse
 import org.dferna14.project.backend.model.ReferenciaSigpacRequest
-import org.dferna14.project.backend.model.ReferenciaSigpacResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -184,28 +184,3 @@ private fun parcelaExiste(parcelaId: Int): Boolean = transaction {
     !Parcelas.selectAll().where { Parcelas.id eq parcelaId }.empty()
 }
 
-private fun ResultRow.toReferenciaSigpacResponse() = ReferenciaSigpacResponse(
-    id               = this[ReferenciaSigpac.id].value,
-    parcelaId        = this[ReferenciaSigpac.parcelaId],
-    provincia        = this[ReferenciaSigpac.provincia],
-    terminoMunicipal = this[ReferenciaSigpac.terminoMunicipal],
-    codigoAgregado   = this[ReferenciaSigpac.codigoAgregado],
-    zona             = this[ReferenciaSigpac.zona],
-    numeroPoligono   = this[ReferenciaSigpac.numeroPoligono],
-    numeroParcela    = this[ReferenciaSigpac.numeroParcela],
-    numeroRecinto    = this[ReferenciaSigpac.numeroRecinto],
-    usoSigpac        = this[ReferenciaSigpac.usoSigpac],
-    superficieHa     = this[ReferenciaSigpac.superficieHa]
-)
-
-private fun ResultRow.toDatosAgronomicosResponse() = DatosAgronomicosResponse(
-    id                 = this[DatosAgronomicos.id].value,
-    parcelaId          = this[DatosAgronomicos.parcelaId],
-    especieVariedad    = this[DatosAgronomicos.especieVariedad],
-    ecoregimenPractica = this[DatosAgronomicos.ecoregimenPractica],
-    secanoRegadio      = this[DatosAgronomicos.secanoRegadio],
-    cultivoId          = this[DatosAgronomicos.cultivoId],
-    fechaInicio        = this[DatosAgronomicos.fechaInicio]?.toString(),
-    fechaFin           = this[DatosAgronomicos.fechaFin]?.toString(),
-    aireLibreProtegido = this[DatosAgronomicos.aireLibreProtegido]
-)

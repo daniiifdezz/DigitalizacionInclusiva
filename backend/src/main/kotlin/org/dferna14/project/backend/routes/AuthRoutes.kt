@@ -5,10 +5,9 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Usuarios
+import org.dferna14.project.backend.mapper.toUsuarioResponse
 import org.dferna14.project.backend.model.LoginRequest
 import org.dferna14.project.backend.model.RegisterRequest
-import org.dferna14.project.backend.model.UsuarioResponse
-import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
@@ -101,13 +100,3 @@ fun Route.authRoutes() {
     }
 }
 
-private fun ResultRow.toUsuarioResponse() = UsuarioResponse(
-    id             = this[Usuarios.id].value,
-    nombre         = this[Usuarios.nombre],
-    apellidos      = this[Usuarios.apellidos],
-    email          = this[Usuarios.email],
-    rol            = this[Usuarios.rol],
-    explotacionId  = this[Usuarios.explotacionId],
-    fechaAlta      = this[Usuarios.fechaAlta]?.toString(),
-    tipoCarnetRopo = this[Usuarios.tipoCarnetRopo]
-)

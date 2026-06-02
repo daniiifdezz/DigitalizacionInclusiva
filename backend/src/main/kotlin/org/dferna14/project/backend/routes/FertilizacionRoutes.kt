@@ -5,8 +5,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Fertilizaciones
+import org.dferna14.project.backend.mapper.toFertilizacionResponse
 import org.dferna14.project.backend.model.FertilizacionRequest
-import org.dferna14.project.backend.model.FertilizacionResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -193,18 +193,3 @@ fun Route.fertilizacionRoutes() {
     }
 }
 
-private fun ResultRow.toFertilizacionResponse() = FertilizacionResponse(
-    id               = this[Fertilizaciones.id].value,
-    actividadId      = this[Fertilizaciones.actividadId],
-    productoId       = this[Fertilizaciones.productoId],
-    cultivoId        = this[Fertilizaciones.cultivoId],
-    aplica           = this[Fertilizaciones.aplica],
-    fechaInicio      = this[Fertilizaciones.fechaInicio]?.toString(),
-    fechaFin         = this[Fertilizaciones.fechaFin]?.toString(),
-    tipoProducto     = this[Fertilizaciones.tipoProducto],
-    numeroAlbaran    = this[Fertilizaciones.numeroAlbaran],
-    riquezaNPK       = this[Fertilizaciones.riquezaNPK],
-    dosis            = this[Fertilizaciones.dosis],
-    tipoFertilizacion= this[Fertilizaciones.tipoFertilizacion],
-    observaciones    = this[Fertilizaciones.observaciones]
-)
