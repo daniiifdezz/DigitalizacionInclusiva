@@ -88,16 +88,19 @@ data class ProductoCreateDto(
 
 @Serializable
 data class SemillaTratadaDto(
-    @SerialName("id")                val id                : Int,
-    @SerialName("actividadId")       val actividadId       : Int,
-    @SerialName("parcelaId")         val parcelaId         : Int,
-    @SerialName("aplica")            val aplica            : Boolean = false,
-    @SerialName("fechaSiembra")      val fechaSiembra      : String? = null,
-    @SerialName("superficieHa")      val superficieHa      : Double? = null,
-    @SerialName("cantidadSemillaKg") val cantidadSemillaKg : Double? = null,
-    @SerialName("productoId")        val productoId        : Int?    = null,
-    @SerialName("variedadSemilla")   val variedadSemilla   : String? = null,
-    @SerialName("cultivoId")         val cultivoId         : Int?    = null
+    @SerialName("id")                       val id                      : Int,
+    @SerialName("actividadId")              val actividadId             : Int,
+    @SerialName("parcelaId")                val parcelaId               : Int,
+    @SerialName("aplica")                   val aplica                  : Boolean = false,
+    @SerialName("fechaSiembra")             val fechaSiembra            : String? = null,
+    @SerialName("superficieHa")             val superficieHa            : Double? = null,
+    @SerialName("cantidadSemillaKg")        val cantidadSemillaKg       : Double? = null,
+    @SerialName("productoId")               val productoId              : Int?    = null,
+    @SerialName("variedadSemilla")          val variedadSemilla         : String? = null,
+    @SerialName("cultivoId")                val cultivoId               : Int?    = null,
+    @SerialName("productoNombreComercial")  val productoNombreComercial : String? = null,
+    @SerialName("productoNumeroRegistro")   val productoNumeroRegistro  : String? = null,
+    @SerialName("productoMateriaActiva")    val productoMateriaActiva   : String? = null
 )
 
 @Serializable
@@ -148,10 +151,13 @@ data class FertilizacionCreateDto(
 
 @Serializable
 data class ActividadProductoDto(
-    @SerialName("id")          val id          : Int,
-    @SerialName("actividadId") val actividadId : Int,
-    @SerialName("productoId")  val productoId  : Int,
-    @SerialName("dosis")       val dosis       : Double
+    @SerialName("id")                       val id                      : Int,
+    @SerialName("actividadId")              val actividadId             : Int,
+    @SerialName("productoId")               val productoId              : Int,
+    @SerialName("dosis")                    val dosis                   : Double,
+    @SerialName("productoNombreComercial")  val productoNombreComercial : String? = null,
+    @SerialName("productoNumeroRegistro")   val productoNumeroRegistro  : String? = null,
+    @SerialName("productoMateriaActiva")    val productoMateriaActiva   : String? = null
 )
 
 @Serializable

@@ -5,6 +5,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.routes.actividadRoutes
 import org.dferna14.project.backend.routes.authRoutes
+import org.dferna14.project.backend.routes.cuadernoRoutes
 import org.dferna14.project.backend.routes.cultivoRoutes
 import org.dferna14.project.backend.routes.equipoRoutes
 import org.dferna14.project.backend.routes.explotacionRoutes
@@ -39,5 +40,6 @@ fun Application.configureRouting() {
         titularRoutes()
         equipoRoutes()
         usuarioRoutes()
+        cuadernoRoutes()
     }
 }

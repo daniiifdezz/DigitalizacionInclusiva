@@ -7,11 +7,11 @@ import org.dferna14.project.backend.db.EquiposAplicacion
 import org.dferna14.project.backend.db.Explotaciones
 import org.dferna14.project.backend.db.Fertilizaciones
 import org.dferna14.project.backend.db.Parcelas
+import org.dferna14.project.backend.db.Productos
 import org.dferna14.project.backend.db.ReferenciaSigpac
 import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.db.Titulares
 import org.dferna14.project.backend.db.Usuarios
-import org.dferna14.project.backend.mapper.toActividadProductoResponse
 import org.dferna14.project.backend.mapper.toActividadResponse
 import org.dferna14.project.backend.mapper.toDatosAgronomicosResponse
 import org.dferna14.project.backend.mapper.toEquipoResponse
@@ -19,15 +19,16 @@ import org.dferna14.project.backend.mapper.toExplotacionResponse
 import org.dferna14.project.backend.mapper.toFertilizacionResponse
 import org.dferna14.project.backend.mapper.toParcelaResponse
 import org.dferna14.project.backend.mapper.toReferenciaSigpacResponse
-import org.dferna14.project.backend.mapper.toSemillaTratadaResponse
 import org.dferna14.project.backend.mapper.toTitularResponse
 import org.dferna14.project.backend.mapper.toUsuarioResponse
 import org.dferna14.project.backend.model.ActividadCompletaDto
+import org.dferna14.project.backend.model.ActividadProductoResponse
 import org.dferna14.project.backend.model.CuadernoCompletoDto
 import org.dferna14.project.backend.model.EstadoActividad
 import org.dferna14.project.backend.model.ParcelaCompletaDto
 import org.dferna14.project.backend.model.PeriodoDto
 import org.dferna14.project.backend.model.ResumenCuadernoDto
+import org.dferna14.project.backend.model.SemillaTratadaResponse
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
@@ -140,16 +141,48 @@ object CuadernoService {
             .map { actRow ->
                 val actId = actRow[Actividades.id].value
 
-                val productosAplicados = ActividadProductos
+                // LEFT JOIN con el catálogo de productos para enriquecer cada
+                // fila con nombre comercial, número de registro y materia activa.
+                // `runCatching` cubre el caso (raro) de filas huérfanas donde el
+                // producto referenciado fue borrado y la columna del JOIN no existe.
+                val productosAplicados = (ActividadProductos leftJoin Productos)
                     .selectAll()
                     .where { ActividadProductos.actividadId eq actId }
-                    .map { it.toActividadProductoResponse() }
+                    .map { row ->
+                        ActividadProductoResponse(
+                            id          = row[ActividadProductos.id].value,
+                            actividadId = row[ActividadProductos.actividadId],
+                            productoId  = row[ActividadProductos.productoId],
+                            dosis       = row[ActividadProductos.dosis],
+                            productoNombreComercial = runCatching { row[Productos.nombreComercial] }.getOrNull(),
+                            productoNumeroRegistro  = runCatching { row[Productos.numeroRegistro] }.getOrNull(),
+                            productoMateriaActiva   = runCatching { row[Productos.materiaActiva] }.getOrNull()
+                        )
+                    }
 
-                val semilla = SemillasTratadas
+                // LEFT JOIN con Productos para enriquecer la semilla con el
+                // nombre comercial del producto (cuando hay productoId).
+                val semilla = (SemillasTratadas leftJoin Productos)
                     .selectAll()
                     .where { SemillasTratadas.actividadId eq actId }
                     .firstOrNull()
-                    ?.toSemillaTratadaResponse()
+                    ?.let { row ->
+                        SemillaTratadaResponse(
+                            id                = row[SemillasTratadas.id].value,
+                            actividadId       = row[SemillasTratadas.actividadId],
+                            parcelaId         = row[SemillasTratadas.parcelaId],
+                            aplica            = row[SemillasTratadas.aplica],
+                            fechaSiembra      = row[SemillasTratadas.fechaSiembra]?.toString(),
+                            superficieHa      = row[SemillasTratadas.superficieHa],
+                            cantidadSemillaKg = row[SemillasTratadas.cantidadSemillaKg],
+                            productoId        = row[SemillasTratadas.productoId],
+                            variedadSemilla   = row[SemillasTratadas.variedadSemilla],
+                            cultivoId         = row[SemillasTratadas.cultivoId],
+                            productoNombreComercial = runCatching { row[Productos.nombreComercial] }.getOrNull(),
+                            productoNumeroRegistro  = runCatching { row[Productos.numeroRegistro] }.getOrNull(),
+                            productoMateriaActiva   = runCatching { row[Productos.materiaActiva] }.getOrNull()
+                        )
+                    }
 
                 val fertilizacion = Fertilizaciones
                     .selectAll()

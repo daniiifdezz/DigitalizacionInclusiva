@@ -59,7 +59,12 @@ data class ActividadProductoResponse(
     val id        : Int,
     val actividadId: Int,
     val productoId: Int,
-    val dosis     : Double
+    val dosis     : Double,
+    // Datos enriquecidos del producto del catálogo (JOIN con Productos).
+    // Son nullable para no romper código que sigue construyendo el DTO sin enriquecer.
+    val productoNombreComercial : String? = null,
+    val productoNumeroRegistro  : String? = null,
+    val productoMateriaActiva   : String? = null
 )
 
 // Semilla tratada
@@ -88,7 +93,12 @@ data class SemillaTratadaResponse(
     val cantidadSemillaKg: Double? = null,
     val productoId       : Int?    = null,
     val variedadSemilla  : String? = null,
-    val cultivoId        : Int?    = null
+    val cultivoId        : Int?    = null,
+    // Datos enriquecidos del catálogo de productos (rellenados por endpoints
+    // que hacen JOIN con Productos). Quedan null cuando no se enriquece.
+    val productoNombreComercial : String? = null,
+    val productoNumeroRegistro  : String? = null,
+    val productoMateriaActiva   : String? = null
 )
 
 // Fertilización

@@ -50,7 +50,13 @@ data class ActividadProducto(
     val id          : Int = 0,
     val actividadId : Int,
     val productoId  : Int,
-    val dosis       : Double
+    val dosis       : Double,
+    // Datos del catálogo de productos (rellenados por endpoints que hacen JOIN
+    // con Productos, como /api/cuaderno/*). Quedan null en endpoints que no
+    // enriquecen.
+    val productoNombreComercial : String? = null,
+    val productoNumeroRegistro  : String? = null,
+    val productoMateriaActiva   : String? = null
 )
 
 data class SemillaTratada(

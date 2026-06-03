@@ -357,14 +357,7 @@ class ActividadRepository(
 
     suspend fun getActividadProductos(actividadId: Int): Result<List<ActividadProducto>> {
         return try {
-            val productos = api.getActividadProductos(actividadId).map { dto ->
-                ActividadProducto(
-                    id          = dto.id,
-                    actividadId = dto.actividadId,
-                    productoId  = dto.productoId,
-                    dosis       = dto.dosis
-                )
-            }
+            val productos = api.getActividadProductos(actividadId).map { it.toDomain() }
             Result.Success(productos)
         } catch (e: CancellationException) {
             throw e
@@ -383,20 +376,23 @@ class ActividadRepository(
                 actividadId,
                 ActividadProductoCreateDto(productoId = productoId, dosis = dosis)
             )
-            Result.Success(
-                ActividadProducto(
-                    id          = dto.id,
-                    actividadId = dto.actividadId,
-                    productoId  = dto.productoId,
-                    dosis       = dto.dosis
-                )
-            )
+            Result.Success(dto.toDomain())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Result.Error("Error al añadir producto: ${e.message}")
         }
     }
+
+    private fun org.dferna14.project.data.remote.ActividadProductoDto.toDomain() = ActividadProducto(
+        id                      = id,
+        actividadId             = actividadId,
+        productoId              = productoId,
+        dosis                   = dosis,
+        productoNombreComercial = productoNombreComercial,
+        productoNumeroRegistro  = productoNumeroRegistro,
+        productoMateriaActiva   = productoMateriaActiva
+    )
 
     suspend fun eliminarActividadProducto(
         actividadId: Int,
