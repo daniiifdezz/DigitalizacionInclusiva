@@ -407,6 +407,14 @@ data class LoginRequest(
     val password : String
 )
 
+// Respuesta de login/registro con JWT. El token se firma en el backend (expira 30 días)
+// y el cliente lo persiste para enviarlo en Authorization: Bearer en cada petición.
+@Serializable
+data class LoginResponse(
+    val token   : String,
+    val usuario : UsuarioResponse
+)
+
 // ============================================================
 // DTOs unificados para generacion del Cuaderno Oficial (PDF)
 // ============================================================

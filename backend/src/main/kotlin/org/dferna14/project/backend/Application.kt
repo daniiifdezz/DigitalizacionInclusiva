@@ -6,6 +6,7 @@ import io.ktor.server.netty.*
 import org.dferna14.project.backend.db.DatabaseFactory
 import org.dferna14.project.backend.plugins.configureCors
 import org.dferna14.project.backend.plugins.configureRouting
+import org.dferna14.project.backend.plugins.configureSecurity
 import org.dferna14.project.backend.plugins.configureSerialization
 import org.dferna14.project.backend.plugins.configureStatusPages
 
@@ -32,5 +33,6 @@ fun Application.module() {
     configureSerialization()
     configureCors()
     configureStatusPages()
+    configureSecurity()   // instalar Authentication antes de las rutas que usan authenticate()
     configureRouting()
 }

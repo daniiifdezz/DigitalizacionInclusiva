@@ -35,15 +35,18 @@ import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.VerdeValidada
+import org.dferna14.project.ui.viewmodel.AuthVm
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Ajustes — pantalla informativa organizada en secciones. Los valores de cuenta
- * y conexión son placeholders del TFG hasta que se implemente el login y la
- * configuración persistente.
+ * y conexión son placeholders del TFG. Incluye el botón de cerrar sesión.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AjustesSc() {
+fun AjustesSc(authVm: AuthVm = koinViewModel()) {
+    var mostrarConfirmacion by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -102,7 +105,7 @@ fun AjustesSc() {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { /* TODO(auth): cerrar sesión cuando exista login */ },
+                    .clickable { mostrarConfirmacion = true },
                 colors = CardDefaults.cardColors(containerColor = RojoFondoEliminar),
                 border = BorderStroke(0.5.dp, RojoEliminar.copy(alpha = 0.2f)),
                 shape = RoundedCornerShape(12.dp)
@@ -118,15 +121,43 @@ fun AjustesSc() {
                         tint = RojoEliminar,
                         modifier = Modifier.size(18.dp)
                     )
-                    Text(
-                        text = "Cerrar sesión",
-                        color = RojoEliminar,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Column {
+                        Text(
+                            text = "Cerrar sesión",
+                            color = RojoEliminar,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Saldrás de tu cuenta en este dispositivo",
+                            color = TextoSecundario,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
             }
         }
+    }
+
+    if (mostrarConfirmacion) {
+        AlertDialog(
+            onDismissRequest = { mostrarConfirmacion = false },
+            title = { Text("¿Cerrar sesión?") },
+            text = { Text("Tendrás que iniciar sesión de nuevo la próxima vez.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    mostrarConfirmacion = false
+                    authVm.cerrarSesion()
+                }) {
+                    Text("Cerrar sesión", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarConfirmacion = false }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            }
+        )
     }
 }
 

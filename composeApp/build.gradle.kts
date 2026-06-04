@@ -35,6 +35,9 @@ kotlin {
 
             // Koin para Android
             implementation(libs.koin.android)
+
+            // androidx.startup — captura el Context de app para SessionStorage
+            implementation("androidx.startup:startup-runtime:1.1.1")
         }
 
         // ── Común (Android + Desktop) ─────────────────────────────────────────

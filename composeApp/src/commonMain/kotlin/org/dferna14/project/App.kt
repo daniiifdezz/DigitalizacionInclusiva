@@ -1,5 +1,6 @@
 package org.dferna14.project
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Assignment
@@ -8,14 +9,19 @@ import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.dferna14.project.ui.screens.*
 import org.dferna14.project.ui.theme.AppTheme
 import org.dferna14.project.ui.theme.BlancoPuro
+import org.dferna14.project.ui.theme.CremaPrincipal
 import org.dferna14.project.ui.theme.NaranjaClaro
 import org.dferna14.project.ui.theme.NaranjaPrimario
 import org.dferna14.project.ui.theme.TextoTerciario
+import org.dferna14.project.ui.viewmodel.AuthVm
+import org.dferna14.project.ui.viewmodel.EstadoSesion
 import androidx.compose.ui.Modifier
+import org.koin.compose.viewmodel.koinViewModel
 
 sealed class Screen {
     // Auth
@@ -48,35 +54,72 @@ sealed class Screen {
 
 @Composable
 fun App(isDesktop: Boolean = false) {
-    // Arranca SIEMPRE en Login (móvil y desktop) hasta que el usuario se autentique
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Login) }
+    // AuthVm es único por ViewModelStore (koinViewModel), así que esta instancia se
+    // comparte con las pantallas hijas: login/logout en cualquier sitio propaga el estado.
+    val authVm: AuthVm = koinViewModel()
+    val estadoSesion by authVm.estadoSesion.collectAsState()
+
+    // Al arrancar, intenta restaurar la sesión persistida (valida el JWT con GET /me).
+    LaunchedEffect(Unit) { authVm.intentarRestaurarSesion() }
 
     AppTheme {
-        when (currentScreen) {
-            is Screen.Login -> {
-                LoginScreen(
-                    onLoginExitoso = {
-                        currentScreen = if (isDesktop) Screen.DesktopHome else Screen.NuevaActividad
-                    },
-                    onIrARegistro = { currentScreen = Screen.Registro }
-                )
-            }
-            is Screen.Registro -> {
-                RegisterScreen(
-                    onRegistroExitoso = {
-                        currentScreen = if (isDesktop) Screen.DesktopHome else Screen.NuevaActividad
-                    },
-                    onIrALogin = { currentScreen = Screen.Login }
-                )
-            }
-            else -> {
-                if (isDesktop) {
-                    DesktopApp(currentScreen) { currentScreen = it }
+        when (val sesion = estadoSesion) {
+            is EstadoSesion.Comprobando -> PantallaCargandoSesion()
+
+            is EstadoSesion.NoAutenticado -> AuthFlow(authVm = authVm)
+
+            is EstadoSesion.Autenticado -> {
+                // Restricción por plataforma: el AGRICULTOR no puede usar Desktop.
+                if (isDesktop && sesion.usuario.rol == "AGRICULTOR") {
+                    PantallaBloqueada(onCerrarSesion = { authVm.cerrarSesion() })
                 } else {
-                    MobileApp(currentScreen) { currentScreen = it }
+                    AppContent(isDesktop = isDesktop)
                 }
             }
         }
+    }
+}
+
+/** Pantalla de carga mientras se valida la sesión guardada al arrancar. */
+@Composable
+private fun PantallaCargandoSesion() {
+    Box(
+        modifier = Modifier.fillMaxSize().background(CremaPrincipal),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = NaranjaPrimario)
+    }
+}
+
+/** Flujo de autenticación (login ↔ registro). El éxito actualiza estadoSesion en AuthVm. */
+@Composable
+private fun AuthFlow(authVm: AuthVm) {
+    var enRegistro by remember { mutableStateOf(false) }
+    if (enRegistro) {
+        RegisterScreen(
+            onRegistroExitoso = { /* estadoSesion pasa a Autenticado y el raíz cambia solo */ },
+            onIrALogin = { enRegistro = false },
+            viewModel = authVm
+        )
+    } else {
+        LoginScreen(
+            onLoginExitoso = { /* idem */ },
+            onIrARegistro = { enRegistro = true },
+            viewModel = authVm
+        )
+    }
+}
+
+/** Contenido autenticado: navegación normal de la app según plataforma. */
+@Composable
+private fun AppContent(isDesktop: Boolean) {
+    var currentScreen by remember {
+        mutableStateOf<Screen>(if (isDesktop) Screen.DesktopHome else Screen.NuevaActividad)
+    }
+    if (isDesktop) {
+        DesktopApp(currentScreen) { currentScreen = it }
+    } else {
+        MobileApp(currentScreen) { currentScreen = it }
     }
 }
 

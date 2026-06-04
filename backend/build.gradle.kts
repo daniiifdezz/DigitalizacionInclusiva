@@ -35,6 +35,11 @@ dependencies {
     // ── Hashing de contraseñas (BCrypt) ──────────────────────────────────────
     implementation("org.mindrot:jbcrypt:0.4")
 
+    // ── Autenticación JWT ─────────────────────────────────────────────────────
+    implementation("io.ktor:ktor-server-auth:3.1.3")
+    implementation("io.ktor:ktor-server-auth-jwt:3.1.3")
+    implementation("com.auth0:java-jwt:4.4.0")
+
     // ── Testing ───────────────────────────────────────────────────────────────
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.testHost)

@@ -6,6 +6,8 @@ import org.dferna14.project.data.remote.ExplotacionApi
 import org.dferna14.project.data.remote.ParcelaApi
 import org.dferna14.project.data.remote.TitularApi
 import org.dferna14.project.data.remote.createHttpClient
+import org.dferna14.project.data.local.SessionStorage
+import org.dferna14.project.data.local.crearSessionStorage
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.data.repository.CuadernoRepository
 import org.dferna14.project.data.repository.ExplotacionRepository
@@ -32,8 +34,11 @@ import org.koin.dsl.module
  */
 val appModule = module {
 
-    // Cliente HTTP — singleton compartido
-    single { createHttpClient() }
+    // Almacenamiento de sesión (JWT persistido) — por plataforma
+    single<SessionStorage> { crearSessionStorage() }
+
+    // Cliente HTTP — singleton compartido (inyecta SessionStorage para el header Bearer)
+    single { createHttpClient(get()) }
 
     // Fuentes de datos remotas
     single { ActividadApi(get()) }
@@ -43,7 +48,7 @@ val appModule = module {
     single { CuadernoApi(get()) }
 
     // Repositorios
-    single { ActividadRepository(get(), get()) }
+    single { ActividadRepository(get(), get(), get()) }
     factoryOf(::TitularRepository)
     factoryOf(::ExplotacionRepository)
     factoryOf(::CuadernoRepository)

@@ -3,6 +3,7 @@ package org.dferna14.project.data.repository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import org.dferna14.project.data.local.SessionStorage
 import org.dferna14.project.data.remote.ActividadApi
 import org.dferna14.project.data.remote.ActividadCreateDto
 import org.dferna14.project.data.remote.ConflictException
@@ -49,7 +50,8 @@ import org.dferna14.project.domain.model.Fertilizacion
  */
 class ActividadRepository(
     private val api: ActividadApi,
-    private val parcelaApi: ParcelaApi
+    private val parcelaApi: ParcelaApi,
+    private val sessionStorage: SessionStorage
 ) {
 
     // Actividades
@@ -869,8 +871,14 @@ class ActividadRepository(
     fun login(request: LoginRequest): Flow<Result<UsuarioDto>> = flow {
         emit(Result.Loading)
         try {
-            val usuario = api.login(request)
-            emit(Result.Success(usuario))
+            val resp = api.login(request)
+            sessionStorage.guardarSesion(
+                token  = resp.token,
+                userId = resp.usuario.id,
+                email  = resp.usuario.email,
+                rol    = resp.usuario.rol
+            )
+            emit(Result.Success(resp.usuario))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -881,12 +889,32 @@ class ActividadRepository(
     fun register(request: RegisterRequest): Flow<Result<UsuarioDto>> = flow {
         emit(Result.Loading)
         try {
-            val usuario = api.register(request)
-            emit(Result.Success(usuario))
+            val resp = api.register(request)
+            sessionStorage.guardarSesion(
+                token  = resp.token,
+                userId = resp.usuario.id,
+                email  = resp.usuario.email,
+                rol    = resp.usuario.rol
+            )
+            emit(Result.Success(resp.usuario))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             emit(Result.Error(e.message ?: "Error al registrar usuario"))
+        }
+    }
+
+    /**
+     * Valida la sesión persistida llamando a GET /me con el JWT guardado.
+     * Lo usa AuthVm al arrancar para decidir si restaurar sesión o ir a login.
+     */
+    suspend fun getMe(): Result<UsuarioDto> {
+        return try {
+            Result.Success(api.getMe())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Sesión no válida: ${e.message}")
         }
     }
 

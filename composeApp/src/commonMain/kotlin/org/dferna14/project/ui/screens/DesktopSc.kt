@@ -3,17 +3,25 @@ package org.dferna14.project.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.theme.BordeMedio
+import org.dferna14.project.ui.theme.RojoEliminar
+import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
+import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
@@ -31,9 +39,11 @@ fun DesktopMainSc(
     onVerConfiguracion: () -> Unit,
     actividadListaVm: ActividadListaVm = koinViewModel(),
     parcelaVm: ParcelaVm = koinViewModel(),
-    productoVm: ProductoVm = koinViewModel()
+    productoVm: ProductoVm = koinViewModel(),
+    authVm: AuthVm = koinViewModel()
 ) {
     var selectedItem by remember { mutableStateOf(0) }
+    var mostrarConfirmacionLogout by remember { mutableStateOf(false) }
 
     val actividadesState by actividadListaVm.actividades.collectAsState()
 
@@ -128,6 +138,32 @@ fun DesktopMainSc(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // Cerrar sesión — separado del resto, abajo del todo.
+            HorizontalDivider(color = BordeMedio)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { mostrarConfirmacionLogout = true }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Logout,
+                    contentDescription = null,
+                    tint = RojoEliminar,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Cerrar sesión",
+                    fontSize = 14.sp,
+                    color = RojoEliminar,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = "TFG - Daniel Fernandez",
                 style = MaterialTheme.typography.bodySmall,
@@ -196,6 +232,27 @@ fun DesktopMainSc(
                 }
             }
         }
+    }
+
+    if (mostrarConfirmacionLogout) {
+        AlertDialog(
+            onDismissRequest = { mostrarConfirmacionLogout = false },
+            title = { Text("¿Cerrar sesión?") },
+            text = { Text("Tendrás que iniciar sesión de nuevo la próxima vez.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    mostrarConfirmacionLogout = false
+                    authVm.cerrarSesion()
+                }) {
+                    Text("Cerrar sesión", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarConfirmacionLogout = false }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            }
+        )
     }
 }
 

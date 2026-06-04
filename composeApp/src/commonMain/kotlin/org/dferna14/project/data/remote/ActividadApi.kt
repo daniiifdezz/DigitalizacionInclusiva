@@ -243,6 +243,15 @@ data class RegisterRequest(
 )
 
 /**
+ * Respuesta de login/registro: JWT firmado + datos del usuario.
+ */
+@Serializable
+data class LoginResponseDto(
+    @SerialName("token")   val token   : String,
+    @SerialName("usuario") val usuario : UsuarioDto
+)
+
+/**
  * Excepción específica para conflictos 409 del backend.
  */
 class ConflictException(message: String) : RuntimeException(message)
@@ -516,7 +525,7 @@ class ActividadApi(private val client: HttpClient) {
 
     // Autenticación
 
-    suspend fun login(request: LoginRequest): UsuarioDto {
+    suspend fun login(request: LoginRequest): LoginResponseDto {
         val response = client.post("$BASE_URL/api/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(request)
@@ -527,10 +536,10 @@ class ActividadApi(private val client: HttpClient) {
                 else "Error al iniciar sesión (${response.status.value})"
             )
         }
-        return response.body<UsuarioDto>()
+        return response.body<LoginResponseDto>()
     }
 
-    suspend fun register(request: RegisterRequest): UsuarioDto {
+    suspend fun register(request: RegisterRequest): LoginResponseDto {
         val response = client.post("$BASE_URL/api/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(request)
@@ -543,6 +552,18 @@ class ActividadApi(private val client: HttpClient) {
                     else -> "Error al registrar (${response.status.value})"
                 }
             )
+        }
+        return response.body<LoginResponseDto>()
+    }
+
+    /**
+     * Valida el JWT guardado y devuelve el usuario actual. El token viaja en el
+     * header Authorization gracias al defaultRequest del HttpClient.
+     */
+    suspend fun getMe(): UsuarioDto {
+        val response = client.get("$BASE_URL/api/auth/me")
+        if (response.status != HttpStatusCode.OK) {
+            throw IllegalStateException("Sesión no válida (${response.status.value})")
         }
         return response.body<UsuarioDto>()
     }

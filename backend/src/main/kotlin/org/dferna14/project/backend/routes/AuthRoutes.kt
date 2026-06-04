@@ -1,13 +1,17 @@
 package org.dferna14.project.backend.routes
 
 import io.ktor.http.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Usuarios
 import org.dferna14.project.backend.mapper.toUsuarioResponse
 import org.dferna14.project.backend.model.LoginRequest
+import org.dferna14.project.backend.model.LoginResponse
 import org.dferna14.project.backend.model.RegisterRequest
+import org.dferna14.project.backend.plugins.JwtConfig
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
@@ -59,7 +63,12 @@ fun Route.authRoutes() {
             if (resultado == null) {
                 call.respond(HttpStatusCode.Conflict, "Ya existe un usuario con ese email")
             } else {
-                call.respond(HttpStatusCode.Created, resultado)
+                val token = JwtConfig.generarToken(
+                    userId = resultado.id,
+                    email  = resultado.email,
+                    rol    = resultado.rol
+                )
+                call.respond(HttpStatusCode.Created, LoginResponse(token = token, usuario = resultado))
             }
         }
 
@@ -94,7 +103,39 @@ fun Route.authRoutes() {
             if (!coincide) {
                 call.respond(HttpStatusCode.Unauthorized, "Credenciales inválidas")
             } else {
-                call.respond(HttpStatusCode.OK, usuarioRow.toUsuarioResponse())
+                val usuarioResponse = usuarioRow.toUsuarioResponse()
+                val token = JwtConfig.generarToken(
+                    userId = usuarioResponse.id,
+                    email  = usuarioResponse.email,
+                    rol    = usuarioResponse.rol
+                )
+                call.respond(HttpStatusCode.OK, LoginResponse(token = token, usuario = usuarioResponse))
+            }
+        }
+
+        // GET /api/auth/me - Valida el JWT guardado y devuelve el usuario actual.
+        // El cliente lo llama al arrancar para restaurar la sesión persistida.
+        // Ktor verifica automáticamente el token dentro de authenticate("auth-jwt").
+        authenticate("auth-jwt") {
+            get("me") {
+                val principal = call.principal<JWTPrincipal>()!!
+                val userId = principal.payload.getClaim("userId").asInt()
+
+                val usuario = transaction {
+                    Usuarios.selectAll()
+                        .where { Usuarios.id eq userId }
+                        .singleOrNull()
+                        ?.toUsuarioResponse()
+                }
+
+                if (usuario != null) {
+                    call.respond(usuario)
+                } else {
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        mapOf("message" to "Usuario no encontrado")
+                    )
+                }
             }
         }
     }
