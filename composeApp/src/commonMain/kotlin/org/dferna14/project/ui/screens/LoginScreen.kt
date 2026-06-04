@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.dferna14.project.data.remote.UsuarioDto
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoPasswordField
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
@@ -104,12 +105,11 @@ fun LoginScreen(
                 keyboardType = KeyboardType.Email
             )
 
-            CampoTextField(
-                label = "Contraseña",
+            CampoPasswordField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = "Tu contraseña",
-                keyboardType = KeyboardType.Password
+                label = "Contraseña",
+                modifier = Modifier.fillMaxWidth()
             )
 
             if (errorMsg != null) {

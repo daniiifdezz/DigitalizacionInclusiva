@@ -50,7 +50,7 @@ fun Route.authRoutes() {
                     it[nombre]       = req.nombre.trim()
                     it[email]        = emailNorm
                     it[passwordHash] = hash
-                    it[rol]          = req.rol?.takeIf { r -> r.isNotBlank() } ?: "AGRICULTOR"
+                    it[rol]          = "AGRICULTOR"
                     it[fechaAlta]    = LocalDate.now()
                 }.value
 

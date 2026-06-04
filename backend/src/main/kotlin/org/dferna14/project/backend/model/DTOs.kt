@@ -398,7 +398,6 @@ data class RegisterRequest(
     val email    : String,
     val password : String,
     val nombre   : String,
-    val rol      : String? = null
 )
 
 @Serializable

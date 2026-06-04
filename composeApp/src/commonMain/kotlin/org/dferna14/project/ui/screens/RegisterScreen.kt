@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.dferna14.project.data.remote.UsuarioDto
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoAvisoInfo
+import org.dferna14.project.ui.components.CampoPasswordField
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
@@ -115,20 +117,18 @@ fun RegisterScreen(
                 keyboardType = KeyboardType.Email
             )
 
-            CampoTextField(
+            CampoPasswordField(
                 label = "Contraseña (mín. 6 caracteres)",
                 value = password,
                 onValueChange = { password = it },
-                placeholder = "Crea una contraseña",
-                keyboardType = KeyboardType.Password
+                modifier = Modifier.fillMaxWidth()
             )
 
-            CampoTextField(
+            CampoPasswordField(
                 label = "Repetir contraseña",
                 value = confirmPass,
                 onValueChange = { confirmPass = it },
-                placeholder = "Vuelve a escribirla",
-                keyboardType = KeyboardType.Password
+                modifier = Modifier.fillMaxWidth()
             )
 
             val avisoLocal = when {
@@ -160,6 +160,11 @@ fun RegisterScreen(
                 && email.isNotBlank()
                 && passwordValida
                 && passwordsCoinciden
+
+            CampoAvisoInfo(
+                mensaje = "Al registrarte accederás con el rol de agricultor. " +
+                        "La opción para cambiar a perfil técnico se habilitará próximamente dentro de la aplicación."
+            )
 
             CampoPrimaryButton(
                 text = if (cargando) "Creando cuenta…" else "Registrarme",
