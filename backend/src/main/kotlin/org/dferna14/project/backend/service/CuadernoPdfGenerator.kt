@@ -224,13 +224,13 @@ object CuadernoPdfGenerator {
         yInicial: Float
     ): Float {
         // Layout: Nº | Nombre / Empresa | NIF | Nº ROPO | [Bas|Cua|Fum|Pil] | Asesor
-        val anchoNum   = 35f
-        val anchoNombre= 230f
-        val anchoNif   = 80f
+        val anchoNum   = 50f
+        val anchoNombre= 220f
+        val anchoNif   = 70f
         val anchoRopo  = 80f
         val anchoCarne = 45f
         val anchoCarneTotal = anchoCarne * 4
-        val anchoAsesor= 70f
+        val anchoAsesor= 60f
         val anchoTotal = anchoNum + anchoNombre + anchoNif + anchoRopo + anchoCarneTotal + anchoAsesor
 
         val altoFila = 14f
@@ -336,7 +336,7 @@ object CuadernoPdfGenerator {
         equipos: List<EquipoResponse>,
         yInicial: Float
     ): Float {
-        val anchos = floatArrayOf(35f, 280f, 110f, 110f, 110f)
+        val anchos = floatArrayOf(50f, 270f, 110f, 110f, 110f)
         val cabeceras = arrayOf(
             "Nº de orden",
             "Descripcion del equipo",
@@ -396,9 +396,12 @@ object CuadernoPdfGenerator {
         parcelas: List<ParcelaCompletaDto>,
         yInicial: Float
     ): Float {
-        val anchoNum = 25f
-        val anchosSigpac = floatArrayOf(55f, 70f, 35f, 25f, 35f, 35f, 35f, 35f) // 8 cols
-        val anchosAgro = floatArrayOf(40f, 85f, 45f, 30f, 45f, 45f, 40f, 55f, 35f) // 9 cols
+        // Anchos calibrados para que cada cabecera quepa entera con la fuente
+        // de subcolumna a 6f bold. Suma total = 35 + 335 + 405 = 775pt
+        // (margen útil apaisado = 782pt).
+        val anchoNum = 35f
+        val anchosSigpac = floatArrayOf(50f, 65f, 45f, 25f, 35f, 35f, 35f, 45f) // 8 cols → 335
+        val anchosAgro = floatArrayOf(60f, 70f, 40f, 30f, 40f, 40f, 40f, 50f, 35f) // 9 cols → 405
         val anchoSigpacTotal = anchosSigpac.sum()
         val anchoAgroTotal = anchosAgro.sum()
         val anchoTotal = anchoNum + anchoSigpacTotal + anchoAgroTotal
@@ -566,7 +569,7 @@ object CuadernoPdfGenerator {
         ordenes: Ordenes,
         yInicial: Float
     ): Float {
-        val anchos = floatArrayOf(45f, 90f, 75f, 45f, 90f, 40f, 40f, 110f, 70f, 45f, 40f, 90f)
+        val anchos = floatArrayOf(60f, 90f, 80f, 45f, 90f, 40f, 40f, 125f, 70f, 35f, 40f, 65f)
         val cabeceras = arrayOf(
             "Id. parcelas [1]",
             "Cultivo (Esp./Var.)",
@@ -583,11 +586,13 @@ object CuadernoPdfGenerator {
         )
         var y = dibujarFilaTablaOficial(cs, cabeceras, anchos, yInicial, cabecera = true)
 
-        // Construir filas planas: actividad × producto (mínimo una fila por actividad)
-        data class FilaFito(val act: ActividadCompletaDto, val producto: ActividadProductoResponse?)
+        // Solo se emite una fila por (actividad × producto). Las actividades
+        // sin productos asignados NO aparecen en este registro: el cuaderno
+        // oficial recoge tratamientos fitosanitarios, y sin producto no hay
+        // tratamiento que registrar.
+        data class FilaFito(val act: ActividadCompletaDto, val producto: ActividadProductoResponse)
         val filas = actividades.flatMap { a ->
-            if (a.productosAplicados.isEmpty()) listOf(FilaFito(a, null))
-            else a.productosAplicados.map { FilaFito(a, it) }
+            a.productosAplicados.map { FilaFito(a, it) }
         }
 
         if (filas.isEmpty()) {
@@ -605,11 +610,10 @@ object CuadernoPdfGenerator {
             val ordenParcela = ordenes.ordenParcela[f.act.actividad.parcelaId]?.toString() ?: ""
             val ordenAplicador = f.act.aplicador?.id?.let { ordenes.ordenAplicador[it]?.toString() } ?: ""
             val ordenEquipo = f.act.equipoUsado?.id?.let { ordenes.ordenEquipo[it]?.toString() } ?: ""
-            val nombreProducto = f.producto?.productoNombreComercial?.takeIf { it.isNotBlank() }
-                ?: f.producto?.let { "Producto #${it.productoId}" }
-                ?: ""
-            val numeroRegistro = f.producto?.productoNumeroRegistro ?: ""
-            val dosis = f.producto?.dosis?.let { "%.2f".format(it) } ?: ""
+            val nombreProducto = f.producto.productoNombreComercial?.takeIf { it.isNotBlank() }
+                ?: "Producto #${f.producto.productoId}"
+            val numeroRegistro = f.producto.productoNumeroRegistro ?: ""
+            val dosis = "%.2f".format(f.producto.dosis)
 
             y = dibujarFilaTablaOficial(
                 cs,
@@ -639,7 +643,7 @@ object CuadernoPdfGenerator {
         ordenes: Ordenes,
         yInicial: Float
     ): Float {
-        val anchos = floatArrayOf(70f, 50f, 130f, 60f, 60f, 220f, 80f)
+        val anchos = floatArrayOf(70f, 55f, 100f, 80f, 95f, 200f, 65f)
         val cabeceras = arrayOf(
             "Fecha siembra",
             "Id. Parc. [2]",
@@ -692,9 +696,11 @@ object CuadernoPdfGenerator {
     // ===================================================================
     private fun generarSeccion6(doc: PDDocument, cuaderno: CuadernoCompletoDto, ordenes: Ordenes) {
         nuevaPagina(doc, cuaderno, numeroSeccion = 6, numeroHoja = 1) { cs, y0 ->
+            // La sección 6 no tiene subsecciones — el título largo ya
+            // incorpora el matiz "(OPCIONAL [EXCEPTO ZONAS VULNERABLES])"
+            // y bajo él va directamente la tabla.
             var y = dibujarTituloSeccionOficial(cs, "6. REGISTRO DE FERTILIZACION (OPCIONAL [EXCEPTO ZONAS VULNERABLES])", y0)
             y -= 6f
-            y = dibujarBarraSubseccion(cs, "6. Registro de fertilizacion", y)
             y = dibujarTablaFertilizacion(cs, cuaderno.actividades, ordenes, y)
             y -= 6f
             dibujarNotasAlPie(cs, listOf(
@@ -711,7 +717,7 @@ object CuadernoPdfGenerator {
         ordenes: Ordenes,
         yInicial: Float
     ): Float {
-        val anchos = floatArrayOf(80f, 50f, 110f, 80f, 70f, 65f, 60f, 75f, 90f)
+        val anchos = floatArrayOf(80f, 50f, 95f, 115f, 70f, 65f, 35f, 60f, 75f)
         val cabeceras = arrayOf(
             "Intervalo fechas",
             "Parc. [1]",
@@ -963,7 +969,9 @@ object CuadernoPdfGenerator {
     ): Float {
         val alturaFila = if (cabecera) 22f else 14f
         val fuente = if (cabecera) FUENTE_CUERPO_BOLD else FUENTE_CUERPO_NORMAL
-        val tamano = if (cabecera) 7f else 7.5f
+        // Cabeceras a 6.5pt para que entren textos largos sin truncar; los
+        // datos siguen a 7.5pt para que se lean cómodos.
+        val tamano = if (cabecera) 6.5f else 7.5f
 
         // Fondo gris para cabecera
         if (cabecera) {
