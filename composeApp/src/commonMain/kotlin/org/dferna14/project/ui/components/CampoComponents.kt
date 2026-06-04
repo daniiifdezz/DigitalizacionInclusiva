@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -46,6 +49,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.EquipoAplicacion
@@ -62,9 +67,11 @@ import org.dferna14.project.ui.theme.CremaSecundario
 import org.dferna14.project.ui.theme.GrisBorrador
 import org.dferna14.project.ui.theme.GrisFondoBorrador
 import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.TextoPlaceholder
+import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.VerdeFondoInfo
 import org.dferna14.project.ui.theme.VerdeFondoValidada
 import org.dferna14.project.ui.theme.VerdeInfo
@@ -528,4 +535,45 @@ fun formatearFecha(fechaIso: String): String {
     } catch (e: Exception) {
         fechaIso
     }
+}
+
+
+@Composable
+fun CampoPasswordField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isError: Boolean = false,
+    supportingText: String? = null
+) {
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = modifier,
+        enabled = enabled,
+        isError = isError,
+        singleLine = true,
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        trailingIcon = {
+            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Icon(
+                    imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                    contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                    tint = TextoSecundario
+                )
+            }
+        },
+        supportingText = supportingText?.let { { Text(it) } },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = NaranjaPrimario,
+            unfocusedBorderColor = BordeMedio,
+            errorBorderColor = RojoEliminar
+        )
+    )
 }
