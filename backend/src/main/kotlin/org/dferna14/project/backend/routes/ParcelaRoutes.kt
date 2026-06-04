@@ -4,12 +4,17 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.db.ActividadProductos
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.DatosAgronomicos
+import org.dferna14.project.backend.db.DatosMedioambientales
+import org.dferna14.project.backend.db.FertilizacionParcelas
+import org.dferna14.project.backend.db.Fertilizaciones
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.ReferenciaSigpac
 import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.model.DatosAgronomicosResponse
+import org.dferna14.project.backend.model.DependenciasParcelaDto
 import org.dferna14.project.backend.model.ParcelaCompletaResponse
 import org.dferna14.project.backend.model.ParcelaRequest
 import org.dferna14.project.backend.model.ParcelaResponse
@@ -17,6 +22,7 @@ import org.dferna14.project.backend.model.ReferenciaSigpacResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 
 fun Route.parcelaRoutes() {
 
@@ -236,6 +242,92 @@ fun Route.parcelaRoutes() {
             val eliminadas = transaction { Parcelas.deleteWhere { Parcelas.id eq id } }
             if (eliminadas == 0) call.respond(HttpStatusCode.NotFound)
             else call.respond(HttpStatusCode.NoContent)
+        }
+
+        // GET /api/parcelas/{id}/dependencias - Conteo de registros hijos
+        // Lo usa el Desktop para mostrar un diálogo detallado antes del borrado en cascada.
+        // NOTA: Fertilizaciones NO tiene parcela_id; se relaciona con la parcela a través
+        // de las actividades de la parcela (Fertilizaciones.actividad_id). Por eso el conteo
+        // de fertilizaciones se calcula sobre las actividades de la parcela.
+        get("{id}/dependencias") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+            val dependencias = transaction {
+                val actividadIds = Actividades.selectAll()
+                    .where { Actividades.parcelaId eq id }
+                    .map { it[Actividades.id].value }
+
+                val fertilizaciones = if (actividadIds.isEmpty()) 0
+                    else Fertilizaciones.selectAll()
+                        .where { Fertilizaciones.actividadId inList actividadIds }
+                        .count().toInt()
+
+                DependenciasParcelaDto(
+                    actividades = actividadIds.size,
+                    semillas = SemillasTratadas.selectAll()
+                        .where { SemillasTratadas.parcelaId eq id }.count().toInt(),
+                    fertilizaciones = fertilizaciones,
+                    referenciaSigpac = if (ReferenciaSigpac.selectAll()
+                        .where { ReferenciaSigpac.parcelaId eq id }.empty()) 0 else 1,
+                    datosAgronomicos = if (DatosAgronomicos.selectAll()
+                        .where { DatosAgronomicos.parcelaId eq id }.empty()) 0 else 1
+                )
+            }
+            call.respond(dependencias)
+        }
+
+        // DELETE /api/parcelas/{id}/cascada - Borrado en cascada (solo Desktop/técnico)
+        // Elimina la parcela y TODOS sus datos hijos en una transacción atómica.
+        // Orden: primero los nietos (hijos de actividad y pivote fertilización-parcela),
+        // luego actividades, luego datos satélite de la parcela y finalmente la parcela.
+        delete("{id}/cascada") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            transaction {
+                // Actividades de la parcela y fertilizaciones colgando de esas actividades.
+                val actividadIds = Actividades.selectAll()
+                    .where { Actividades.parcelaId eq id }
+                    .map { it[Actividades.id].value }
+
+                val fertilizacionIds = if (actividadIds.isEmpty()) emptyList()
+                    else Fertilizaciones.selectAll()
+                        .where { Fertilizaciones.actividadId inList actividadIds }
+                        .map { it[Fertilizaciones.id].value }
+
+                // Hijos de las actividades.
+                if (actividadIds.isNotEmpty()) {
+                    ActividadProductos.deleteWhere { ActividadProductos.actividadId inList actividadIds }
+                    SemillasTratadas.deleteWhere { SemillasTratadas.actividadId inList actividadIds }
+                }
+
+                // Pivote fertilización-parcela: tanto por las fertilizaciones a borrar
+                // como por la propia parcela (relación N:M).
+                if (fertilizacionIds.isNotEmpty())
+                    FertilizacionParcelas.deleteWhere { FertilizacionParcelas.fertilizacionId inList fertilizacionIds }
+                FertilizacionParcelas.deleteWhere { FertilizacionParcelas.parcelaId eq id }
+
+                // Fertilizaciones de las actividades de la parcela.
+                if (fertilizacionIds.isNotEmpty())
+                    Fertilizaciones.deleteWhere { Fertilizaciones.id inList fertilizacionIds }
+
+                // Ahora las actividades.
+                Actividades.deleteWhere { Actividades.parcelaId eq id }
+
+                // Semillas asociadas directamente a la parcela (por si quedara alguna).
+                SemillasTratadas.deleteWhere { SemillasTratadas.parcelaId eq id }
+
+                // Datos satélite de la parcela.
+                ReferenciaSigpac.deleteWhere { ReferenciaSigpac.parcelaId eq id }
+                DatosAgronomicos.deleteWhere { DatosAgronomicos.parcelaId eq id }
+                DatosMedioambientales.deleteWhere { DatosMedioambientales.parcelaId eq id }
+
+                // Finalmente la parcela.
+                Parcelas.deleteWhere { Parcelas.id eq id }
+            }
+
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }

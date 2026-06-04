@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.dferna14.project.data.remote.DependenciasProductoDto
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.components.CampoAvisoInfo
@@ -67,7 +68,10 @@ private fun nombreTipoFert(codigo: String?): String =
 @Composable
 fun ProductosSc(
     viewModel: ProductoVm = koinViewModel(),
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    // Desktop (técnico): borrado en cascada con diálogo detallado.
+    // Móvil (agricultor, valor por defecto): borrado simple bloqueado con 409.
+    isDesktop: Boolean = false
 ) {
     val productosState by viewModel.productos.collectAsState()
     val mensajeError by viewModel.mensajeError.collectAsState()
@@ -75,6 +79,15 @@ fun ProductosSc(
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
     var productoAEliminar by remember { mutableStateOf<Producto?>(null) }
     var filtroActivo by remember { mutableStateOf(TIPO_TODOS) }
+    // Solo en Desktop: dependencias del producto a eliminar para el diálogo de cascada.
+    var dependenciasProducto by remember { mutableStateOf<DependenciasProductoDto?>(null) }
+
+    LaunchedEffect(productoAEliminar) {
+        dependenciasProducto = null
+        if (isDesktop) {
+            productoAEliminar?.let { dependenciasProducto = viewModel.obtenerDependencias(it.id) }
+        }
+    }
 
     LaunchedEffect(mensajeError) {
         mensajeError?.let {
@@ -222,27 +235,96 @@ fun ProductosSc(
         )
     }
 
-    // Diálogo confirmar eliminación
+    // Diálogo confirmar eliminación.
+    // Desktop: borrado en cascada con detalle de dependencias.
+    // Móvil: borrado simple (el backend bloquea con 409 si hay datos asociados).
     productoAEliminar?.let { producto ->
-        AlertDialog(
-            onDismissRequest = { productoAEliminar = null },
-            title = { Text("¿Eliminar producto?") },
-            text = { Text("Esta acción no se puede deshacer. ¿Seguro que quieres eliminar \"${producto.nombreComercial}\"?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.eliminarProducto(producto.id)
+        if (isDesktop) {
+            ConfirmarBorradoCascadaProductoDialog(
+                producto = producto,
+                dependencias = dependenciasProducto,
+                onConfirmar = {
+                    viewModel.eliminarProductoEnCascada(producto.id)
                     productoAEliminar = null
-                }) {
-                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                },
+                onCancelar = { productoAEliminar = null }
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { productoAEliminar = null },
+                title = { Text("¿Eliminar producto?") },
+                text = { Text("Esta acción no se puede deshacer. ¿Seguro que quieres eliminar \"${producto.nombreComercial}\"?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.eliminarProducto(producto.id)
+                        productoAEliminar = null
+                    }) {
+                        Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { productoAEliminar = null }) {
+                        Text("Cancelar", color = TextoSecundario)
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { productoAEliminar = null }) {
-                    Text("Cancelar", color = TextoSecundario)
-                }
-            }
-        )
+            )
+        }
     }
+}
+
+@Composable
+private fun ConfirmarBorradoCascadaProductoDialog(
+    producto: Producto,
+    dependencias: DependenciasProductoDto?,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text("¿Eliminar producto y sus referencias?") },
+        text = {
+            Column {
+                Text("Se eliminará el producto \"${producto.nombreComercial}\" del catálogo.")
+                Spacer(Modifier.height(8.dp))
+
+                if (dependencias == null) {
+                    Text("Consultando datos asociados…", color = TextoSecundario, fontSize = 13.sp)
+                } else {
+                    val items = buildList {
+                        if (dependencias.actividadProductos > 0)
+                            add("• Se quitará de ${dependencias.actividadProductos} aplicación(es) en actividades")
+                        if (dependencias.semillas > 0)
+                            add("• ${dependencias.semillas} semilla(s) tratada(s) quedarán sin producto")
+                        if (dependencias.fertilizaciones > 0)
+                            add("• ${dependencias.fertilizaciones} fertilización(es) quedarán sin producto")
+                    }
+                    if (items.isEmpty()) {
+                        Text("No está siendo usado en ningún registro.", color = TextoSecundario, fontSize = 13.sp)
+                    } else {
+                        items.forEach { Text(it, color = TextoSecundario, fontSize = 13.sp) }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Esta acción no se puede deshacer.",
+                    color = RojoEliminar,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmar) {
+                Text("Eliminar todo", color = RojoEliminar, fontWeight = FontWeight.Medium)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) {
+                Text("Cancelar", color = TextoSecundario)
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

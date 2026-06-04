@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.dferna14.project.data.remote.DependenciasParcelaDto
 import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
@@ -39,6 +41,16 @@ fun ParcelasSc(
     var parcelaExpandida by remember { mutableStateOf<Int?>(null) }
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
     var parcelaAEliminar by remember { mutableStateOf<Parcela?>(null) }
+    // Dependencias de la parcela a eliminar. null mientras se consultan; al llegar
+    // se rellena el detalle del diálogo de borrado en cascada.
+    var dependenciasParcela by remember { mutableStateOf<DependenciasParcelaDto?>(null) }
+
+    // Al marcar una parcela para eliminar, consultamos sus datos hijos para mostrar
+    // el diálogo de confirmación detallado del técnico.
+    LaunchedEffect(parcelaAEliminar) {
+        dependenciasParcela = null
+        parcelaAEliminar?.let { dependenciasParcela = viewModel.obtenerDependencias(it.id) }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.cargarParcelas()
@@ -178,30 +190,77 @@ fun ParcelasSc(
         }
     }
 
+    // Borrado en cascada Desktop
     parcelaAEliminar?.let { parcela ->
-        AlertDialog(
-            onDismissRequest = { parcelaAEliminar = null },
-            title = { Text("¿Eliminar parcela?") },
-            text = {
-                Text(
-                    "Se eliminará \"${parcela.alias ?: "Parcela ${parcela.id}"}\" y todos sus datos asociados (SIGPAC, agronómicos). Esta acción no se puede deshacer."
-                )
+        ConfirmarBorradoCascadaParcelaDialog(
+            parcela = parcela,
+            dependencias = dependenciasParcela,
+            onConfirmar = {
+                viewModel.eliminarParcelaEnCascada(parcela.id)
+                parcelaAEliminar = null
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.eliminarParcela(parcela.id)
-                    parcelaAEliminar = null
-                }) {
-                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { parcelaAEliminar = null }) {
-                    Text("Cancelar", color = TextoSecundario)
-                }
-            }
+            onCancelar = { parcelaAEliminar = null }
         )
     }
+}
+
+@Composable
+private fun ConfirmarBorradoCascadaParcelaDialog(
+    parcela: Parcela,
+    dependencias: DependenciasParcelaDto?,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text("¿Eliminar parcela y todos sus datos?") },
+        text = {
+            Column {
+                Text("Se eliminará la parcela \"${parcela.alias ?: "Parcela ${parcela.id}"}\" y todos sus datos asociados:")
+                Spacer(Modifier.height(8.dp))
+
+                if (dependencias == null) {
+                    Text("Consultando datos asociados…", color = TextoSecundario, fontSize = 13.sp)
+                } else {
+                    val items = buildList {
+                        if (dependencias.actividades > 0)
+                            add("• ${dependencias.actividades} actividad(es)")
+                        if (dependencias.semillas > 0)
+                            add("• ${dependencias.semillas} semilla(s) tratada(s)")
+                        if (dependencias.fertilizaciones > 0)
+                            add("• ${dependencias.fertilizaciones} fertilización(es)")
+                        if (dependencias.referenciaSigpac > 0)
+                            add("• Datos SIGPAC")
+                        if (dependencias.datosAgronomicos > 0)
+                            add("• Datos agronómicos")
+                    }
+                    if (items.isEmpty()) {
+                        Text("No tiene datos asociados.", color = TextoSecundario, fontSize = 13.sp)
+                    } else {
+                        items.forEach { Text(it, color = TextoSecundario, fontSize = 13.sp) }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Esta acción no se puede deshacer.",
+                    color = RojoEliminar,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmar) {
+                Text("Eliminar todo", color = RojoEliminar, fontWeight = FontWeight.Medium)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) {
+                Text("Cancelar", color = TextoSecundario)
+            }
+        }
+    )
 }
 
 @Composable

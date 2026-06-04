@@ -86,6 +86,22 @@ data class ProductoCreateDto(
     @SerialName("tipoFertilizante") val tipoFertilizante: String? = null
 )
 
+// Conteo de dependencias para el borrado en cascada (Desktop).
+data class DependenciasParcelaDto(
+    @SerialName("actividades")      val actividades      : Int = 0,
+    @SerialName("semillas")         val semillas         : Int = 0,
+    @SerialName("fertilizaciones")  val fertilizaciones  : Int = 0,
+    @SerialName("referenciaSigpac") val referenciaSigpac : Int = 0,
+    @SerialName("datosAgronomicos") val datosAgronomicos : Int = 0
+)
+
+@Serializable
+data class DependenciasProductoDto(
+    @SerialName("actividadProductos") val actividadProductos : Int = 0,
+    @SerialName("semillas")           val semillas           : Int = 0,
+    @SerialName("fertilizaciones")    val fertilizaciones    : Int = 0
+)
+
 @Serializable
 data class SemillaTratadaDto(
     @SerialName("id")                       val id                      : Int,
@@ -367,6 +383,15 @@ class ActividadApi(private val client: HttpClient) {
         return response.status == HttpStatusCode.NoContent
     }
 
+    // Borrado en cascada de parcela solo dekstop.
+    suspend fun getDependenciasParcela(id: Int): DependenciasParcelaDto =
+        client.get("$BASE_URL/api/parcelas/$id/dependencias").body()
+
+    suspend fun eliminarParcelaEnCascada(id: Int): Boolean {
+        val response = client.delete("$BASE_URL/api/parcelas/$id/cascada")
+        return response.status == HttpStatusCode.NoContent
+    }
+
     // Productos
 
     suspend fun getProductos(): List<ProductoDto> =
@@ -399,6 +424,15 @@ class ActividadApi(private val client: HttpClient) {
                 ?: "El producto está siendo usado y no se puede eliminar"
             throw ConflictException(msg)
         }
+        return response.status == HttpStatusCode.NoContent
+    }
+
+    // Borrado en cascada de producto (solo Desktop)
+    suspend fun getDependenciasProducto(id: Int): DependenciasProductoDto =
+        client.get("$BASE_URL/api/productos/$id/dependencias").body()
+
+    suspend fun eliminarProductoEnCascada(id: Int): Boolean {
+        val response = client.delete("$BASE_URL/api/productos/$id/cascada")
         return response.status == HttpStatusCode.NoContent
     }
 

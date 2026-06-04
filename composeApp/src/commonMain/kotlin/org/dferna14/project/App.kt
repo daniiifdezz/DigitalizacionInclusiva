@@ -165,7 +165,8 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         }
         is Screen.Productos -> {
             ProductosSc(
-                onVolver = { onNavigate(Screen.DesktopHome) }
+                onVolver = { onNavigate(Screen.DesktopHome) },
+                isDesktop = true
             )
         }
         else -> {}

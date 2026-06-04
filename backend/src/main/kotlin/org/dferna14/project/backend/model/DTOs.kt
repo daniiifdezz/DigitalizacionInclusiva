@@ -260,6 +260,24 @@ data class ProductoResponse(
     val tipoFertilizante: String? = null
 )
 
+// Dependencias — conteo de registros hijos antes de un borrado en cascada .
+
+@Serializable
+data class DependenciasParcelaDto(
+    val actividades      : Int,
+    val semillas         : Int,
+    val fertilizaciones  : Int,
+    val referenciaSigpac : Int,   // 0 o 1 (relación 1:1 con la parcela)
+    val datosAgronomicos : Int    // 0 o 1 (relación 1:1 con la parcela)
+)
+
+@Serializable
+data class DependenciasProductoDto(
+    val actividadProductos : Int,
+    val semillas           : Int,
+    val fertilizaciones    : Int
+)
+
 // Titular
 
 @Serializable

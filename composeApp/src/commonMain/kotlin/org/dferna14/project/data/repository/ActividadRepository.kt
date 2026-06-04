@@ -8,6 +8,8 @@ import org.dferna14.project.data.remote.ActividadCreateDto
 import org.dferna14.project.data.remote.ConflictException
 import org.dferna14.project.data.remote.ActividadDto
 import org.dferna14.project.data.remote.ActividadProductoCreateDto
+import org.dferna14.project.data.remote.DependenciasParcelaDto
+import org.dferna14.project.data.remote.DependenciasProductoDto
 import org.dferna14.project.data.remote.DatosAgronomicosCreateDto
 import org.dferna14.project.data.remote.EstadoActividadDto
 import org.dferna14.project.data.remote.LoginRequest
@@ -269,9 +271,35 @@ class ActividadRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: ConflictException) {
-            Result.Error(e.message ?: "La parcela tiene datos asociados y no se puede eliminar")
+            Result.Error(
+                "Esta parcela tiene actividades, semillas o datos SIGPAC asociados. " +
+                    "Pide al técnico desde el escritorio que la elimine si es necesario."
+            )
         } catch (e: Exception) {
             Result.Error("Error al eliminar parcela: ${e.message}")
+        }
+    }
+
+    // Borrado en cascada de parcela Desktop
+    suspend fun getDependenciasParcela(id: Int): Result<DependenciasParcelaDto> {
+        return try {
+            Result.Success(api.getDependenciasParcela(id))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al consultar dependencias de la parcela: ${e.message}")
+        }
+    }
+
+    suspend fun eliminarParcelaEnCascada(id: Int): Result<Boolean> {
+        return try {
+            val ok = api.eliminarParcelaEnCascada(id)
+            if (ok) Result.Success(true)
+            else Result.Error("No se pudo eliminar la parcela y sus datos")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al eliminar la parcela: ${e.message}")
         }
     }
 
@@ -347,9 +375,34 @@ class ActividadRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: ConflictException) {
-            Result.Error(e.message ?: "El producto está siendo usado y no se puede eliminar")
+            Result.Error(
+                "Este producto está siendo usado en actividades. " +
+                    "Pide al técnico desde el escritorio que lo elimine si es necesario."
+            )
         } catch (e: Exception) {
             Result.Error("Error al eliminar producto: ${e.message}")
+        }
+    }
+
+    suspend fun getDependenciasProducto(id: Int): Result<DependenciasProductoDto> {
+        return try {
+            Result.Success(api.getDependenciasProducto(id))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al consultar dependencias del producto: ${e.message}")
+        }
+    }
+
+    suspend fun eliminarProductoEnCascada(id: Int): Result<Boolean> {
+        return try {
+            val ok = api.eliminarProductoEnCascada(id)
+            if (ok) Result.Success(true)
+            else Result.Error("No se pudo eliminar el producto y sus referencias")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al eliminar el producto en cascada: ${e.message}")
         }
     }
 

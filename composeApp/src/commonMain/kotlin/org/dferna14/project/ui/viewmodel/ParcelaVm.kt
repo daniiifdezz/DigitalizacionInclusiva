@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.dferna14.project.data.remote.DependenciasParcelaDto
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.data.repository.ExplotacionRepository
 import org.dferna14.project.domain.model.Cultivo
@@ -129,6 +130,34 @@ class ParcelaVm(
                 throw e
             } catch (e: Exception) {
                 _mensajeError.value = "Error al eliminar parcela: ${e.message}"
+            }
+        }
+    }
+
+    /**
+     * Consulta las dependencias (datos hijos) de una parcela
+     */
+    suspend fun obtenerDependencias(parcelaId: Int): DependenciasParcelaDto? {
+        val resultado = repository.getDependenciasParcela(parcelaId)
+        return if (resultado is Result.Success) resultado.data else null
+    }
+
+    /**
+     * Borrado en cascada de la parcela y todos sus datos hijos (solo Desktop/técnico).
+     */
+    fun eliminarParcelaEnCascada(parcelaId: Int) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.eliminarParcelaEnCascada(parcelaId)
+                if (resultado is Result.Success) {
+                    cargarParcelas()
+                } else if (resultado is Result.Error) {
+                    _mensajeError.value = resultado.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "No se pudo eliminar la parcela y sus datos: ${e.message}"
             }
         }
     }

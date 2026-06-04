@@ -8,6 +8,7 @@ import org.dferna14.project.backend.db.ActividadProductos
 import org.dferna14.project.backend.db.Fertilizaciones
 import org.dferna14.project.backend.db.Productos
 import org.dferna14.project.backend.db.SemillasTratadas
+import org.dferna14.project.backend.model.DependenciasProductoDto
 import org.dferna14.project.backend.model.ProductoRequest
 import org.dferna14.project.backend.model.ProductoResponse
 import org.jetbrains.exposed.sql.*
@@ -130,6 +131,48 @@ fun Route.productoRoutes() {
 
             if (filasEliminadas == 0) call.respond(HttpStatusCode.NotFound)
             else call.respond(HttpStatusCode.NoContent)
+        }
+
+        // GET /api/productos/{id}/dependencias - Conteo de registros hijos (Desktop)
+        get("{id}/dependencias") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+            val dependencias = transaction {
+                DependenciasProductoDto(
+                    actividadProductos = ActividadProductos.selectAll()
+                        .where { ActividadProductos.productoId eq id }.count().toInt(),
+                    semillas = SemillasTratadas.selectAll()
+                        .where { SemillasTratadas.productoId eq id }.count().toInt(),
+                    fertilizaciones = Fertilizaciones.selectAll()
+                        .where { Fertilizaciones.productoId eq id }.count().toInt()
+                )
+            }
+            call.respond(dependencias)
+        }
+
+        // DELETE /api/productos/{id}/cascada - Borrado mixto (solo Desktop/técnico)
+        // Estrategia mixta:
+        //  - actividad_producto: se BORRA la fila (sin producto no tiene sentido la línea).
+        //  - semillatratada / fertilizacion: se pone productoId a NULL, porque esos
+        //    registros conservan su valor aunque pierdan la referencia al catálogo
+        //    (ambas columnas producto_id son nullable en Tables.kt).
+        delete("{id}/cascada") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            transaction {
+                ActividadProductos.deleteWhere { ActividadProductos.productoId eq id }
+                SemillasTratadas.update({ SemillasTratadas.productoId eq id }) {
+                    it[SemillasTratadas.productoId] = null
+                }
+                Fertilizaciones.update({ Fertilizaciones.productoId eq id }) {
+                    it[Fertilizaciones.productoId] = null
+                }
+                Productos.deleteWhere { Productos.id eq id }
+            }
+
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }

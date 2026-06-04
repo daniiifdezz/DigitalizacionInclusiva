@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.dferna14.project.data.remote.DependenciasProductoDto
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
@@ -106,6 +107,36 @@ class ProductoVm(
                 throw e
             } catch (e: Exception) {
                 _mensajeError.value = "Error al eliminar producto: ${e.message}"
+            }
+        }
+    }
+
+    /**
+     * Consulta las dependencias (datos hijos) de un producto. Lo usa el Desktop
+     * para mostrar el diálogo de confirmación de borrado en cascada antes de borrar.
+     * Devuelve null si la consulta falla.
+     */
+    suspend fun obtenerDependencias(productoId: Int): DependenciasProductoDto? {
+        val resultado = repository.getDependenciasProducto(productoId)
+        return if (resultado is Result.Success) resultado.data else null
+    }
+
+    /**
+     * Borrado en cascada del producto y sus referencias (solo Desktop/técnico).
+     */
+    fun eliminarProductoEnCascada(productoId: Int) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.eliminarProductoEnCascada(productoId)
+                if (resultado is Result.Success) {
+                    cargarProductos()
+                } else if (resultado is Result.Error) {
+                    _mensajeError.value = resultado.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.value = "No se pudo eliminar el producto y sus referencias: ${e.message}"
             }
         }
     }
