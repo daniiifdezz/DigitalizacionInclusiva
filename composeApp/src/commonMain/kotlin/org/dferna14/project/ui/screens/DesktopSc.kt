@@ -27,6 +27,7 @@ fun DesktopMainSc(
     onVerParcelas: () -> Unit,
     onVerProductos: () -> Unit,
     onVerValidar: (Int) -> Unit,
+    onVerCuadernoPdf: () -> Unit,
     onVerConfiguracion: () -> Unit,
     actividadListaVm: ActividadListaVm = koinViewModel(),
     parcelaVm: ParcelaVm = koinViewModel(),
@@ -109,10 +110,18 @@ fun DesktopMainSc(
                 }
             )
             MenuItem(
-                text = "Configuración",
+                text = "Cuaderno PDF",
                 selected = selectedItem == 4,
                 onClick = {
                     selectedItem = 4
+                    onVerCuadernoPdf()
+                }
+            )
+            MenuItem(
+                text = "Configuración",
+                selected = selectedItem == 5,
+                onClick = {
+                    selectedItem = 5
                     onVerConfiguracion()
                 }
             )

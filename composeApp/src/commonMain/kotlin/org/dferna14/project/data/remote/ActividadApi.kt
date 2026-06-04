@@ -87,6 +87,7 @@ data class ProductoCreateDto(
 )
 
 // Conteo de dependencias para el borrado en cascada (Desktop).
+@Serializable
 data class DependenciasParcelaDto(
     @SerialName("actividades")      val actividades      : Int = 0,
     @SerialName("semillas")         val semillas         : Int = 0,
