@@ -3,6 +3,7 @@ package org.dferna14.project.data.remote
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
@@ -255,6 +256,9 @@ data class LoginResponseDto(
  * Excepción específica para conflictos 409 del backend.
  */
 class ConflictException(message: String) : RuntimeException(message)
+
+@Serializable
+data class CambioRolRequest(val nuevoRol: String)
 
 @Serializable
 private data class ErrorMessage(val message: String? = null)
@@ -567,4 +571,14 @@ class ActividadApi(private val client: HttpClient) {
         }
         return response.body<UsuarioDto>()
     }
+
+    
+    suspend fun cambiarRolUsuario(usuarioId: Int, nuevoRol: String): HttpResponse {
+        return client.put("$BASE_URL/api/usuarios/$usuarioId/rol") {
+            contentType(ContentType.Application.Json)
+            setBody(CambioRolRequest(nuevoRol))
+        }
+    }
 }
+
+

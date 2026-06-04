@@ -21,6 +21,9 @@ class UsuarioVm(
     private val _mensajeError = MutableStateFlow<String?>(null)
     val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
 
+    private val _mensajeRol = MutableStateFlow<String?>(null)
+    val mensajeRol: StateFlow<String?> = _mensajeRol.asStateFlow()
+
     init {
         cargarUsuarios()
     }
@@ -72,7 +75,31 @@ class UsuarioVm(
         }
     }
 
+    /**
+     * Promueve (TECNICO) o degrada (AGRICULTOR) a un usuario. Al terminar refresca
+     * la lista y publica un mensaje de feedback en [mensajeRol].
+     */
+    fun cambiarRolUsuario(usuarioId: Int, nuevoRol: String) {
+        viewModelScope.launch {
+            when (val resultado = repository.cambiarRolUsuario(usuarioId, nuevoRol)) {
+                is Result.Success -> {
+                    _mensajeRol.value = if (nuevoRol == "TECNICO")
+                        "Usuario promovido a técnico correctamente"
+                    else
+                        "Usuario degradado a agricultor correctamente"
+                    cargarUsuarios()
+                }
+                is Result.Error -> _mensajeRol.value = "Error: ${resultado.message}"
+                else -> Unit
+            }
+        }
+    }
+
     fun limpiarMensajeError() {
         _mensajeError.value = null
+    }
+
+    fun limpiarMensajeRol() {
+        _mensajeRol.value = null
     }
 }

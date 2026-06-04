@@ -540,7 +540,7 @@ fun formatearFecha(fechaIso: String): String {
 
 @Composable
 fun CampoPasswordField(
-    label: String, // Cambiado el orden para que coincida con tu CampoTextField
+    label: String,
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,

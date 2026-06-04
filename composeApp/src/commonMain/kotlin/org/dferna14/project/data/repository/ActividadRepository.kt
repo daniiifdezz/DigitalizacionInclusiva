@@ -36,6 +36,9 @@ import org.dferna14.project.domain.model.SemillaTratada
 import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.data.remote.FertilizacionCreateDto
 import org.dferna14.project.domain.model.Fertilizacion
+import io.ktor.client.statement.*
+import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.json.Json
 
 /**
  * Repositorio offline-first para Actividades y Parcelas.
@@ -932,6 +935,39 @@ class ActividadRepository(
             throw e
         } catch (e: Exception) {
             Result.Error("Error al cargar cultivos: ${e.message}")
+        }
+    }
+
+    suspend fun cambiarRolUsuario(usuarioId: Int, nuevoRol: String): Result<Unit> {
+        return try {
+            val response = api.cambiarRolUsuario(usuarioId, nuevoRol)
+            when (response.status) {
+                HttpStatusCode.OK -> Result.Success(Unit)
+                HttpStatusCode.Forbidden -> {
+                    val cuerpo = response.bodyAsText()
+                    val mensaje = parsearMensajeError(cuerpo) ?: "No tienes permiso para cambiar el rol"
+                    Result.Error(mensaje)
+                }
+                HttpStatusCode.NotFound -> Result.Error("Usuario no encontrado")
+                HttpStatusCode.BadRequest -> {
+                    val cuerpo = response.bodyAsText()
+                    Result.Error(parsearMensajeError(cuerpo) ?: "Petición inválida")
+                }
+                else -> Result.Error("Error inesperado: ${response.status}")
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error de red: ${e.message}")
+        }
+    }
+    private fun parsearMensajeError(jsonStr: String): String? {
+        return try {
+            val kotlinxJson = Json { ignoreUnknownKeys = true }
+            val mapa = kotlinxJson.decodeFromString<Map<String, String>>(jsonStr)
+            mapa["message"]
+        } catch (e: Exception) {
+            null
         }
     }
 }

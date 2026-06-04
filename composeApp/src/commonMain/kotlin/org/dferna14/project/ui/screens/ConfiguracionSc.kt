@@ -1,5 +1,6 @@
 package org.dferna14.project.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,11 +9,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +36,8 @@ import org.dferna14.project.ui.theme.NaranjaPrimario
 import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
+import org.dferna14.project.ui.theme.VerdeValidada
+import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.ConfiguracionVm
 import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
@@ -663,17 +670,24 @@ private fun NuevoEquipoDialog(
     )
 }
 
-// ── Pestaña Aplicadores ─────────────────────────────────────────────────────
+//  Pestaña Aplicadores
 
 @Composable
 private fun PestanaAplicadores(
     snackbarHostState: SnackbarHostState,
-    usuarioVm: UsuarioVm = koinViewModel()
+    usuarioVm: UsuarioVm = koinViewModel(),
+    authVm: AuthVm = koinViewModel()
 ) {
     val usuariosState by usuarioVm.usuarios.collectAsState()
     val mensajeError by usuarioVm.mensajeError.collectAsState()
+    val mensajeRol by usuarioVm.mensajeRol.collectAsState()
+    val usuarioActual by authVm.usuarioActual.collectAsState()
+    val idUsuarioActual = usuarioActual?.id
     var mostrarDialogo by remember { mutableStateOf(false) }
     var aplicadorAEliminar by remember { mutableStateOf<Usuario?>(null) }
+    var mostrarDialogoPromocion by remember { mutableStateOf<Int?>(null) }
+    var mostrarDialogoDegradacion by remember { mutableStateOf<Int?>(null) }
+
 
     LaunchedEffect(Unit) { usuarioVm.cargarUsuarios() }
 
@@ -681,6 +695,13 @@ private fun PestanaAplicadores(
         mensajeError?.let {
             snackbarHostState.showSnackbar(it)
             usuarioVm.limpiarMensajeError()
+        }
+    }
+
+    LaunchedEffect(mensajeRol) {
+        mensajeRol?.let {
+            snackbarHostState.showSnackbar(it)
+            usuarioVm.limpiarMensajeRol()
         }
     }
 
@@ -736,6 +757,9 @@ private fun PestanaAplicadores(
                         items(estado.data, key = { it.id }) { usuario ->
                             AplicadorConfigCard(
                                 usuario = usuario,
+                                idUsuarioActual = idUsuarioActual,
+                                onPromover = { mostrarDialogoPromocion = it },
+                                onDegradar = { mostrarDialogoDegradacion = it },
                                 onEliminar = { aplicadorAEliminar = usuario }
                             )
                         }
@@ -777,6 +801,90 @@ private fun PestanaAplicadores(
             }
         )
     }
+
+    // Diálogo de promoción a técnico
+    if (mostrarDialogoPromocion != null) {
+        val usuarios = (usuariosState as? Result.Success)?.data.orEmpty()
+        val usuarioAPromover = usuarios.firstOrNull { it.id == mostrarDialogoPromocion }
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoPromocion = null },
+            title = { Text("¿Promover a técnico?") },
+            text = {
+                Column {
+                    Text("Vas a otorgar permisos de técnico a:")
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "${usuarioAPromover?.nombre.orEmpty()} ${usuarioAPromover?.apellidos.orEmpty()}".trim(),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    )
+                    Text(usuarioAPromover?.email.orEmpty(), color = TextoSecundario, fontSize = 13.sp)
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Como técnico podrá validar actividades, gestionar productos " +
+                            "y equipos, generar el cuaderno oficial y promover a otros " +
+                            "usuarios. Asegúrate de que es alguien de confianza.",
+                        fontSize = 13.sp,
+                        color = TextoSecundario
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val id = mostrarDialogoPromocion!!
+                    mostrarDialogoPromocion = null
+                    usuarioVm.cambiarRolUsuario(id, "TECNICO")
+                }) {
+                    Text("Promover", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoPromocion = null }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    // Diálogo de degradación a agricultor
+    if (mostrarDialogoDegradacion != null) {
+        val usuarios = (usuariosState as? Result.Success)?.data.orEmpty()
+        val usuarioADegradar = usuarios.firstOrNull { it.id == mostrarDialogoDegradacion }
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoDegradacion = null },
+            title = { Text("¿Degradar a agricultor?") },
+            text = {
+                Column {
+                    Text("Vas a retirar los permisos de técnico a:")
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "${usuarioADegradar?.nombre.orEmpty()} ${usuarioADegradar?.apellidos.orEmpty()}".trim(),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    )
+                    Text(usuarioADegradar?.email.orEmpty(), color = TextoSecundario, fontSize = 13.sp)
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Perderá acceso a la aplicación de escritorio y a las " +
+                            "funciones de técnico. Podrá seguir usando la app móvil " +
+                            "como agricultor.",
+                        fontSize = 13.sp,
+                        color = TextoSecundario
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val id = mostrarDialogoDegradacion!!
+                    mostrarDialogoDegradacion = null
+                    usuarioVm.cambiarRolUsuario(id, "AGRICULTOR")
+                }) {
+                    Text("Degradar", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoDegradacion = null }) { Text("Cancelar") }
+            }
+        )
+    }
 }
 
 private fun Usuario.nombreLegible(): String =
@@ -785,6 +893,9 @@ private fun Usuario.nombreLegible(): String =
 @Composable
 private fun AplicadorConfigCard(
     usuario: Usuario,
+    idUsuarioActual: Int?,
+    onPromover: (Int) -> Unit,
+    onDegradar: (Int) -> Unit,
     onEliminar: () -> Unit
 ) {
     CampoCard {
@@ -803,11 +914,69 @@ private fun AplicadorConfigCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = TextoTerciario
                 )
-                Text(
-                    text = "Rol: ${usuario.rol}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextoTerciario
-                )
+                Spacer(Modifier.height(6.dp))
+                // Rol: badge TECNICO (con opción de degradar) o botón "Promover a técnico"
+                when (usuario.rol) {
+                    "TECNICO" -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .background(VerdeValidada, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Star,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = Color.White
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        "TECNICO",
+                                        fontSize = 11.sp,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            // Un técnico no puede degradarse a sí mismo (protección anti-suicidio)
+                            if (usuario.id != idUsuarioActual) {
+                                IconButton(
+                                    onClick = { onDegradar(usuario.id) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Remove,
+                                        contentDescription = "Degradar a agricultor",
+                                        tint = TextoSecundario,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    "AGRICULTOR" -> {
+                        OutlinedButton(
+                            onClick = { onPromover(usuario.id) },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NaranjaPrimario),
+                            border = BorderStroke(1.dp, NaranjaPrimario),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text("Promover a técnico", fontSize = 12.sp)
+                        }
+                    }
+                    else -> {
+                        Text("Rol: ${usuario.rol}", color = TextoSecundario, fontSize = 13.sp)
+                    }
+                }
                 usuario.tipoCarnetRopo?.let { tipo ->
                     Spacer(Modifier.height(4.dp))
                     Box(

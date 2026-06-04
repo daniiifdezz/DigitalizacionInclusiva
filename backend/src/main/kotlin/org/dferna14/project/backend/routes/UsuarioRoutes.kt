@@ -1,12 +1,15 @@
 package org.dferna14.project.backend.routes
 
 import io.ktor.http.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.Usuarios
 import org.dferna14.project.backend.mapper.toUsuarioResponse
+import org.dferna14.project.backend.model.CambioRolRequest
 import org.dferna14.project.backend.model.UsuarioRequest
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -128,6 +131,57 @@ fun Route.usuarioRoutes() {
             val filas = transaction { Usuarios.deleteWhere { Usuarios.id eq id } }
             if (filas == 0) call.respond(HttpStatusCode.NotFound)
             else call.respond(HttpStatusCode.NoContent)
+        }
+
+        // PUT /api/usuarios/{id}/rol — promoción/degradación de roles (solo TECNICO).
+        // Protegido con JWT. Reglas: solo TECNICO puede cambiar roles; un TECNICO no
+        // puede degradarse a sí mismo; nuevoRol debe ser AGRICULTOR o TECNICO.
+        authenticate("auth-jwt") {
+            put("{id}/rol") {
+                val principal = call.principal<JWTPrincipal>()!!
+                val rolSolicitante = principal.payload.getClaim("rol").asString()
+                val userIdSolicitante = principal.payload.getClaim("userId").asInt()
+
+                if (rolSolicitante != "TECNICO") {
+                    return@put call.respond(
+                        HttpStatusCode.Forbidden,
+                        mapOf("message" to "Solo los tecnicos pueden modificar roles")
+                    )
+                }
+
+                val id = call.parameters["id"]?.toIntOrNull()
+                    ?: return@put call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "ID de usuario invalido")
+                    )
+
+                val request = call.receive<CambioRolRequest>()
+                if (request.nuevoRol !in setOf("AGRICULTOR", "TECNICO")) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("message" to "Rol invalido. Permitidos: AGRICULTOR, TECNICO")
+                    )
+                }
+
+                if (id == userIdSolicitante && request.nuevoRol == "AGRICULTOR") {
+                    return@put call.respond(
+                        HttpStatusCode.Forbidden,
+                        mapOf("message" to "No puedes degradarte a ti mismo. Pide a otro tecnico que lo haga.")
+                    )
+                }
+
+                val filasAfectadas = transaction {
+                    Usuarios.update({ Usuarios.id eq id }) {
+                        it[Usuarios.rol] = request.nuevoRol
+                    }
+                }
+
+                if (filasAfectadas == 0) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Usuario no encontrado"))
+                } else {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Rol actualizado correctamente"))
+                }
+            }
         }
     }
 }

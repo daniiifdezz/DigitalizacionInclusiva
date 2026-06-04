@@ -467,3 +467,6 @@ data class ResumenCuadernoDto(
     val superficieTotalTratada    : Double,
     val productosUnicosUsados     : Int
 )
+
+@Serializable
+data class CambioRolRequest(val nuevoRol: String)
