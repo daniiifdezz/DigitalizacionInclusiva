@@ -540,9 +540,9 @@ fun formatearFecha(fechaIso: String): String {
 
 @Composable
 fun CampoPasswordField(
+    label: String, // Cambiado el orden para que coincida con tu CampoTextField
     value: String,
     onValueChange: (String) -> Unit,
-    label: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isError: Boolean = false,
@@ -553,10 +553,10 @@ fun CampoPasswordField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         enabled = enabled,
         isError = isError,
+        label = { Text(label, color = TextoTerciario, fontSize = 12.sp) },
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -569,11 +569,20 @@ fun CampoPasswordField(
                 )
             }
         },
+        shape = RoundedCornerShape(12.dp),
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
         supportingText = supportingText?.let { { Text(it) } },
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = NaranjaPrimario,
-            unfocusedBorderColor = BordeMedio,
-            errorBorderColor = RojoEliminar
+            focusedBorderColor   = if (isError) RojoEliminar else NaranjaPrimario,
+            unfocusedBorderColor = if (isError) RojoEliminar else BordeMedio,
+            disabledBorderColor  = BordeMedio,
+            errorBorderColor     = RojoEliminar,
+            focusedContainerColor   = BlancoPuro,
+            unfocusedContainerColor = BlancoPuro,
+            disabledContainerColor  = BlancoPuro,
+            focusedLabelColor   = if (isError) RojoEliminar else NaranjaPrimario,
+            unfocusedLabelColor = TextoTerciario,
+            cursorColor         = NaranjaPrimario
         )
     )
 }
