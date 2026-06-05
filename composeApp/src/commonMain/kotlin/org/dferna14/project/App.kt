@@ -47,6 +47,7 @@ sealed class Screen {
     object DesktopHome : Screen()
     object Parcelas : Screen()
     object CuadernoPdf : Screen()
+    object DesktopAjustes : Screen()
     object Configuracion : Screen()
     data class EditarParcela(val parcelaId: Int) : Screen()
     data class Pendientes(val actividadId: Int) : Screen()
@@ -134,6 +135,7 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 onVerProductos = { onNavigate(Screen.Productos) },
                 onVerValidar = { id -> onNavigate(Screen.Validar(id)) },
                 onVerCuadernoPdf = { onNavigate(Screen.CuadernoPdf) },
+                onVerAjustes = { onNavigate(Screen.DesktopAjustes) },
                 onVerConfiguracion = { onNavigate(Screen.Configuracion) }
             )
         }
@@ -218,6 +220,9 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
             CuadernoPdfSc(
                 onVolver = { onNavigate(Screen.DesktopHome) }
             )
+        }
+        is Screen.DesktopAjustes -> {
+            AjustesSc(mostrarBotonCerrarSesion = false)
         }
         else -> {}
     }

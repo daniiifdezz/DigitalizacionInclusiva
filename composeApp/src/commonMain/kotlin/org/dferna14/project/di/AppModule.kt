@@ -14,6 +14,7 @@ import org.dferna14.project.data.repository.ExplotacionRepository
 import org.dferna14.project.data.repository.TitularRepository
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
+import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.ConfiguracionVm
 import org.dferna14.project.ui.viewmodel.CuadernoVm
@@ -65,4 +66,5 @@ val appModule = module {
     factoryOf(::ConfiguracionVm)
     factoryOf(::AuthVm)
     factoryOf(::CuadernoVm)
+    factoryOf(::AjustesVm)
 }

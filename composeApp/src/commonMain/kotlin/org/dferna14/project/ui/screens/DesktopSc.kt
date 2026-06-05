@@ -36,6 +36,7 @@ fun DesktopMainSc(
     onVerProductos: () -> Unit,
     onVerValidar: (Int) -> Unit,
     onVerCuadernoPdf: () -> Unit,
+    onVerAjustes: () -> Unit,
     onVerConfiguracion: () -> Unit,
     actividadListaVm: ActividadListaVm = koinViewModel(),
     parcelaVm: ParcelaVm = koinViewModel(),
@@ -128,10 +129,18 @@ fun DesktopMainSc(
                 }
             )
             MenuItem(
-                text = "Configuración",
-                selected = selectedItem == 5,
+                text = "Ajustes",
+                selected = selectedItem == 6,
                 onClick = {
-                    selectedItem = 5
+                    selectedItem = 6
+                    onVerAjustes()
+                }
+            )
+            MenuItem(
+                text = "Configuración",
+                selected = selectedItem == 7,
+                onClick = {
+                    selectedItem = 7
                     onVerConfiguracion()
                 }
             )
