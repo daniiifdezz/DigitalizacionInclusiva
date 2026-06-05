@@ -82,7 +82,7 @@ data class Fertilizacion(
     val fechaFin           : String? = null,
     val tipoProducto       : String? = null,
     val numeroAlbaran      : String? = null,
-    val riquezaNPK         : String? = null,
+    val riquezaNpk         : String? = null,
     val dosis              : Double? = null,
     val tipoFertilizacion  : String? = null,
     val observaciones      : String? = null

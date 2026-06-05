@@ -146,7 +146,7 @@ data class FertilizacionDto(
     @SerialName("fechaFin")          val fechaFin          : String? = null,
     @SerialName("tipoProducto")      val tipoProducto      : String? = null,
     @SerialName("numeroAlbaran")     val numeroAlbaran     : String? = null,
-    @SerialName("riquezaNPK")        val riquezaNPK        : String? = null,
+    @SerialName("riquezaNpk")        val riquezaNpk        : String? = null,
     @SerialName("dosis")             val dosis             : Double? = null,
     @SerialName("tipoFertilizacion") val tipoFertilizacion : String? = null,
     @SerialName("observaciones")     val observaciones     : String? = null
@@ -162,7 +162,7 @@ data class FertilizacionCreateDto(
     @SerialName("fechaFin")          val fechaFin          : String? = null,
     @SerialName("tipoProducto")      val tipoProducto      : String? = null,
     @SerialName("numeroAlbaran")     val numeroAlbaran     : String? = null,
-    @SerialName("riquezaNPK")        val riquezaNPK        : String? = null,
+    @SerialName("riquezaNpk")        val riquezaNpk        : String? = null,
     @SerialName("dosis")             val dosis             : Double? = null,
     @SerialName("tipoFertilizacion") val tipoFertilizacion : String? = null,
     @SerialName("observaciones")     val observaciones     : String? = null

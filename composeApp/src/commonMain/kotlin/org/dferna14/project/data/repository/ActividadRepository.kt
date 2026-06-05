@@ -588,7 +588,7 @@ class ActividadRepository(
                     fechaFin          = fertilizacion.fechaFin,
                     tipoProducto      = fertilizacion.tipoProducto,
                     numeroAlbaran     = fertilizacion.numeroAlbaran,
-                    riquezaNPK        = fertilizacion.riquezaNPK,
+                    riquezaNpk        = fertilizacion.riquezaNpk,
                     dosis             = fertilizacion.dosis,
                     tipoFertilizacion = fertilizacion.tipoFertilizacion,
                     observaciones     = fertilizacion.observaciones
@@ -612,7 +612,7 @@ class ActividadRepository(
         fechaFin          = fechaFin,
         tipoProducto      = tipoProducto,
         numeroAlbaran     = numeroAlbaran,
-        riquezaNPK        = riquezaNPK,
+        riquezaNpk        = riquezaNpk,
         dosis             = dosis,
         tipoFertilizacion = tipoFertilizacion,
         observaciones     = observaciones

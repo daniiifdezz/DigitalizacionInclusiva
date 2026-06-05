@@ -754,7 +754,7 @@ object CuadernoPdfGenerator {
                     cultivo,
                     f.tipoProducto ?: "",
                     f.numeroAlbaran ?: "",
-                    f.riquezaNPK ?: "",
+                    f.riquezaNpk ?: "",
                     f.dosis?.let { "%.2f".format(it) } ?: "",
                     f.tipoFertilizacion ?: "",
                     f.observaciones ?: ""

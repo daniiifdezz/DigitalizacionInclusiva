@@ -5,6 +5,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Fertilizaciones
+import org.dferna14.project.backend.db.Productos.riquezaNpk
 import org.dferna14.project.backend.mapper.toFertilizacionResponse
 import org.dferna14.project.backend.model.FertilizacionRequest
 import org.jetbrains.exposed.sql.*
@@ -54,7 +55,7 @@ fun Route.fertilizacionRoutes() {
                     it[fechaFin] = fechaFinLocalDate
                     it[tipoProducto] = request.tipoProducto
                     it[numeroAlbaran] = request.numeroAlbaran
-                    it[riquezaNPK] = request.riquezaNPK
+                    it[riquezaNpk] = request.riquezaNpk
                     it[dosis] = request.dosis
                     it[tipoFertilizacion] = request.tipoFertilizacion
                     it[observaciones] = request.observaciones
@@ -87,7 +88,7 @@ fun Route.fertilizacionRoutes() {
                     it[fechaFin] = fechaFinLocalDate
                     it[tipoProducto] = request.tipoProducto
                     it[numeroAlbaran] = request.numeroAlbaran
-                    it[riquezaNPK] = request.riquezaNPK
+                    it[riquezaNpk] = request.riquezaNpk
                     it[dosis] = request.dosis
                     it[tipoFertilizacion] = request.tipoFertilizacion
                     it[observaciones] = request.observaciones
@@ -156,7 +157,7 @@ fun Route.fertilizacionRoutes() {
                         it[fechaFin]          = fechaFinLocalDate
                         it[tipoProducto]      = request.tipoProducto
                         it[numeroAlbaran]     = request.numeroAlbaran
-                        it[riquezaNPK]        = request.riquezaNPK
+                        it[riquezaNpk]        = request.riquezaNpk
                         it[dosis]             = request.dosis
                         it[tipoFertilizacion] = request.tipoFertilizacion
                         it[observaciones]     = request.observaciones
@@ -172,7 +173,7 @@ fun Route.fertilizacionRoutes() {
                         it[fechaFin]                    = fechaFinLocalDate
                         it[tipoProducto]                = request.tipoProducto
                         it[numeroAlbaran]               = request.numeroAlbaran
-                        it[riquezaNPK]                  = request.riquezaNPK
+                        it[riquezaNpk]                  = request.riquezaNpk
                         it[dosis]                       = request.dosis
                         it[tipoFertilizacion]           = request.tipoFertilizacion
                         it[observaciones]               = request.observaciones
