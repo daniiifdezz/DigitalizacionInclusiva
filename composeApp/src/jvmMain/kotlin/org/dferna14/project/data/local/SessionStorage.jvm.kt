@@ -39,8 +39,28 @@ class SessionStorageJvm : SessionStorage {
     override fun obtenerRol(): String? = cargar().getProperty("rol")
     override fun obtenerUserId(): Int? = cargar().getProperty("userId")?.toIntOrNull()
 
+
+    override fun guardarUrlBackend(url: String) {
+        val props = cargar()
+        props.setProperty("url_backend", url)
+        guardar(props)
+    }
+
+    override fun obtenerUrlBackend(): String? {
+        return cargar().getProperty("url_backend")
+    }
+
     override fun limpiarSesion() {
-        if (ficheroSesion.exists()) ficheroSesion.delete()
+        val props = cargar()
+        props.remove("token")
+        props.remove("userId")
+        props.remove("email")
+        props.remove("rol")
+        if (props.isEmpty) {
+            if (ficheroSesion.exists()) ficheroSesion.delete()
+        } else {
+            guardar(props)
+        }
     }
 
     override fun haySesion(): Boolean = obtenerToken() != null

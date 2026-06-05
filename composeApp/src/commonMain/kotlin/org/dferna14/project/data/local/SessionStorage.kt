@@ -15,6 +15,10 @@ interface SessionStorage {
     fun obtenerUserId(): Int?
     fun limpiarSesion()
     fun haySesion(): Boolean
+
+    //URL del back
+    fun guardarUrlBackend(url: String)
+    fun obtenerUrlBackend(): String?
 }
 
 expect fun crearSessionStorage(): SessionStorage

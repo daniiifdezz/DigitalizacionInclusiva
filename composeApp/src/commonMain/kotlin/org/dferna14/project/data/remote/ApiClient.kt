@@ -22,7 +22,7 @@ import org.dferna14.project.data.local.SessionStorage
  */
 
 // URL base — se define por plataforma en androidMain y jvmMain
-expect val BASE_URL: String
+expect val BASE_URL_POR_DEFECTO: String
 
 fun createHttpClient(sessionStorage: SessionStorage): HttpClient {
     return HttpClient {
@@ -44,4 +44,10 @@ fun createHttpClient(sessionStorage: SessionStorage): HttpClient {
             }
         }
     }
+}
+
+
+fun baseUrl(sessionStorage: SessionStorage): String {
+    val guardada = sessionStorage.obtenerUrlBackend()
+    return guardada?.takeIf { it.isNotBlank() } ?: BASE_URL_POR_DEFECTO
 }

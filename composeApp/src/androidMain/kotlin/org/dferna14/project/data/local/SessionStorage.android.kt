@@ -30,11 +30,28 @@ class SessionStorageAndroid(context: Context) : SessionStorage {
     override fun obtenerUserId(): Int? =
         if (prefs.contains("userId")) prefs.getInt("userId", -1) else null
 
-    override fun limpiarSesion() {
-        prefs.edit().clear().apply()
+
+
+    override fun guardarUrlBackend(url: String) {
+        prefs.edit().putString("url_backend", url).apply()
     }
 
+    override fun obtenerUrlBackend(): String? {
+        return prefs.getString("url_backend", null)
+    }
+
+    override fun limpiarSesion() {
+        prefs.edit().apply {
+            remove("token")
+            remove("userId")
+            remove("email")
+            remove("rol")
+            apply()
+        }
+    }
     override fun haySesion(): Boolean = obtenerToken() != null
+
+
 }
 
 private lateinit var contextoApp: Context
