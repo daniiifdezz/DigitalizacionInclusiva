@@ -40,12 +40,12 @@ val appModule = module {
     // Cliente HTTP — singleton compartido (inyecta SessionStorage para el header Bearer)
     single { createHttpClient(get()) }
 
-    // Fuentes de datos remotas
-    single { ActividadApi(get()) }
-    single { TitularApi(get()) }
-    single { ExplotacionApi(get()) }
-    single { ParcelaApi(get()) }
-    single { CuadernoApi(get()) }
+    // Fuentes de datos remotas (client + sessionStorage para URL dinámica)
+    single { ActividadApi(get(), get()) }
+    single { TitularApi(get(), get()) }
+    single { ExplotacionApi(get(), get()) }
+    single { ParcelaApi(get(), get()) }
+    single { CuadernoApi(get(), get()) }
 
     // Repositorios
     single { ActividadRepository(get(), get(), get()) }

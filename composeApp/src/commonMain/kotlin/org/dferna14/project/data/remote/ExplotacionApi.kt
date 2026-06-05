@@ -7,6 +7,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.dferna14.project.data.local.SessionStorage
 
 @Serializable
 data class ExplotacionDto(
@@ -41,7 +42,7 @@ data class ExplotacionCreateDto(
     @SerialName("email")              val email              : String? = null
 )
 
-class ExplotacionApi(private val client: HttpClient) {
+class ExplotacionApi(private val client: HttpClient, private val sessionStorage: SessionStorage) {
 
     /**
      * Devuelve la primera explotación del sistema (la app monoexplotación de TFG asume una sola)
@@ -49,7 +50,7 @@ class ExplotacionApi(private val client: HttpClient) {
      */
     suspend fun getExplotacion(): ExplotacionDto? {
         return try {
-            client.get("$BASE_URL/api/explotaciones").body<List<ExplotacionDto>>().firstOrNull()
+            client.get("${baseUrl(sessionStorage)}/api/explotaciones").body<List<ExplotacionDto>>().firstOrNull()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -63,17 +64,17 @@ class ExplotacionApi(private val client: HttpClient) {
      * la explotación del usuario autenticado.
      */
     suspend fun getExplotaciones(): List<ExplotacionDto> =
-        client.get("$BASE_URL/api/explotaciones").body()
+        client.get("${baseUrl(sessionStorage)}/api/explotaciones").body()
 
     suspend fun crearExplotacion(request: ExplotacionCreateDto): ExplotacionDto {
-        return client.post("$BASE_URL/api/explotaciones") {
+        return client.post("${baseUrl(sessionStorage)}/api/explotaciones") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body<ExplotacionDto>()
     }
 
     suspend fun actualizarExplotacion(id: Int, request: ExplotacionCreateDto): Boolean {
-        val response = client.put("$BASE_URL/api/explotaciones/$id") {
+        val response = client.put("${baseUrl(sessionStorage)}/api/explotaciones/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

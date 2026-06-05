@@ -8,6 +8,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import org.dferna14.project.data.local.SessionStorage
 
 
 @Serializable
@@ -267,14 +268,14 @@ private data class ErrorMessage(val message: String? = null)
  * Fuente de datos remota — encapsula todas las llamadas HTTP.
  * El repositorio usa esta clase, nunca HttpClient directamente.
  */
-class ActividadApi(private val client: HttpClient) {
+class ActividadApi(private val client: HttpClient, private val sessionStorage: SessionStorage) {
 
     // Actividades
 
     suspend fun getActividades(): List<ActividadDto> {
-        println("DEBUG: Intentando conectar a $BASE_URL/api/actividades")
+        println("DEBUG: Intentando conectar a ${baseUrl(sessionStorage)}/api/actividades")
         try {
-            val response = client.get("$BASE_URL/api/actividades")
+            val response = client.get("${baseUrl(sessionStorage)}/api/actividades")
             println("DEBUG: Respuesta recibida: ${response.status}")
             return response.body<List<ActividadDto>>()
         } catch (e: CancellationException) {
@@ -287,17 +288,17 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun getActividad(id: Int): ActividadDto =
-        client.get("$BASE_URL/api/actividades/$id").body<ActividadDto>()
+        client.get("${baseUrl(sessionStorage)}/api/actividades/$id").body<ActividadDto>()
 
     suspend fun crearActividad(actividad: ActividadCreateDto): ActividadDto {
-        return client.post("$BASE_URL/api/actividades") {
+        return client.post("${baseUrl(sessionStorage)}/api/actividades") {
             contentType(ContentType.Application.Json)
             setBody(actividad)
         }.body<ActividadDto>()
     }
 
     suspend fun actualizarActividad(id: Int, actividad: ActividadCreateDto): Boolean {
-        val response = client.put("$BASE_URL/api/actividades/$id") {
+        val response = client.put("${baseUrl(sessionStorage)}/api/actividades/$id") {
             contentType(ContentType.Application.Json)
             setBody(actividad)
         }
@@ -305,34 +306,34 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun eliminarActividad(id: Int): Boolean {
-        val response = client.delete("$BASE_URL/api/actividades/$id")
+        val response = client.delete("${baseUrl(sessionStorage)}/api/actividades/$id")
         return response.status == HttpStatusCode.NoContent
     }
 
     suspend fun getActividadesPendientes(): List<ActividadDto> =
-        client.get("$BASE_URL/api/actividades/pendientes").body<List<ActividadDto>>()
+        client.get("${baseUrl(sessionStorage)}/api/actividades/pendientes").body<List<ActividadDto>>()
 
     suspend fun enviarActividad(id: Int): ActividadDto =
-        client.post("$BASE_URL/api/actividades/$id/enviar").body<ActividadDto>()
+        client.post("${baseUrl(sessionStorage)}/api/actividades/$id/enviar").body<ActividadDto>()
 
     suspend fun validarActividad(id: Int): ActividadDto =
-        client.post("$BASE_URL/api/actividades/$id/validar").body<ActividadDto>()
+        client.post("${baseUrl(sessionStorage)}/api/actividades/$id/validar").body<ActividadDto>()
 
     suspend fun devolverActividad(id: Int): Boolean {
-        val response = client.post("$BASE_URL/api/actividades/$id/devolver")
+        val response = client.post("${baseUrl(sessionStorage)}/api/actividades/$id/devolver")
         return response.status == HttpStatusCode.OK
     }
 
     // Productos aplicados a una actividad (actividad_producto)
 
     suspend fun getActividadProductos(actividadId: Int): List<ActividadProductoDto> =
-        client.get("$BASE_URL/api/actividades/$actividadId/productos").body()
+        client.get("${baseUrl(sessionStorage)}/api/actividades/$actividadId/productos").body()
 
     suspend fun crearActividadProducto(
         actividadId: Int,
         request: ActividadProductoCreateDto
     ): ActividadProductoDto {
-        return client.post("$BASE_URL/api/actividades/$actividadId/productos") {
+        return client.post("${baseUrl(sessionStorage)}/api/actividades/$actividadId/productos") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -340,7 +341,7 @@ class ActividadApi(private val client: HttpClient) {
 
     suspend fun eliminarActividadProducto(actividadId: Int, actividadProductoId: Int): Boolean {
         val response = client.delete(
-            "$BASE_URL/api/actividades/$actividadId/productos/$actividadProductoId"
+            "${baseUrl(sessionStorage)}/api/actividades/$actividadId/productos/$actividadProductoId"
         )
         return response.status == HttpStatusCode.NoContent
     }
@@ -349,7 +350,7 @@ class ActividadApi(private val client: HttpClient) {
 
     suspend fun getSemillaTratada(actividadId: Int): SemillaTratadaDto? {
         return try {
-            client.get("$BASE_URL/api/actividades/$actividadId/semilla").body<SemillaTratadaDto?>()
+            client.get("${baseUrl(sessionStorage)}/api/actividades/$actividadId/semilla").body<SemillaTratadaDto?>()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -358,7 +359,7 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun crearSemillaTratada(semilla: SemillaTratadaCreateDto): SemillaTratadaDto {
-        return client.post("$BASE_URL/api/actividades/${semilla.actividadId}/semilla") {
+        return client.post("${baseUrl(sessionStorage)}/api/actividades/${semilla.actividadId}/semilla") {
             contentType(ContentType.Application.Json)
             setBody(semilla)
         }.body<SemillaTratadaDto>()
@@ -367,20 +368,20 @@ class ActividadApi(private val client: HttpClient) {
     // Parcelas
 
     suspend fun getParcelas(): List<ParcelaDto> =
-        client.get("$BASE_URL/api/parcelas").body<List<ParcelaDto>>()
+        client.get("${baseUrl(sessionStorage)}/api/parcelas").body<List<ParcelaDto>>()
 
     suspend fun getParcela(id: Int): ParcelaDto =
-        client.get("$BASE_URL/api/parcelas/$id").body<ParcelaDto>()
+        client.get("${baseUrl(sessionStorage)}/api/parcelas/$id").body<ParcelaDto>()
 
     suspend fun crearParcela(parcela: ParcelaCreateDto): ParcelaDto {
-        return client.post("$BASE_URL/api/parcelas") {
+        return client.post("${baseUrl(sessionStorage)}/api/parcelas") {
             contentType(ContentType.Application.Json)
             setBody(parcela)
         }.body<ParcelaDto>()
     }
 
     suspend fun actualizarParcela(id: Int, parcela: ParcelaCreateDto): Boolean {
-        val response = client.put("$BASE_URL/api/parcelas/$id") {
+        val response = client.put("${baseUrl(sessionStorage)}/api/parcelas/$id") {
             contentType(ContentType.Application.Json)
             setBody(parcela)
         }
@@ -388,7 +389,7 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun eliminarParcela(id: Int): Boolean {
-        val response = client.delete("$BASE_URL/api/parcelas/$id")
+        val response = client.delete("${baseUrl(sessionStorage)}/api/parcelas/$id")
         if (response.status == HttpStatusCode.Conflict) {
             val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
                 ?: "La parcela tiene datos asociados y no se puede eliminar"
@@ -399,32 +400,32 @@ class ActividadApi(private val client: HttpClient) {
 
     // Borrado en cascada de parcela solo dekstop.
     suspend fun getDependenciasParcela(id: Int): DependenciasParcelaDto =
-        client.get("$BASE_URL/api/parcelas/$id/dependencias").body()
+        client.get("${baseUrl(sessionStorage)}/api/parcelas/$id/dependencias").body()
 
     suspend fun eliminarParcelaEnCascada(id: Int): Boolean {
-        val response = client.delete("$BASE_URL/api/parcelas/$id/cascada")
+        val response = client.delete("${baseUrl(sessionStorage)}/api/parcelas/$id/cascada")
         return response.status == HttpStatusCode.NoContent
     }
 
     // Productos
 
     suspend fun getProductos(): List<ProductoDto> =
-        client.get("$BASE_URL/api/productos").body<List<ProductoDto>>()
+        client.get("${baseUrl(sessionStorage)}/api/productos").body<List<ProductoDto>>()
 
     suspend fun getProductosPorTipo(tipo: String): List<ProductoDto> =
-        client.get("$BASE_URL/api/productos") {
+        client.get("${baseUrl(sessionStorage)}/api/productos") {
             parameter("tipo", tipo)
         }.body<List<ProductoDto>>()
 
     suspend fun crearProducto(producto: ProductoCreateDto): ProductoDto {
-        return client.post("$BASE_URL/api/productos") {
+        return client.post("${baseUrl(sessionStorage)}/api/productos") {
             contentType(ContentType.Application.Json)
             setBody(producto)
         }.body<ProductoDto>()
     }
 
     suspend fun actualizarProducto(id: Int, producto: ProductoCreateDto): Boolean {
-        val response = client.put("$BASE_URL/api/productos/$id") {
+        val response = client.put("${baseUrl(sessionStorage)}/api/productos/$id") {
             contentType(ContentType.Application.Json)
             setBody(producto)
         }
@@ -432,7 +433,7 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun eliminarProducto(id: Int): Boolean {
-        val response = client.delete("$BASE_URL/api/productos/$id")
+        val response = client.delete("${baseUrl(sessionStorage)}/api/productos/$id")
         if (response.status == HttpStatusCode.Conflict) {
             val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
                 ?: "El producto está siendo usado y no se puede eliminar"
@@ -443,20 +444,20 @@ class ActividadApi(private val client: HttpClient) {
 
     // Borrado en cascada de producto (solo Desktop)
     suspend fun getDependenciasProducto(id: Int): DependenciasProductoDto =
-        client.get("$BASE_URL/api/productos/$id/dependencias").body()
+        client.get("${baseUrl(sessionStorage)}/api/productos/$id/dependencias").body()
 
     suspend fun eliminarProductoEnCascada(id: Int): Boolean {
-        val response = client.delete("$BASE_URL/api/productos/$id/cascada")
+        val response = client.delete("${baseUrl(sessionStorage)}/api/productos/$id/cascada")
         return response.status == HttpStatusCode.NoContent
     }
 
     // Fertilizacion functions
     suspend fun getFertilizaciones(): List<FertilizacionDto> =
-        client.get("$BASE_URL/api/fertilizaciones").body<List<FertilizacionDto>>()
+        client.get("${baseUrl(sessionStorage)}/api/fertilizaciones").body<List<FertilizacionDto>>()
 
     suspend fun getFertilizacionByActividad(actividadId: Int): FertilizacionDto? {
         return try {
-            val response = client.get("$BASE_URL/api/actividades/$actividadId/fertilizacion")
+            val response = client.get("${baseUrl(sessionStorage)}/api/actividades/$actividadId/fertilizacion")
             if (response.status == HttpStatusCode.NotFound) null
             else response.body<FertilizacionDto>()
         } catch (e: CancellationException) {
@@ -470,7 +471,7 @@ class ActividadApi(private val client: HttpClient) {
         actividadId: Int,
         fertilizacion: FertilizacionCreateDto
     ): FertilizacionDto {
-        return client.post("$BASE_URL/api/actividades/$actividadId/fertilizacion") {
+        return client.post("${baseUrl(sessionStorage)}/api/actividades/$actividadId/fertilizacion") {
             contentType(ContentType.Application.Json)
             setBody(fertilizacion)
         }.body<FertilizacionDto>()
@@ -479,16 +480,16 @@ class ActividadApi(private val client: HttpClient) {
     // Equipos de aplicación
 
     suspend fun getEquipos(): List<EquipoDto> =
-        client.get("$BASE_URL/api/equipos").body<List<EquipoDto>>()
+        client.get("${baseUrl(sessionStorage)}/api/equipos").body<List<EquipoDto>>()
 
     suspend fun crearEquipo(equipo: EquipoCreateDto): EquipoDto =
-        client.post("$BASE_URL/api/equipos") {
+        client.post("${baseUrl(sessionStorage)}/api/equipos") {
             contentType(ContentType.Application.Json)
             setBody(equipo)
         }.body<EquipoDto>()
 
     suspend fun eliminarEquipo(id: Int): Boolean {
-        val response = client.delete("$BASE_URL/api/equipos/$id")
+        val response = client.delete("${baseUrl(sessionStorage)}/api/equipos/$id")
         if (response.status == HttpStatusCode.Conflict) {
             val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
                 ?: "El equipo está asignado a actividades y no se puede eliminar"
@@ -500,12 +501,12 @@ class ActividadApi(private val client: HttpClient) {
     // Usuarios (para dropdown de aplicador)
 
     suspend fun getUsuarios(rol: String? = null): List<UsuarioDto> {
-        val url = if (rol != null) "$BASE_URL/api/usuarios?rol=$rol" else "$BASE_URL/api/usuarios"
+        val url = if (rol != null) "${baseUrl(sessionStorage)}/api/usuarios?rol=$rol" else "${baseUrl(sessionStorage)}/api/usuarios"
         return client.get(url).body<List<UsuarioDto>>()
     }
 
     suspend fun crearUsuario(usuario: UsuarioCreateDto): UsuarioDto {
-        val response = client.post("$BASE_URL/api/usuarios") {
+        val response = client.post("${baseUrl(sessionStorage)}/api/usuarios") {
             contentType(ContentType.Application.Json)
             setBody(usuario)
         }
@@ -518,7 +519,7 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun eliminarUsuario(id: Int): Boolean {
-        val response = client.delete("$BASE_URL/api/usuarios/$id")
+        val response = client.delete("${baseUrl(sessionStorage)}/api/usuarios/$id")
         if (response.status == HttpStatusCode.Conflict) {
             val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
                 ?: "El aplicador está asignado a actividades y no se puede eliminar"
@@ -530,7 +531,7 @@ class ActividadApi(private val client: HttpClient) {
     // Autenticación
 
     suspend fun login(request: LoginRequest): LoginResponseDto {
-        val response = client.post("$BASE_URL/api/auth/login") {
+        val response = client.post("${baseUrl(sessionStorage)}/api/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
@@ -544,7 +545,7 @@ class ActividadApi(private val client: HttpClient) {
     }
 
     suspend fun register(request: RegisterRequest): LoginResponseDto {
-        val response = client.post("$BASE_URL/api/auth/register") {
+        val response = client.post("${baseUrl(sessionStorage)}/api/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
@@ -565,7 +566,7 @@ class ActividadApi(private val client: HttpClient) {
      * header Authorization gracias al defaultRequest del HttpClient.
      */
     suspend fun getMe(): UsuarioDto {
-        val response = client.get("$BASE_URL/api/auth/me")
+        val response = client.get("${baseUrl(sessionStorage)}/api/auth/me")
         if (response.status != HttpStatusCode.OK) {
             throw IllegalStateException("Sesión no válida (${response.status.value})")
         }
@@ -574,7 +575,7 @@ class ActividadApi(private val client: HttpClient) {
 
     
     suspend fun cambiarRolUsuario(usuarioId: Int, nuevoRol: String): HttpResponse {
-        return client.put("$BASE_URL/api/usuarios/$usuarioId/rol") {
+        return client.put("${baseUrl(sessionStorage)}/api/usuarios/$usuarioId/rol") {
             contentType(ContentType.Application.Json)
             setBody(CambioRolRequest(nuevoRol))
         }

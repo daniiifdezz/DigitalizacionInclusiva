@@ -7,6 +7,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.dferna14.project.data.local.SessionStorage
 
 @Serializable
 data class TitularDto(
@@ -35,7 +36,7 @@ data class TitularCreateDto(
     @SerialName("email")        val email        : String? = null
 )
 
-class TitularApi(private val client: HttpClient) {
+class TitularApi(private val client: HttpClient, private val sessionStorage: SessionStorage) {
 
     /**
      * Devuelve el primer titular del sistema (la app monoexplotación de TFG asume uno solo)
@@ -43,7 +44,7 @@ class TitularApi(private val client: HttpClient) {
      */
     suspend fun getTitular(): TitularDto? {
         return try {
-            client.get("$BASE_URL/api/titulares").body<List<TitularDto>>().firstOrNull()
+            client.get("${baseUrl(sessionStorage)}/api/titulares").body<List<TitularDto>>().firstOrNull()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -52,14 +53,14 @@ class TitularApi(private val client: HttpClient) {
     }
 
     suspend fun crearTitular(request: TitularCreateDto): TitularDto {
-        return client.post("$BASE_URL/api/titulares") {
+        return client.post("${baseUrl(sessionStorage)}/api/titulares") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body<TitularDto>()
     }
 
     suspend fun actualizarTitular(id: Int, request: TitularCreateDto): Boolean {
-        val response = client.put("$BASE_URL/api/titulares/$id") {
+        val response = client.put("${baseUrl(sessionStorage)}/api/titulares/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

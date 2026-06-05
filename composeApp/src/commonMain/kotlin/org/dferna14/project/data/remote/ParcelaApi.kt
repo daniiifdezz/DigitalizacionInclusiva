@@ -7,6 +7,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.dferna14.project.data.local.SessionStorage
 
 // DTOs específicos de la pantalla de edición de parcela. Reusan la forma de los
 // DTOs del backend (DTOs.kt) pero declarados aquí para no acoplar el módulo
@@ -78,11 +79,11 @@ data class CultivoDto(
     @SerialName("variedad") val variedad : String? = null
 )
 
-class ParcelaApi(private val client: HttpClient) {
+class ParcelaApi(private val client: HttpClient, private val sessionStorage: SessionStorage) {
 
     suspend fun getParcelaCompleta(id: Int): ParcelaCompletaDto? {
         return try {
-            client.get("$BASE_URL/api/parcelas/$id/completa").body<ParcelaCompletaDto?>()
+            client.get("${baseUrl(sessionStorage)}/api/parcelas/$id/completa").body<ParcelaCompletaDto?>()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -100,12 +101,12 @@ class ParcelaApi(private val client: HttpClient) {
         esActualizacion: Boolean
     ): Boolean {
         val response = if (esActualizacion) {
-            client.put("$BASE_URL/api/parcelas/$parcelaId/sigpac") {
+            client.put("${baseUrl(sessionStorage)}/api/parcelas/$parcelaId/sigpac") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
         } else {
-            client.post("$BASE_URL/api/parcelas/$parcelaId/sigpac") {
+            client.post("${baseUrl(sessionStorage)}/api/parcelas/$parcelaId/sigpac") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -122,12 +123,12 @@ class ParcelaApi(private val client: HttpClient) {
         esActualizacion: Boolean
     ): Boolean {
         val response = if (esActualizacion) {
-            client.put("$BASE_URL/api/parcelas/$parcelaId/agronomico") {
+            client.put("${baseUrl(sessionStorage)}/api/parcelas/$parcelaId/agronomico") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
         } else {
-            client.post("$BASE_URL/api/parcelas/$parcelaId/agronomico") {
+            client.post("${baseUrl(sessionStorage)}/api/parcelas/$parcelaId/agronomico") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
@@ -136,5 +137,5 @@ class ParcelaApi(private val client: HttpClient) {
     }
 
     suspend fun getCultivos(): List<CultivoDto> =
-        client.get("$BASE_URL/api/cultivos").body()
+        client.get("${baseUrl(sessionStorage)}/api/cultivos").body()
 }
