@@ -5,7 +5,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Fertilizaciones
-import org.dferna14.project.backend.db.Productos.riquezaNpk
 import org.dferna14.project.backend.mapper.toFertilizacionResponse
 import org.dferna14.project.backend.model.FertilizacionRequest
 import org.jetbrains.exposed.sql.*
@@ -138,6 +137,7 @@ fun Route.fertilizacionRoutes() {
                 ?: return@post call.respond(HttpStatusCode.BadRequest)
 
             val request = call.receive<FertilizacionRequest>()
+            println("DEBUG fertilizacion recibida: riquezaNpk=${request.riquezaNpk} tipoProducto=${request.tipoProducto} tipoFertilizacion=${request.tipoFertilizacion} aplica=${request.aplica} dosis=${request.dosis}") // TODO: quitar tras verificación
             val fechaInicioLocalDate = request.fechaInicio?.let { java.time.LocalDate.parse(it) }
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 

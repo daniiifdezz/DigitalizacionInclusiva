@@ -218,6 +218,7 @@ fun FertilizacionSc(
                             actividadId   = actividadId,
                             aplica        = aplica,
                             productoId    = if (aplica) fertilizanteSeleccionado?.id else null,
+                            riquezaNpk    = if (aplica) fertilizanteSeleccionado?.riquezaNpk else null,
                             numeroAlbaran = if (aplica) numeroAlbaran.ifBlank { null } else null,
                             dosis         = if (aplica) dosis.toDoubleOrNull() else null,
                             observaciones = if (aplica) observaciones.ifBlank { null } else null,

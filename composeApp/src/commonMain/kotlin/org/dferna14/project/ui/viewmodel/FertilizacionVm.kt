@@ -65,13 +65,12 @@ class FertilizacionVm(
         }
     }
 
-    // Guardado simplificado para la pantalla móvil: solo necesita los campos
-    // que el agricultor rellena. Los campos técnicos (tipoProducto, NPK,
-    // tipoFertilizacion) los completa el técnico desde Desktop.
+
     fun guardarFertilizacion(
         actividadId: Int,
         aplica: Boolean,
         productoId: Int?,
+        riquezaNpk: String?,
         numeroAlbaran: String?,
         dosis: Double?,
         observaciones: String?,
@@ -85,6 +84,7 @@ class FertilizacionVm(
                     aplica        = aplica,
                     fechaInicio   = fechaInicio,
                     numeroAlbaran = numeroAlbaran,
+                    riquezaNpk    = riquezaNpk,
                     dosis         = dosis,
                     observaciones = observaciones
                 )

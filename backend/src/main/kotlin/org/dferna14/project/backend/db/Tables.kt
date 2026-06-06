@@ -134,7 +134,7 @@ object Fertilizaciones : IntIdTable("fertilizacion") {
     val fechaFin          = date("fecha_fin").nullable()
     val tipoProducto      = varchar("tipo_producto", 10).nullable()
     val numeroAlbaran     = varchar("numero_albaran", 50).nullable()
-    val riquezaNPK        = varchar("riqueza_npk", 50).nullable()
+    val riquezaNpk        = varchar("riqueza_npk", 50).nullable()
     val dosis             = double("dosis").nullable()
     val tipoFertilizacion = varchar("tipo_fertilizacion", 10).nullable()
     val observaciones     = text("observaciones").nullable()

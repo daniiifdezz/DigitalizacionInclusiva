@@ -26,7 +26,7 @@ data class Producto(
     val materiaActiva: String? = null,
     val numeroRegistro: String? = null,
     val tipo: String = "FITOSANITARIO",
-    val riquezaNpk: String? = null,
+    val riquezaNpk: String?,
     val tipoFertilizante: String? = null
 )
 

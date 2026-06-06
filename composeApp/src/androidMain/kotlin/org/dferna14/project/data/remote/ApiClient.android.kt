@@ -15,4 +15,4 @@ package org.dferna14.project.data.remote
  * emulador 10.0.2.2
  *
  */
-actual val BASE_URL_POR_DEFECTO: String = "http://192.168.1.130:8080"
+actual val BASE_URL_POR_DEFECTO: String = "http://192.168.1.140:8080"
