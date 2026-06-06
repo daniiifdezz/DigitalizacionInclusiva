@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
@@ -57,7 +58,9 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AjustesSc(
     mostrarBotonCerrarSesion: Boolean = true,
     authVm: AuthVm = koinViewModel(),
-    ajustesVm: AjustesVm = koinViewModel()
+    ajustesVm: AjustesVm = koinViewModel(),
+    onVolver: (() -> Unit)? = null,
+
 ) {
     var mostrarConfirmacion by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -74,7 +77,17 @@ fun AjustesSc(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Ajustes", style = MaterialTheme.typography.titleLarge) }
+                title = { Text("Ajustes", style = MaterialTheme.typography.titleLarge) },
+                navigationIcon = {
+                    if (onVolver != null) {
+                        IconButton(onClick = onVolver) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver al menú principal"
+                            )
+                        }
+                    }
+                }
             )
         }
     ) { padding ->
@@ -88,7 +101,6 @@ fun AjustesSc(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // ── Bloque: Configuración de red ──────────────────────────────────
             AjusteSeccion(titulo = "CONFIGURACIÓN DE RED") {
                 Column(
                     modifier = Modifier.padding(14.dp),
@@ -161,7 +173,6 @@ fun AjustesSc(
                 }
             }
 
-            // ── Bloques informativos (solo móvil) ─────────────────────────────
             if (mostrarBotonCerrarSesion) {
                 AjusteSeccion(titulo = "MI CUENTA") {
                     AjusteFilaPerfil(nombre = "Daniel Fernández", rol = "Agricultor")
@@ -187,7 +198,6 @@ fun AjustesSc(
                 }
             }
 
-            // ── Cerrar sesión (solo móvil; Desktop lo tiene en el menú lateral) ──
             if (mostrarBotonCerrarSesion) {
                 Spacer(Modifier.height(4.dp))
                 Card(

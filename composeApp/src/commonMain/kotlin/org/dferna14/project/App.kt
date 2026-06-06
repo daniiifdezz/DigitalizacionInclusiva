@@ -222,7 +222,9 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
             )
         }
         is Screen.DesktopAjustes -> {
-            AjustesSc(mostrarBotonCerrarSesion = false)
+            AjustesSc(mostrarBotonCerrarSesion = false,
+                onVolver = { onNavigate(Screen.DesktopHome) } )
+
         }
         else -> {}
     }
