@@ -137,7 +137,6 @@ fun Route.fertilizacionRoutes() {
                 ?: return@post call.respond(HttpStatusCode.BadRequest)
 
             val request = call.receive<FertilizacionRequest>()
-            println("DEBUG fertilizacion recibida: riquezaNpk=${request.riquezaNpk} tipoProducto=${request.tipoProducto} tipoFertilizacion=${request.tipoFertilizacion} aplica=${request.aplica} dosis=${request.dosis}") // TODO: quitar tras verificación
             val fechaInicioLocalDate = request.fechaInicio?.let { java.time.LocalDate.parse(it) }
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 
