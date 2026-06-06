@@ -82,6 +82,10 @@ fun ProductosSc(
     // Solo en Desktop: dependencias del producto a eliminar para el diálogo de cascada.
     var dependenciasProducto by remember { mutableStateOf<DependenciasProductoDto?>(null) }
 
+    LaunchedEffect(Unit) {
+        viewModel.cargarProductos()
+    }
+
     LaunchedEffect(productoAEliminar) {
         dependenciasProducto = null
         if (isDesktop) {

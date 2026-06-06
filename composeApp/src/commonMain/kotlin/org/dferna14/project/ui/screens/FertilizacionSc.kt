@@ -80,6 +80,11 @@ fun FertilizacionSc(
     var observaciones by remember { mutableStateOf("") }
     var camposPrecargados by remember { mutableStateOf(false) }
 
+
+    LaunchedEffect(Unit) {
+        viewModel.cargarFertilizantes()
+    }
+
     LaunchedEffect(actividadId) {
         if (actividadId > 0) viewModel.cargarFertilizacion(actividadId)
     }

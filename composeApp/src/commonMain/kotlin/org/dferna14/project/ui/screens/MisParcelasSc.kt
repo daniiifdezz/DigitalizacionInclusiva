@@ -36,6 +36,9 @@ fun MisParcelasSc(
     var mostrarDialogoCrear by remember { mutableStateOf(false) }
     var parcelaAEliminar by remember { mutableStateOf<Parcela?>(null) }
 
+    LaunchedEffect(Unit) {
+        viewModel.cargarParcelas()
+    }
     LaunchedEffect(mostrarDialogoCrear) {
         if (mostrarDialogoCrear) viewModel.cargarExplotaciones()
     }
