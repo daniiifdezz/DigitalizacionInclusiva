@@ -6,11 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import org.dferna14.project.util.registrarActivityParaCierre
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        registrarActivityParaCierre(this)
 
         setContent {
             App()

@@ -11,16 +11,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import org.dferna14.project.ui.screens.*
 import org.dferna14.project.ui.theme.AppTheme
 import org.dferna14.project.ui.theme.BlancoPuro
 import org.dferna14.project.ui.theme.CremaPrincipal
 import org.dferna14.project.ui.theme.NaranjaClaro
 import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
+import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.EstadoSesion
 import androidx.compose.ui.Modifier
+import org.dferna14.project.util.AppBackHandler
+import org.dferna14.project.util.cerrarApp
 import org.koin.compose.viewmodel.koinViewModel
 
 sealed class Screen {
@@ -55,12 +60,9 @@ sealed class Screen {
 
 @Composable
 fun App(isDesktop: Boolean = false) {
-    // AuthVm es único por ViewModelStore (koinViewModel), así que esta instancia se
-    // comparte con las pantallas hijas: login/logout en cualquier sitio propaga el estado.
     val authVm: AuthVm = koinViewModel()
     val estadoSesion by authVm.estadoSesion.collectAsState()
 
-    // Al arrancar, intenta restaurar la sesión persistida (valida el JWT con GET /me).
     LaunchedEffect(Unit) { authVm.intentarRestaurarSesion() }
 
     AppTheme {
@@ -70,7 +72,6 @@ fun App(isDesktop: Boolean = false) {
             is EstadoSesion.NoAutenticado -> AuthFlow(authVm = authVm)
 
             is EstadoSesion.Autenticado -> {
-                // Restricción por plataforma: el AGRICULTOR no puede usar Desktop.
                 if (isDesktop && sesion.usuario.rol == "AGRICULTOR") {
                     PantallaBloqueada(onCerrarSesion = { authVm.cerrarSesion() })
                 } else {
@@ -81,7 +82,6 @@ fun App(isDesktop: Boolean = false) {
     }
 }
 
-/** Pantalla de carga mientras se valida la sesión guardada al arrancar. */
 @Composable
 private fun PantallaCargandoSesion() {
     Box(
@@ -92,35 +92,57 @@ private fun PantallaCargandoSesion() {
     }
 }
 
-/** Flujo de autenticación (login ↔ registro). El éxito actualiza estadoSesion en AuthVm. */
 @Composable
 private fun AuthFlow(authVm: AuthVm) {
     var enRegistro by remember { mutableStateOf(false) }
     if (enRegistro) {
         RegisterScreen(
-            onRegistroExitoso = { /* estadoSesion pasa a Autenticado y el raíz cambia solo */ },
+            onRegistroExitoso = {},
             onIrALogin = { enRegistro = false },
             viewModel = authVm
         )
     } else {
         LoginScreen(
-            onLoginExitoso = { /* idem */ },
+            onLoginExitoso = {},
             onIrARegistro = { enRegistro = true },
             viewModel = authVm
         )
     }
 }
 
-/** Contenido autenticado: navegación normal de la app según plataforma. */
+/**
+ * Contenido autenticado. Mantiene un historial de pantallas visitadas (pila)
+**/
+
 @Composable
 private fun AppContent(isDesktop: Boolean) {
-    var currentScreen by remember {
-        mutableStateOf<Screen>(if (isDesktop) Screen.DesktopHome else Screen.NuevaActividad)
+    val pantallaPrincipal: Screen =
+        if (isDesktop) Screen.DesktopHome else Screen.MisActividades
+
+    val historial = remember { mutableStateListOf<Screen>(pantallaPrincipal) }
+    val currentScreen = historial.last()
+
+    fun navegarA(destino: Screen) {
+        if (historial.isEmpty() || historial.last() != destino) {
+            historial.add(destino)
+        }
     }
+
+    fun volverAtras(): Boolean {
+        return if (historial.size > 1) {
+            historial.removeAt(historial.size - 1)
+            true
+        } else false
+    }
+
     if (isDesktop) {
-        DesktopApp(currentScreen) { currentScreen = it }
+        DesktopApp(currentScreen) { navegarA(it) }
     } else {
-        MobileApp(currentScreen) { currentScreen = it }
+        MobileApp(
+            currentScreen = currentScreen,
+            volverAtras = ::volverAtras,
+            onNavigate = ::navegarA
+        )
     }
 }
 
@@ -222,9 +244,10 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
             )
         }
         is Screen.DesktopAjustes -> {
-            AjustesSc(mostrarBotonCerrarSesion = false,
-                onVolver = { onNavigate(Screen.DesktopHome) } )
-
+            AjustesSc(
+                mostrarBotonCerrarSesion = false,
+                onVolver = { onNavigate(Screen.DesktopHome) }
+            )
         }
         else -> {}
     }
@@ -233,26 +256,43 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
 private data class TabItem(val titulo: String, val icono: ImageVector)
 
 @Composable
-private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
-    var selectedTab by remember { mutableStateOf(0) }
+private fun MobileApp(
+    currentScreen: Screen,
+    volverAtras: () -> Boolean,
+    onNavigate: (Screen) -> Unit
+) {
+    var mostrarDialogoSalida by remember { mutableStateOf(false) }
+
+    val selectedTab = when (currentScreen) {
+        is Screen.MisParcelas -> 1
+        is Screen.Productos   -> 2
+        is Screen.Ajustes     -> 3
+        else                  -> 0  // MisActividades y todas las pantallas de flujo
+    }
+
+    // Intercepta el botón/gesto atrás del sistema (no-op silencioso en Desktop).
+    AppBackHandler(enabled = true) {
+        val pudoVolver = volverAtras()
+        if (!pudoVolver) {
+            // Estamos en la raíz — preguntar al usuario si quiere salir
+            mostrarDialogoSalida = true
+        }
+    }
+
     val tabs = listOf(
         TabItem("Actividades", Icons.Outlined.Assignment),
         TabItem("Parcelas",    Icons.Outlined.Map),
         TabItem("Productos",   Icons.Outlined.Science),
         TabItem("Ajustes",     Icons.Outlined.Settings)
     )
-    val screen = currentScreen
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = BlancoPuro
-            ) {
+            NavigationBar(containerColor = BlancoPuro) {
                 tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = selectedTab == index,
                         onClick = {
-                            selectedTab = index
                             when (index) {
                                 0 -> onNavigate(Screen.MisActividades)
                                 1 -> onNavigate(Screen.MisParcelas)
@@ -275,7 +315,7 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            when (screen) {
+            when (val screen = currentScreen) {
                 is Screen.MisActividades -> {
                     ActividadListadoSc(
                         onNuevaActividad = { onNavigate(Screen.NuevaActividad) },
@@ -294,7 +334,9 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                         onVolver = { onNavigate(Screen.MisActividades) },
                         onEditar = { id -> onNavigate(Screen.Editar(id)) },
                         onVerSemillas = { id -> onNavigate(Screen.Semillas(id)) },
-                onVerFertilizacion = { parcelaId -> onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId)) }
+                        onVerFertilizacion = { parcelaId ->
+                            onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId))
+                        }
                     )
                 }
                 is Screen.Editar -> {
@@ -330,5 +372,30 @@ private fun MobileApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 else -> {}
             }
         }
+    }
+
+    if (mostrarDialogoSalida) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoSalida = false },
+            title = { Text("¿Salir de la aplicación?") },
+            text = { Text("Si sales, tendrás que volver a abrir la app para continuar.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    mostrarDialogoSalida = false
+                    cerrarApp()
+                }) {
+                    Text(
+                        "Salir",
+                        color = RojoEliminar,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoSalida = false }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            }
+        )
     }
 }
