@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoTextoMultilinea
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
@@ -164,18 +165,18 @@ fun EditarActividadSc(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    OutlinedTextField(
+                    CampoTextoMultilinea(
+                        label = "Problema fitosanitario",
                         value = problemaFitosanitario,
                         onValueChange = { problemaFitosanitario = it },
-                        label = { Text("Problema fitosanitario") },
                         minLines = 2,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    OutlinedTextField(
+                    CampoTextoMultilinea(
+                        label = "Observaciones",
                         value = observaciones,
                         onValueChange = { observaciones = it },
-                        label = { Text("Observaciones") },
                         minLines = 3,
                         modifier = Modifier.fillMaxWidth()
                     )

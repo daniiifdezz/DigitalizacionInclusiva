@@ -26,6 +26,7 @@ import org.dferna14.project.ui.components.CampoField
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.components.CampoTextoMultilinea
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeSuave
 import org.dferna14.project.ui.theme.NaranjaPrimario
@@ -134,7 +135,7 @@ fun NuevaActividadSc(
                     )
                 }
 
-                CampoTextField(
+                CampoTextoMultilinea(
                     label = "Problema fitosanitario",
                     value = problemaFitosanitario,
                     onValueChange = { problemaFitosanitario = it },
@@ -216,7 +217,7 @@ fun NuevaActividadSc(
                     )
                 }
 
-                CampoTextField(
+                CampoTextoMultilinea(
                     label = "Observaciones (opcional)",
                     value = observaciones,
                     onValueChange = { observaciones = it },
