@@ -24,6 +24,8 @@ import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
 import org.dferna14.project.ui.viewmodel.SemillaVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
+import org.dferna14.project.util.VoiceRecognizer
+import org.dferna14.project.util.crearVoiceRecognizer
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -37,6 +39,9 @@ val appModule = module {
 
     // Almacenamiento de sesión (JWT persistido) — por plataforma
     single<SessionStorage> { crearSessionStorage() }
+
+    // Reconocedor de voz — factory para que cada campo tenga su instancia independiente
+    factory<VoiceRecognizer> { crearVoiceRecognizer() }
 
     // Cliente HTTP — singleton compartido (inyecta SessionStorage para el header Bearer)
     single { createHttpClient(get()) }

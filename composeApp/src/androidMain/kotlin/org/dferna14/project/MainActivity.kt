@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import org.dferna14.project.util.registrarActivityParaCierre
+import org.dferna14.project.util.registrarContextoVoz
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,6 +15,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         registrarActivityParaCierre(this)
+        registrarContextoVoz(this)
 
         setContent {
             App()
