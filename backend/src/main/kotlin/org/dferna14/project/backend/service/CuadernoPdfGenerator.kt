@@ -45,14 +45,13 @@ import java.io.ByteArrayOutputStream
 object CuadernoPdfGenerator {
 
     // ── Tipografía ─────────────────────────────────────────────────────────────
-    private val FUENTE_TITULO_PRINCIPAL  = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
-    private val FUENTE_TITULO_SECCION    = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
-    private val FUENTE_TITULO_SUBSECCION = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
-    private val FUENTE_CUERPO_NORMAL     = PDType1Font(Standard14Fonts.FontName.HELVETICA)
-    private val FUENTE_CUERPO_BOLD       = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+    private var FUENTE_TITULO_PRINCIPAL  = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+    private var FUENTE_TITULO_SECCION    = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+    private var FUENTE_TITULO_SUBSECCION = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+    private var FUENTE_CUERPO_NORMAL     = PDType1Font(Standard14Fonts.FontName.HELVETICA)
+    private var FUENTE_CUERPO_BOLD       = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
 
     // ── Geometría ──────────────────────────────────────────────────────────────
-    // Apaisado A4: el cuaderno oficial siempre se imprime en horizontal.
     private val PAGINA = PDRectangle(PDRectangle.A4.height, PDRectangle.A4.width)
     private const val MARGEN_IZQ = 30f
     private const val MARGEN_DCH = 30f
@@ -83,7 +82,16 @@ object CuadernoPdfGenerator {
     // ===================================================================
     // PUNTO DE ENTRADA
     // ===================================================================
+    @Synchronized
     fun generar(cuaderno: CuadernoCompletoDto): ByteArray {
+        // Nuevas instancias por cada generación para evitar que PDFBox reutilice
+        // objetos de fuente vinculados a un PDDocument ya cerrado.
+        FUENTE_TITULO_PRINCIPAL  = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+        FUENTE_TITULO_SECCION    = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+        FUENTE_TITULO_SUBSECCION = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+        FUENTE_CUERPO_NORMAL     = PDType1Font(Standard14Fonts.FontName.HELVETICA)
+        FUENTE_CUERPO_BOLD       = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+
         val ordenes = construirOrdenes(cuaderno)
         val documento = PDDocument()
         try {

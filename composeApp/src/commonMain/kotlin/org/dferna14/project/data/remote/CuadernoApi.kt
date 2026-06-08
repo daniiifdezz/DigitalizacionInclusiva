@@ -3,6 +3,7 @@ package org.dferna14.project.data.remote
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import org.dferna14.project.data.local.SessionStorage
 
 /**
@@ -25,6 +26,10 @@ class CuadernoApi(private val client: HttpClient, private val sessionStorage: Se
         val response = client.get("${baseUrl(sessionStorage)}/api/cuaderno/pdf") {
             parameter("desde", desde)
             parameter("hasta", hasta)
+        }
+        if (!response.status.isSuccess()) {
+            val cuerpo = runCatching { response.bodyAsText() }.getOrDefault(response.status.description)
+            throw IllegalStateException("Error del servidor (${response.status.value}): $cuerpo")
         }
         return response.readRawBytes()
     }
