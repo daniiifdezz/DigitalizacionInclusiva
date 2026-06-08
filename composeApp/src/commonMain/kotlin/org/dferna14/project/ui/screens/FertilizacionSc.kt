@@ -4,8 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CameraAlt
+import org.dferna14.project.ui.components.CampoTextoConOcr
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -176,26 +175,12 @@ fun FertilizacionSc(
                             }
                         }
 
-                        CampoTextField(
-                            label = "Número de albarán",
+                        CampoTextoConOcr(
                             value = numeroAlbaran,
                             onValueChange = { numeroAlbaran = it },
-                            trailingIcon = {
-                                IconButton(
-                                    onClick = { /* TODO: OCR — implementación futura */ },
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.CameraAlt,
-                                        contentDescription = "Escanear albarán con cámara",
-                                        tint = NaranjaPrimario,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                        )
-                        CampoAvisoInfo(
-                            mensaje = "Próximamente: escanea el albarán con la cámara automáticamente"
+                            label = "Nº Albarán",
+                            placeholder = "Número del albarán",
+                            modifier = Modifier.fillMaxWidth()
                         )
 
                         CampoTextField(

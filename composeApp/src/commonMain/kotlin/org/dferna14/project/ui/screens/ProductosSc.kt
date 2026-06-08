@@ -26,6 +26,7 @@ import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoDropdown
 import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.components.CampoTextoConOcr
 import org.dferna14.project.ui.theme.AmbarFondoProducto
 import org.dferna14.project.ui.theme.AmbarProducto
 import org.dferna14.project.ui.theme.AzulFondoPendiente
@@ -485,10 +486,12 @@ private fun CrearProductoDialog(
                             value = materiaActiva,
                             onValueChange = { materiaActiva = it }
                         )
-                        CampoTextField(
-                            label = "Número de registro",
+                        CampoTextoConOcr(
                             value = numeroRegistro,
-                            onValueChange = { numeroRegistro = it }
+                            onValueChange = { numeroRegistro = it },
+                            label = "Nº Registro (ej: ES-00221)",
+                            placeholder = "ES-XXXXX",
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }

@@ -180,7 +180,7 @@ fun AjustesSc(
                     AjusteFila(
                         icono = Icons.Outlined.Business,
                         texto = "Explotación",
-                        valor = "Finca El Roble"
+                        valor = "Hermanos Martín"
                     )
                 }
 
@@ -199,7 +199,7 @@ fun AjustesSc(
             }
 
             if (mostrarBotonCerrarSesion) {
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(4.dp ))
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
