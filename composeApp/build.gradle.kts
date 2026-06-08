@@ -38,6 +38,16 @@ kotlin {
 
             // androidx.startup — captura el Context de app para SessionStorage
             implementation("androidx.startup:startup-runtime:1.1.1")
+
+            // CameraX — vista previa y análisis de imagen en tiempo real
+            val cameraxVersion = "1.3.4"
+            implementation("androidx.camera:camera-core:$cameraxVersion")
+            implementation("androidx.camera:camera-camera2:$cameraxVersion")
+            implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+            implementation("androidx.camera:camera-view:$cameraxVersion")
+
+            // ML Kit — reconocimiento de texto (OCR) offline
+            implementation("com.google.mlkit:text-recognition:16.0.1")
         }
 
         // ── Común (Android + Desktop) ─────────────────────────────────────────
