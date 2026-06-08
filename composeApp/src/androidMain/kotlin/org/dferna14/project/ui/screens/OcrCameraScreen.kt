@@ -44,6 +44,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.dferna14.project.ui.theme.NaranjaPrimario
 import java.util.concurrent.Executors
 
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun OcrCameraScreen(
@@ -97,11 +98,27 @@ fun OcrCameraScreen(
                                         mediaImage,
                                         imageProxy.imageInfo.rotationDegrees
                                     )
-                                    recognizer.process(image)
-                                        .addOnSuccessListener { resultado ->
-                                            val texto = resultado.text.trim()
-                                            if (texto.isNotBlank()) {
-                                                textoDetectado = texto
+                                    recognizer.process(image).addOnSuccessListener { resultado ->
+                                            val textoCompleto = resultado.text.trim()
+
+                                            val patronesValidos = listOf(
+                                                """\b\d{5}\b""".toRegex(),                     // 5 dígitos (Registro)
+                                                """\b\d{1,2}-\d{1,2}-\d{1,2}\b""".toRegex(),   // NPK (15-15-15)
+                                                """\b[A-Z]{2,4}-\d{4,8}\b""".toRegex(),        // Albarán Mixto (ALB-1234)
+                                                """\b\d{6,10}\b""".toRegex()                   // Albarán Largo (448291)
+                                            )
+
+                                            var codigoEncontrado: String? = null
+                                            for (patron in patronesValidos) {
+                                                val coincidencia = patron.find(textoCompleto)
+                                                if (coincidencia != null) {
+                                                    codigoEncontrado = coincidencia.value
+                                                    break
+                                                }
+                                            }
+
+                                            if (codigoEncontrado != null) {
+                                                textoDetectado = codigoEncontrado
                                                 mostrarBotonUsar = true
                                             }
                                         }
