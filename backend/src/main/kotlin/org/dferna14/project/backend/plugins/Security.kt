@@ -44,7 +44,9 @@ fun ApplicationCall.tenantId(): Int? =
     principal<JWTPrincipal>()?.payload?.getClaim("explotacionId")?.let {
         if (it.isNull) null else it.asInt()
     }
-
+fun ApplicationCall.currentUserId(): Int =
+    principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
+        ?: throw IllegalArgumentException("No se encontró userId en el token")
 fun Application.configureSecurity() {
     install(Authentication) {
         jwt("auth-jwt") {

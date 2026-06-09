@@ -67,6 +67,8 @@ object Parcelas : IntIdTable("parcela") {
     val alias                = varchar("alias", 100).nullable()
     val sistemaAsesoramiento = varchar("sistema_asesoramiento", 50).nullable()
     val zonaNitratos         = bool("zona_nitratos").nullable()
+
+    val creadorId = integer("creador_id").references(Usuarios.id).nullable()
 }
 
 object EquiposAplicacion : IntIdTable("equipoaplicacion") {
