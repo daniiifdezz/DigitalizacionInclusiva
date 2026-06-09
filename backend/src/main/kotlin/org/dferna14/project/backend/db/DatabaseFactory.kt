@@ -16,12 +16,17 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object DatabaseFactory {
 
     fun init() {
+        val databaseUrl = System.getenv("DATABASE_URL")
         val config = HikariConfig().apply {
             driverClassName = "org.postgresql.Driver"
-            jdbcUrl         = buildJdbcUrl()
-            username        = System.getenv("DB_USER")     ?: "postgres"
-            password        = System.getenv("DB_PASSWORD") ?: ""
-            maximumPoolSize = 10
+            if (databaseUrl != null) {
+                jdbcUrl = databaseUrl
+            } else {
+                jdbcUrl  = buildJdbcUrl()
+                username = System.getenv("DB_USER")     ?: "postgres"
+                password = System.getenv("DB_PASSWORD") ?: ""
+            }
+            maximumPoolSize = 5
             isAutoCommit    = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()
@@ -51,4 +56,6 @@ object DatabaseFactory {
         val name = System.getenv("DB_NAME") ?: "DigitalizacionInclusiva"
         return "jdbc:postgresql://$host:$port/$name"
     }
+
+    // Para Railway: DATABASE_URL = "jdbc:postgresql://host:5432/db?user=u&password=p&sslmode=require"
 }

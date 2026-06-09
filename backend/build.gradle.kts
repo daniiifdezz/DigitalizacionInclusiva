@@ -51,6 +51,7 @@ dependencies {
 application {
     mainClass.set("org.dferna14.project.backend.ApplicationKt")
 }
+
 tasks.named<JavaExec>("run") {
     val envFile = rootProject.file(".env")
     if (envFile.exists()) {
