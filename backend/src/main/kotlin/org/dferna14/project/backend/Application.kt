@@ -17,10 +17,25 @@ import org.dferna14.project.backend.plugins.configureStatusPages
  * Para ejecutar: ./gradlew :backend:run
  */
 fun main() {
+    // Imprime las IPs locales al arrancar para que sea fácil configurar la tablet.
+    val ips = java.net.NetworkInterface.getNetworkInterfaces()
+        ?.asSequence()
+        ?.filter { it.isUp && !it.isLoopback }
+        ?.flatMap { it.inetAddresses.asSequence() }
+        ?.filterIsInstance<java.net.Inet4Address>()
+        ?.map { "  http://${it.hostAddress}:8080" }
+        ?.joinToString("\n") ?: "  (no detectadas)"
+
+    println("═══════════════════════════════════════════")
+    println("  Backend arrancando en http://0.0.0.0:8080")
+    println("  Usa en la tablet cualquiera de estas IPs:")
+    println(ips)
+    println("═══════════════════════════════════════════")
+
     embeddedServer(
         factory  = Netty,
         port     = 8080,
-        host     = "0.0.0.0", // acepta conexiones desde móvil en la misma red WiFi
+        host     = "0.0.0.0",
         module   = Application::module
     ).start(wait = true)
 }

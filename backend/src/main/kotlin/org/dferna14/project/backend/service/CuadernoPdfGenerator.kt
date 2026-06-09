@@ -1120,6 +1120,8 @@ object CuadernoPdfGenerator {
             .replace("–", "-")
             .replace("·", ".")
             .replace("\r", "")
+            .replace("\t", " ")
+            .filter { it.code >= 0x20 }   // elimina cualquier otro caracter de control
 
     private fun truncarTexto(texto: String, fuente: PDType1Font, tamano: Float, anchoMax: Float): String {
         if (texto.isEmpty()) return texto

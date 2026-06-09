@@ -25,12 +25,14 @@ class SessionStorageJvm : SessionStorage {
         ficheroSesion.outputStream().use { props.store(it, "Sesion guardada") }
     }
 
-    override fun guardarSesion(token: String, userId: Int, email: String, rol: String) {
+    override fun guardarSesion(token: String, userId: Int, email: String, rol: String, explotacionId: Int?) {
         val props = cargar()
         props.setProperty("token", token)
         props.setProperty("userId", userId.toString())
         props.setProperty("email", email)
         props.setProperty("rol", rol)
+        if (explotacionId != null) props.setProperty("explotacion_id", explotacionId.toString())
+        else props.remove("explotacion_id")
         guardar(props)
     }
 
@@ -38,6 +40,7 @@ class SessionStorageJvm : SessionStorage {
     override fun obtenerEmail(): String? = cargar().getProperty("email")
     override fun obtenerRol(): String? = cargar().getProperty("rol")
     override fun obtenerUserId(): Int? = cargar().getProperty("userId")?.toIntOrNull()
+    override fun obtenerExplotacionId(): Int? = cargar().getProperty("explotacion_id")?.toIntOrNull()
 
 
     override fun guardarUrlBackend(url: String) {
@@ -56,6 +59,7 @@ class SessionStorageJvm : SessionStorage {
         props.remove("userId")
         props.remove("email")
         props.remove("rol")
+        props.remove("explotacion_id")
         if (props.isEmpty) {
             if (ficheroSesion.exists()) ficheroSesion.delete()
         } else {

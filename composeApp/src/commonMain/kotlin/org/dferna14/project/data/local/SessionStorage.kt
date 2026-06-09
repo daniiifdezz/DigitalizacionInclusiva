@@ -8,15 +8,15 @@ package org.dferna14.project.data.local
  * user.home) en Desktop.
  */
 interface SessionStorage {
-    fun guardarSesion(token: String, userId: Int, email: String, rol: String)
+    fun guardarSesion(token: String, userId: Int, email: String, rol: String, explotacionId: Int?)
     fun obtenerToken(): String?
     fun obtenerEmail(): String?
     fun obtenerRol(): String?
     fun obtenerUserId(): Int?
+    fun obtenerExplotacionId(): Int?
     fun limpiarSesion()
     fun haySesion(): Boolean
 
-    //URL del back
     fun guardarUrlBackend(url: String)
     fun obtenerUrlBackend(): String?
 }

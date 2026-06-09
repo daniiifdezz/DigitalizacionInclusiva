@@ -14,12 +14,14 @@ class SessionStorageAndroid(context: Context) : SessionStorage {
         "session_prefs", Context.MODE_PRIVATE
     )
 
-    override fun guardarSesion(token: String, userId: Int, email: String, rol: String) {
+    override fun guardarSesion(token: String, userId: Int, email: String, rol: String, explotacionId: Int?) {
         prefs.edit().apply {
             putString("token", token)
             putInt("userId", userId)
             putString("email", email)
             putString("rol", rol)
+            if (explotacionId != null) putInt("explotacion_id", explotacionId)
+            else remove("explotacion_id")
             apply()
         }
     }
@@ -29,6 +31,8 @@ class SessionStorageAndroid(context: Context) : SessionStorage {
     override fun obtenerRol(): String? = prefs.getString("rol", null)
     override fun obtenerUserId(): Int? =
         if (prefs.contains("userId")) prefs.getInt("userId", -1) else null
+    override fun obtenerExplotacionId(): Int? =
+        if (prefs.contains("explotacion_id")) prefs.getInt("explotacion_id", -1) else null
 
 
 
@@ -46,6 +50,7 @@ class SessionStorageAndroid(context: Context) : SessionStorage {
             remove("userId")
             remove("email")
             remove("rol")
+            remove("explotacion_id")
             apply()
         }
     }

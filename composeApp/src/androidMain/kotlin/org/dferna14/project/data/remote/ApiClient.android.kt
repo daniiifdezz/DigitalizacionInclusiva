@@ -13,6 +13,6 @@ package org.dferna14.project.data.remote
  *192.168.1.138 ethernet casa
  * 172.20.10.2 datos movil
  * emulador 10.0.2.2
- *
+ *http://192.168.1.140:8080 casa wifi
  */
-actual val BASE_URL_POR_DEFECTO: String = "http://192.168.1.140:8080"
+actual val BASE_URL_POR_DEFECTO: String = "http://172.20.10.2:8080"
