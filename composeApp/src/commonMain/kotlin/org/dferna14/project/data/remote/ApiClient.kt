@@ -47,7 +47,4 @@ fun createHttpClient(sessionStorage: SessionStorage): HttpClient {
 }
 
 
-fun baseUrl(sessionStorage: SessionStorage): String {
-    val guardada = sessionStorage.obtenerUrlBackend()
-    return guardada?.takeIf { it.isNotBlank() } ?: BASE_URL_POR_DEFECTO
-}
+fun baseUrl(sessionStorage: SessionStorage): String = BASE_URL_POR_DEFECTO
