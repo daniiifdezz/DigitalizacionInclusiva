@@ -876,10 +876,11 @@ class ActividadRepository(
         try {
             val resp = api.login(request)
             sessionStorage.guardarSesion(
-                token  = resp.token,
-                userId = resp.usuario.id,
-                email  = resp.usuario.email,
-                rol    = resp.usuario.rol
+                token         = resp.token,
+                userId        = resp.usuario.id,
+                email         = resp.usuario.email,
+                rol           = resp.usuario.rol,
+                explotacionId = resp.usuario.explotacionId
             )
             emit(Result.Success(resp.usuario))
         } catch (e: CancellationException) {
@@ -894,10 +895,11 @@ class ActividadRepository(
         try {
             val resp = api.register(request)
             sessionStorage.guardarSesion(
-                token  = resp.token,
-                userId = resp.usuario.id,
-                email  = resp.usuario.email,
-                rol    = resp.usuario.rol
+                token         = resp.token,
+                userId        = resp.usuario.id,
+                email         = resp.usuario.email,
+                rol           = resp.usuario.rol,
+                explotacionId = resp.usuario.explotacionId
             )
             emit(Result.Success(resp.usuario))
         } catch (e: CancellationException) {
