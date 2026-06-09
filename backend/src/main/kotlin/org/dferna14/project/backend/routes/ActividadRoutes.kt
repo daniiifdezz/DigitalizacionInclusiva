@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.plugins.tenantId
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.ActividadProductos
 import org.dferna14.project.backend.db.Fertilizaciones
@@ -30,11 +31,14 @@ fun Route.actividadRoutes() {
         // Filtro opcional: ?estado=BORRADOR|PENDIENTE_VALIDAR|VALIDADA
         // LEFT JOIN  con parcelas
         get {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val estadoParam = call.request.queryParameters["estado"]
             val actividades = transaction {
                 val base = (Actividades leftJoin Parcelas).selectAll()
+                    .where { Parcelas.explotacionId eq tenantId }
                 val query = if (estadoParam != null) {
-                    base.where { Actividades.estado eq estadoParam }
+                    base.andWhere { Actividades.estado eq estadoParam }
                 } else {
                     base
                 }
@@ -46,9 +50,14 @@ fun Route.actividadRoutes() {
         // GET /api/actividades/pendientes
         // Devuelve solo actividades pendientes de validar (para desktop)
         get("pendientes") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val actividades = transaction {
                 (Actividades leftJoin Parcelas).selectAll()
-                    .where { Actividades.estado eq EstadoActividad.PENDIENTE_VALIDAR.name }
+                    .where {
+                        (Actividades.estado eq EstadoActividad.PENDIENTE_VALIDAR.name) and
+                                (Parcelas.explotacionId eq tenantId)
+                    }
                     .map { it.toActividadResponse() }
             }
             call.respond(actividades)
@@ -56,12 +65,14 @@ fun Route.actividadRoutes() {
 
         // GET /api/actividades/{id}
         get("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val actividad = transaction {
                 (Actividades leftJoin Parcelas).selectAll()
-                    .where { Actividades.id eq id }
+                    .where { (Actividades.id eq id) and (Parcelas.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?.toActividadResponse()
             }
@@ -72,9 +83,21 @@ fun Route.actividadRoutes() {
 
         // POST /api/actividades
         post {
+            val tenantId = call.tenantId()
+                ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val request = call.receive<ActividadRequest>()
             val fechaInicioLocalDate = java.time.LocalDate.parse(request.fechaInicio)
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
+
+            val parcelaValida = transaction {
+                Parcelas.selectAll()
+                    .where { (Parcelas.id eq request.parcelaId) and (Parcelas.explotacionId eq tenantId) }
+                    .any()
+            }
+            if (!parcelaValida) return@post call.respond(
+                HttpStatusCode.Forbidden,
+                mapOf("message" to "La parcela no pertenece a tu explotación")
+            )
 
             val creada = transaction {
                 val nuevaId = Actividades.insertAndGetId {
@@ -101,6 +124,8 @@ fun Route.actividadRoutes() {
 
         // PUT /api/actividades/{id}
         put("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@put call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
 
@@ -108,8 +133,11 @@ fun Route.actividadRoutes() {
             val fechaInicioLocalDate = java.time.LocalDate.parse(request.fechaInicio)
             val fechaFinLocalDate = request.fechaFin?.let { java.time.LocalDate.parse(it) }
 
-
             val filasActualizadas = transaction {
+                val esDelTenant = (Actividades leftJoin Parcelas).selectAll()
+                    .where { (Actividades.id eq id) and (Parcelas.explotacionId eq tenantId) }
+                    .any()
+                if (!esDelTenant) return@transaction 0
                 Actividades.update({ Actividades.id eq id }) {
                     it[parcelaId]= request.parcelaId
                     it[fechaInicio]= fechaInicioLocalDate
@@ -211,13 +239,18 @@ fun Route.actividadRoutes() {
         }
 
         // DELETE /api/actividades/{id}
-        // Borra en cascada los hijos  en misma transaccion antes de borrar la actividad
-        // evitamos violaciones de FK
+        // Borra en cascada los hijos en misma transaccion antes de borrar la actividad
         delete("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@delete call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
             val filasEliminadas = transaction {
+                val esDelTenant = (Actividades leftJoin Parcelas).selectAll()
+                    .where { (Actividades.id eq id) and (Parcelas.explotacionId eq tenantId) }
+                    .any()
+                if (!esDelTenant) return@transaction 0
                 SemillasTratadas.deleteWhere { SemillasTratadas.actividadId eq id }
                 ActividadProductos.deleteWhere { ActividadProductos.actividadId eq id }
                 Fertilizaciones.deleteWhere { Fertilizaciones.actividadId eq id }

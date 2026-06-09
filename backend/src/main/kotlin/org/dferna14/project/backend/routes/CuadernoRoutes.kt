@@ -3,6 +3,7 @@ package org.dferna14.project.backend.routes
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.plugins.tenantId
 import org.dferna14.project.backend.service.CuadernoPdfGenerator
 import org.dferna14.project.backend.service.CuadernoService
 import java.time.LocalDate
@@ -22,6 +23,8 @@ fun Route.cuadernoRoutes() {
     route("/api/cuaderno") {
 
         get("/pdf") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val (desde, hasta) = parseFechas(
                 desdeStr = call.request.queryParameters["desde"],
                 hastaStr = call.request.queryParameters["hasta"]
@@ -31,7 +34,7 @@ fun Route.cuadernoRoutes() {
             }
 
             try {
-                val cuaderno = CuadernoService.obtenerCuadernoCompleto(desde, hasta)
+                val cuaderno = CuadernoService.obtenerCuadernoCompleto(desde, hasta, tenantId)
                 val pdfBytes = CuadernoPdfGenerator.generar(cuaderno)
 
                 val nombreFichero = "cuaderno_campo_${desde}_a_${hasta}.pdf"
@@ -55,6 +58,8 @@ fun Route.cuadernoRoutes() {
         }
 
         get("/datos") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val (desde, hasta) = parseFechas(
                 desdeStr = call.request.queryParameters["desde"],
                 hastaStr = call.request.queryParameters["hasta"]
@@ -64,7 +69,7 @@ fun Route.cuadernoRoutes() {
             }
 
             try {
-                val cuaderno = CuadernoService.obtenerCuadernoCompleto(desde, hasta)
+                val cuaderno = CuadernoService.obtenerCuadernoCompleto(desde, hasta, tenantId)
                 call.respond(cuaderno)
             } catch (e: Exception) {
                 call.respond(

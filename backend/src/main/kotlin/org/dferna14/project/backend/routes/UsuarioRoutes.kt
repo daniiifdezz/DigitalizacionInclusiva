@@ -11,6 +11,7 @@ import org.dferna14.project.backend.db.Usuarios
 import org.dferna14.project.backend.mapper.toUsuarioResponse
 import org.dferna14.project.backend.model.CambioRolRequest
 import org.dferna14.project.backend.model.UsuarioRequest
+import org.dferna14.project.backend.plugins.tenantId
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -30,13 +31,12 @@ fun Route.usuarioRoutes() {
         // GET /api/usuarios
         // Filtro opcional: ?rol=AGRICULTOR|TECNICO|ADMIN
         get {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val rolParam = call.request.queryParameters["rol"]
             val usuarios = transaction {
-                val query = if (rolParam != null) {
-                    Usuarios.selectAll().where { Usuarios.rol eq rolParam }
-                } else {
-                    Usuarios.selectAll()
-                }
+                val base = Usuarios.selectAll().where { Usuarios.explotacionId eq tenantId }
+                val query = if (rolParam != null) base.andWhere { Usuarios.rol eq rolParam } else base
                 query.map { it.toUsuarioResponse() }
             }
             call.respond(usuarios)
@@ -44,12 +44,14 @@ fun Route.usuarioRoutes() {
 
         // GET /api/usuarios/{id}
         get("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val usuario = transaction {
                 Usuarios.selectAll()
-                    .where { Usuarios.id eq id }
+                    .where { (Usuarios.id eq id) and (Usuarios.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?.toUsuarioResponse()
             }
@@ -63,6 +65,8 @@ fun Route.usuarioRoutes() {
         // desde la pantalla de configuración del técnico. La contraseña se
         // establece después por el propio usuario vía /api/auth/register.
         post {
+            val tenantId = call.tenantId()
+                ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val request = call.receive<UsuarioRequest>()
             if (request.nombre.isBlank() || request.email.isBlank()) {
                 return@post call.respond(
@@ -89,7 +93,7 @@ fun Route.usuarioRoutes() {
                     it[apellidos]      = request.apellidos?.trim()
                     it[email]          = emailNorm
                     it[rol]            = request.rol?.takeIf { r -> r.isNotBlank() } ?: "AGRICULTOR"
-                    it[explotacionId]  = request.explotacionId
+                    it[explotacionId]  = tenantId
                     it[fechaAlta]      = LocalDate.now()
                     it[tipoCarnetRopo] = request.tipoCarnetRopo
                 }.value
@@ -113,8 +117,17 @@ fun Route.usuarioRoutes() {
         // DELETE /api/usuarios/{id}
         // 409 si el usuario está asignado como aplicador en alguna actividad.
         delete("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@delete call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            val esDelTenant = transaction {
+                Usuarios.selectAll()
+                    .where { (Usuarios.id eq id) and (Usuarios.explotacionId eq tenantId) }
+                    .any()
+            }
+            if (!esDelTenant) return@delete call.respond(HttpStatusCode.NotFound)
 
             val tieneActividades = transaction {
                 !Actividades.selectAll()
@@ -134,53 +147,58 @@ fun Route.usuarioRoutes() {
         }
 
         // PUT /api/usuarios/{id}/rol — promoción/degradación de roles (solo TECNICO).
-        // Protegido con JWT. Reglas: solo TECNICO puede cambiar roles; un TECNICO no
-        // puede degradarse a sí mismo; nuevoRol debe ser AGRICULTOR o TECNICO.
-        authenticate("auth-jwt") {
-            put("{id}/rol") {
-                val principal = call.principal<JWTPrincipal>()!!
-                val rolSolicitante = principal.payload.getClaim("rol").asString()
-                val userIdSolicitante = principal.payload.getClaim("userId").asInt()
+        // Reglas: solo TECNICO puede cambiar roles; un TECNICO no puede degradarse a sí mismo.
+        put("{id}/rol") {
+            val principal = call.principal<JWTPrincipal>()!!
+            val rolSolicitante = principal.payload.getClaim("rol").asString()
+            val userIdSolicitante = principal.payload.getClaim("userId").asInt()
+            val tenantId = call.tenantId()
 
-                if (rolSolicitante != "TECNICO") {
-                    return@put call.respond(
-                        HttpStatusCode.Forbidden,
-                        mapOf("message" to "Solo los tecnicos pueden modificar roles")
-                    )
+            if (rolSolicitante != "TECNICO") {
+                return@put call.respond(
+                    HttpStatusCode.Forbidden,
+                    mapOf("message" to "Solo los tecnicos pueden modificar roles")
+                )
+            }
+
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@put call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "ID de usuario invalido")
+                )
+
+            val request = call.receive<CambioRolRequest>()
+            if (request.nuevoRol !in setOf("AGRICULTOR", "TECNICO")) {
+                return@put call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "Rol invalido. Permitidos: AGRICULTOR, TECNICO")
+                )
+            }
+
+            if (id == userIdSolicitante && request.nuevoRol == "AGRICULTOR") {
+                return@put call.respond(
+                    HttpStatusCode.Forbidden,
+                    mapOf("message" to "No puedes degradarte a ti mismo. Pide a otro tecnico que lo haga.")
+                )
+            }
+
+            val esDelTenant = tenantId != null && transaction {
+                Usuarios.selectAll()
+                    .where { (Usuarios.id eq id) and (Usuarios.explotacionId eq tenantId) }
+                    .any()
+            }
+            if (!esDelTenant) return@put call.respond(HttpStatusCode.NotFound, mapOf("message" to "Usuario no encontrado"))
+
+            val filasAfectadas = transaction {
+                Usuarios.update({ Usuarios.id eq id }) {
+                    it[Usuarios.rol] = request.nuevoRol
                 }
+            }
 
-                val id = call.parameters["id"]?.toIntOrNull()
-                    ?: return@put call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "ID de usuario invalido")
-                    )
-
-                val request = call.receive<CambioRolRequest>()
-                if (request.nuevoRol !in setOf("AGRICULTOR", "TECNICO")) {
-                    return@put call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("message" to "Rol invalido. Permitidos: AGRICULTOR, TECNICO")
-                    )
-                }
-
-                if (id == userIdSolicitante && request.nuevoRol == "AGRICULTOR") {
-                    return@put call.respond(
-                        HttpStatusCode.Forbidden,
-                        mapOf("message" to "No puedes degradarte a ti mismo. Pide a otro tecnico que lo haga.")
-                    )
-                }
-
-                val filasAfectadas = transaction {
-                    Usuarios.update({ Usuarios.id eq id }) {
-                        it[Usuarios.rol] = request.nuevoRol
-                    }
-                }
-
-                if (filasAfectadas == 0) {
-                    call.respond(HttpStatusCode.NotFound, mapOf("message" to "Usuario no encontrado"))
-                } else {
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Rol actualizado correctamente"))
-                }
+            if (filasAfectadas == 0) {
+                call.respond(HttpStatusCode.NotFound, mapOf("message" to "Usuario no encontrado"))
+            } else {
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Rol actualizado correctamente"))
             }
         }
     }

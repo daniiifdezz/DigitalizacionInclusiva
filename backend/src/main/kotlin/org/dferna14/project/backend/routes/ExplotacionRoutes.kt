@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.plugins.tenantId
 import org.dferna14.project.backend.db.EquiposAplicacion
 import org.dferna14.project.backend.db.Explotaciones
 import org.dferna14.project.backend.db.Parcelas
@@ -20,20 +21,26 @@ fun Route.explotacionRoutes() {
 
         // GET /api/explotaciones
         get {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val explotaciones = transaction {
-                Explotaciones.selectAll().map { it.toExplotacionResponse() }
+                Explotaciones.selectAll()
+                    .where { Explotaciones.id eq tenantId }
+                    .map { it.toExplotacionResponse() }
             }
             call.respond(explotaciones)
         }
 
         // GET /api/explotaciones/{id}
         get("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val explotacion = transaction {
                 Explotaciones.selectAll()
-                    .where { Explotaciones.id eq id }
+                    .where { (Explotaciones.id eq id) and (Explotaciones.id eq tenantId) }
                     .singleOrNull()
                     ?.toExplotacionResponse()
             }
@@ -79,8 +86,11 @@ fun Route.explotacionRoutes() {
 
         // PUT /api/explotaciones/{id}
         put("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@put call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
+            if (id != tenantId) return@put call.respond(HttpStatusCode.Forbidden)
 
             val request = call.receive<ExplotacionRequest>()
 

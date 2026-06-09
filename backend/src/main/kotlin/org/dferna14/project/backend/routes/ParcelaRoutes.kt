@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.plugins.tenantId
 import org.dferna14.project.backend.db.ActividadProductos
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.DatosAgronomicos
@@ -30,8 +31,10 @@ fun Route.parcelaRoutes() {
 
         // GET /api/parcelas
         get {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val parcelas = transaction {
-                Parcelas.selectAll().map {
+                Parcelas.selectAll().where { Parcelas.explotacionId eq tenantId }.map {
                     ParcelaResponse(
                         id                   = it[Parcelas.id].value,
                         explotacionId        = it[Parcelas.explotacionId],
@@ -47,12 +50,14 @@ fun Route.parcelaRoutes() {
 
         // GET /api/parcelas/{id}
         get("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val parcela = transaction {
                 Parcelas.selectAll()
-                    .where { Parcelas.id eq id }
+                    .where { (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?.let {
                         ParcelaResponse(
@@ -77,12 +82,14 @@ fun Route.parcelaRoutes() {
         // Devuelve parcela + sub-objetos satélite (referenciasigpac, datosagronomicos).
         // Si SIGPAC o agronómicos no existen para esta parcela, su sub-objeto es null.
         get("{id}/completa") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val parcelaCompleta = transaction {
                 val parcela = Parcelas.selectAll()
-                    .where { Parcelas.id eq id }
+                    .where { (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?: return@transaction null
 
@@ -143,11 +150,13 @@ fun Route.parcelaRoutes() {
 
         // POST /api/parcelas - Crear nueva parcela
         post {
+            val tenantId = call.tenantId()
+                ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val request = call.receive<ParcelaRequest>()
 
             val creada = transaction {
                 val nuevaId = Parcelas.insertAndGetId {
-                    it[explotacionId] = request.explotacionId
+                    it[explotacionId] = tenantId
                     it[orden] = request.orden
                     it[alias] = request.alias
                     it[sistemaAsesoramiento] = request.sistemaAsesoramiento
@@ -174,14 +183,16 @@ fun Route.parcelaRoutes() {
 
         // PUT /api/parcelas/{id} - Actualizar parcela
         put("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@put call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
 
             val request = call.receive<ParcelaRequest>()
 
             val filasActualizadas = transaction {
-                Parcelas.update({ Parcelas.id eq id }) {
-                    it[explotacionId] = request.explotacionId
+                Parcelas.update({ (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }) {
+                    it[explotacionId] = tenantId
                     it[orden] = request.orden
                     it[alias] = request.alias
                     it[sistemaAsesoramiento] = request.sistemaAsesoramiento
@@ -199,8 +210,15 @@ fun Route.parcelaRoutes() {
         // DELETE /api/parcelas/{id} - Eliminar parcela
         // Bloqueo con 409 en parcela referenciada en cualquier tabla hija
         delete("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@delete call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            val esDelTenant = transaction {
+                Parcelas.selectAll().where { (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }.any()
+            }
+            if (!esDelTenant) return@delete call.respond(HttpStatusCode.NotFound)
 
             data class Refs(
                 val actividades: Boolean,

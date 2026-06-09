@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.plugins.tenantId
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.EquiposAplicacion
 import org.dferna14.project.backend.mapper.toEquipoResponse
@@ -18,20 +19,26 @@ fun Route.equipoRoutes() {
 
         // GET /api/equipos
         get {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val equipos = transaction {
-                EquiposAplicacion.selectAll().map { it.toEquipoResponse() }
+                EquiposAplicacion.selectAll()
+                    .where { EquiposAplicacion.explotacionId eq tenantId }
+                    .map { it.toEquipoResponse() }
             }
             call.respond(equipos)
         }
 
         // GET /api/equipos/{id}
         get("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val equipo = transaction {
                 EquiposAplicacion.selectAll()
-                    .where { EquiposAplicacion.id eq id }
+                    .where { (EquiposAplicacion.id eq id) and (EquiposAplicacion.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?.toEquipoResponse()
             }
@@ -42,6 +49,8 @@ fun Route.equipoRoutes() {
 
         // POST /api/equipos
         post {
+            val tenantId = call.tenantId()
+                ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val request = call.receive<EquipoRequest>()
             if (request.tipo.isBlank()) {
                 return@post call.respond(
@@ -53,7 +62,7 @@ fun Route.equipoRoutes() {
 
             val creado = transaction {
                 val nuevoId = EquiposAplicacion.insertAndGetId {
-                    it[explotacionId]         = request.explotacionId
+                    it[explotacionId]         = tenantId
                     it[tipo]                  = request.tipo
                     it[marca]                 = request.marca
                     it[modelo]                = request.modelo
@@ -73,6 +82,8 @@ fun Route.equipoRoutes() {
 
         // PUT /api/equipos/{id}
         put("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@put call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
 
@@ -80,8 +91,8 @@ fun Route.equipoRoutes() {
             val fechaInsp = request.fechaUltimaInspeccion?.let { java.time.LocalDate.parse(it) }
 
             val filas = transaction {
-                EquiposAplicacion.update({ EquiposAplicacion.id eq id }) {
-                    it[explotacionId]         = request.explotacionId
+                EquiposAplicacion.update({ (EquiposAplicacion.id eq id) and (EquiposAplicacion.explotacionId eq tenantId) }) {
+                    it[explotacionId]         = tenantId
                     it[tipo]                  = request.tipo
                     it[marca]                 = request.marca
                     it[modelo]                = request.modelo
@@ -97,8 +108,17 @@ fun Route.equipoRoutes() {
 
         // DELETE /api/equipos/{id}
         delete("{id}") {
+            val tenantId = call.tenantId()
+                ?: return@delete call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            val esDelTenant = transaction {
+                EquiposAplicacion.selectAll()
+                    .where { (EquiposAplicacion.id eq id) and (EquiposAplicacion.explotacionId eq tenantId) }
+                    .any()
+            }
+            if (!esDelTenant) return@delete call.respond(HttpStatusCode.NotFound)
 
             val tieneActividades = transaction {
                 !Actividades.selectAll().where { Actividades.equipoId eq id }.empty()

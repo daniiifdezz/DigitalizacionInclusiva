@@ -4,9 +4,11 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.db.Explotaciones
 import org.dferna14.project.backend.db.Titulares
 import org.dferna14.project.backend.mapper.toTitularResponse
 import org.dferna14.project.backend.model.TitularRequest
+import org.dferna14.project.backend.plugins.tenantId
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -17,8 +19,18 @@ fun Route.titularRoutes() {
 
         // GET /api/titulares
         get {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val titulares = transaction {
-                Titulares.selectAll().map { it.toTitularResponse() }
+                val titularId = Explotaciones.selectAll()
+                    .where { Explotaciones.id eq tenantId }
+                    .firstOrNull()
+                    ?.get(Explotaciones.titularId)
+                if (titularId != null) {
+                    Titulares.selectAll()
+                        .where { Titulares.id eq titularId }
+                        .map { it.toTitularResponse() }
+                } else emptyList()
             }
             call.respond(titulares)
         }

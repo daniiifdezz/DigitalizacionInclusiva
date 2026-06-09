@@ -52,26 +52,31 @@ object CuadernoService {
 
     fun obtenerCuadernoCompleto(
         fechaInicio: LocalDate,
-        fechaFin: LocalDate
+        fechaFin: LocalDate,
+        explotacionId: Int
     ): CuadernoCompletoDto = transaction {
 
-        // 1. Titular (sistema monoexplotación: el primer registro)
-        val titular = Titulares
-            .selectAll()
-            .firstOrNull()
-            ?.toTitularResponse()
-
-        // 2. Explotación (sistema monoexplotación: el primer registro)
+        // 1. Explotación del tenant
         val explotacion = Explotaciones
             .selectAll()
+            .where { Explotaciones.id eq explotacionId }
             .firstOrNull()
             ?.toExplotacionResponse()
 
+        // 2. Titular de esta explotación
+        val titularId = Explotaciones.selectAll()
+            .where { Explotaciones.id eq explotacionId }
+            .firstOrNull()
+            ?.get(Explotaciones.titularId)
+        val titular = if (titularId != null) {
+            Titulares.selectAll().where { Titulares.id eq titularId }.firstOrNull()?.toTitularResponse()
+        } else null
+
         // 3. Parcelas con SIGPAC y datos agronómicos
-        val parcelas = construirListaParcelas()
+        val parcelas = construirListaParcelas(explotacionId)
 
         // 4. Actividades VALIDADAS del periodo con todos sus datos relacionados
-        val actividades = construirListaActividades(fechaInicio, fechaFin)
+        val actividades = construirListaActividades(fechaInicio, fechaFin, explotacionId)
 
         // 5. Resumen estadístico
         val resumen = construirResumen(parcelas, actividades)
@@ -95,8 +100,8 @@ object CuadernoService {
      * Estos datos no se filtran por periodo: el cuaderno debe mostrar todas
      * las parcelas existentes en el momento de la generación.
      */
-    private fun construirListaParcelas(): List<ParcelaCompletaDto> {
-        return Parcelas.selectAll().map { parcelaRow ->
+    private fun construirListaParcelas(explotacionId: Int): List<ParcelaCompletaDto> {
+        return Parcelas.selectAll().where { Parcelas.explotacionId eq explotacionId }.map { parcelaRow ->
             val parcelaId = parcelaRow[Parcelas.id].value
 
             val sigpac = ReferenciaSigpac
@@ -128,14 +133,16 @@ object CuadernoService {
      */
     private fun construirListaActividades(
         fechaInicio: LocalDate,
-        fechaFin: LocalDate
+        fechaFin: LocalDate,
+        explotacionId: Int
     ): List<ActividadCompletaDto> {
         return (Actividades leftJoin Parcelas)
             .selectAll()
             .where {
                 (Actividades.estado eq EstadoActividad.VALIDADA.name) and
                         (Actividades.fechaInicio greaterEq fechaInicio) and
-                        (Actividades.fechaInicio lessEq fechaFin)
+                        (Actividades.fechaInicio lessEq fechaFin) and
+                        (Parcelas.explotacionId eq explotacionId)
             }
             .orderBy(Actividades.fechaInicio to SortOrder.ASC)
             .map { actRow ->

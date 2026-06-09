@@ -4,9 +4,12 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.Fertilizaciones
+import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.mapper.toFertilizacionResponse
 import org.dferna14.project.backend.model.FertilizacionRequest
+import org.dferna14.project.backend.plugins.tenantId
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -17,8 +20,15 @@ fun Route.fertilizacionRoutes() {
     route("/api/fertilizaciones") {
 
         get {
+            val tenantId = call.tenantId()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val fertilizaciones = transaction {
-                Fertilizaciones.selectAll().map { it.toFertilizacionResponse() }
+                Fertilizaciones
+                    .join(Actividades, JoinType.INNER, Fertilizaciones.actividadId, Actividades.id)
+                    .join(Parcelas, JoinType.INNER, Actividades.parcelaId, Parcelas.id)
+                    .selectAll()
+                    .where { Parcelas.explotacionId eq tenantId }
+                    .map { it.toFertilizacionResponse() }
             }
             call.respond(fertilizaciones)
         }
