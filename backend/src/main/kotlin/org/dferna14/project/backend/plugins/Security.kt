@@ -17,27 +17,33 @@ import java.util.Date
  * nunca quedar hardcodeado en el repositorio.
  */
 object JwtConfig {
-    private const val SECRET = "digitalizacion-inclusiva-tfg-secret-key-cambiar-en-produccion"
+    private val SECRET = System.getenv("JWT_SECRET")
+        ?: "digitalizacion-inclusiva-tfg-secret-key-cambiar-en-produccion"
     const val ISSUER = "DigitalizacionInclusiva"
     const val AUDIENCE = "DigitalizacionInclusivaUsers"
     const val REALM = "DigitalizacionInclusiva App"
 
-    // 30 días en milisegundos
     private const val DURACION_TOKEN_MS = 30L * 24 * 60 * 60 * 1000
 
-    val algorithm: Algorithm = Algorithm.HMAC256(SECRET)
+    val algorithm: Algorithm get() = Algorithm.HMAC256(SECRET)
 
-    fun generarToken(userId: Int, email: String, rol: String): String {
+    fun generarToken(userId: Int, email: String, rol: String, explotacionId: Int?): String {
         return JWT.create()
             .withIssuer(ISSUER)
             .withAudience(AUDIENCE)
             .withClaim("userId", userId)
             .withClaim("email", email)
             .withClaim("rol", rol)
+            .withClaim("explotacionId", explotacionId)
             .withExpiresAt(Date(System.currentTimeMillis() + DURACION_TOKEN_MS))
             .sign(algorithm)
     }
 }
+
+fun ApplicationCall.tenantId(): Int? =
+    principal<JWTPrincipal>()?.payload?.getClaim("explotacionId")?.let {
+        if (it.isNull) null else it.asInt()
+    }
 
 fun Application.configureSecurity() {
     install(Authentication) {

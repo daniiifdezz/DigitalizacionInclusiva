@@ -1,6 +1,7 @@
 package org.dferna14.project.backend.plugins
 
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.routes.actividadRoutes
@@ -23,23 +24,22 @@ import org.dferna14.project.backend.routes.usuarioRoutes
 fun Application.configureRouting() {
     routing {
 
-        // Health check --> verificar si el servidor esta activo
-        get("/health") {
-            call.respondText("OK")
-        }
+        get("/health") { call.respondText("OK") }
 
-        // Rutas de la API
         authRoutes()
-        actividadRoutes()
-        parcelaRoutes()
-        sigpacRoutes()
-        fertilizacionRoutes()
-        productoRoutes()
-        cultivoRoutes()
-        explotacionRoutes()
-        titularRoutes()
-        equipoRoutes()
-        usuarioRoutes()
-        cuadernoRoutes()
+
+        authenticate("auth-jwt") {
+            actividadRoutes()
+            parcelaRoutes()
+            sigpacRoutes()
+            fertilizacionRoutes()
+            productoRoutes()
+            cultivoRoutes()
+            explotacionRoutes()
+            titularRoutes()
+            equipoRoutes()
+            usuarioRoutes()
+            cuadernoRoutes()
+        }
     }
 }

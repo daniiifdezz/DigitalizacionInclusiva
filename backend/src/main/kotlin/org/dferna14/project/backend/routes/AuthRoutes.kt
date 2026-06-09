@@ -6,6 +6,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.dferna14.project.backend.db.Explotaciones
 import org.dferna14.project.backend.db.Usuarios
 import org.dferna14.project.backend.mapper.toUsuarioResponse
 import org.dferna14.project.backend.model.LoginRequest
@@ -46,12 +47,17 @@ fun Route.authRoutes() {
                     .any()
                 if (yaExiste) return@transaction null
 
+                val expId = Explotaciones.insertAndGetId {
+                    it[nombre] = "Explotación de ${req.nombre.trim()}"
+                }.value
+
                 val newId = Usuarios.insertAndGetId {
-                    it[nombre]       = req.nombre.trim()
-                    it[email]        = emailNorm
-                    it[passwordHash] = hash
-                    it[rol]          = "AGRICULTOR"
-                    it[fechaAlta]    = LocalDate.now()
+                    it[nombre]        = req.nombre.trim()
+                    it[email]         = emailNorm
+                    it[passwordHash]  = hash
+                    it[rol]           = "TECNICO"
+                    it[explotacionId] = expId
+                    it[fechaAlta]     = LocalDate.now()
                 }.value
 
                 Usuarios.selectAll()
@@ -64,9 +70,10 @@ fun Route.authRoutes() {
                 call.respond(HttpStatusCode.Conflict, "Ya existe un usuario con ese email")
             } else {
                 val token = JwtConfig.generarToken(
-                    userId = resultado.id,
-                    email  = resultado.email,
-                    rol    = resultado.rol
+                    userId        = resultado.id,
+                    email         = resultado.email,
+                    rol           = resultado.rol,
+                    explotacionId = resultado.explotacionId
                 )
                 call.respond(HttpStatusCode.Created, LoginResponse(token = token, usuario = resultado))
             }
@@ -105,9 +112,10 @@ fun Route.authRoutes() {
             } else {
                 val usuarioResponse = usuarioRow.toUsuarioResponse()
                 val token = JwtConfig.generarToken(
-                    userId = usuarioResponse.id,
-                    email  = usuarioResponse.email,
-                    rol    = usuarioResponse.rol
+                    userId        = usuarioResponse.id,
+                    email         = usuarioResponse.email,
+                    rol           = usuarioResponse.rol,
+                    explotacionId = usuarioRow[Usuarios.explotacionId]
                 )
                 call.respond(HttpStatusCode.OK, LoginResponse(token = token, usuario = usuarioResponse))
             }
