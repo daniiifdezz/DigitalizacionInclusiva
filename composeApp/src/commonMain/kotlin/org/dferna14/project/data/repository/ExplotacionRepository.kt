@@ -45,9 +45,8 @@ class ExplotacionRepository(
 
     suspend fun actualizarExplotacion(explotacion: Explotacion): Result<Explotacion> {
         return try {
-            val ok = api.actualizarExplotacion(explotacion.id, explotacion.toCreateDto())
-            if (ok) Result.Success(explotacion)
-            else Result.Error("No se pudo actualizar la explotación")
+            val dto = api.actualizarExplotacion(explotacion.id, explotacion.toCreateDto())
+            Result.Success(dto.toDomain())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

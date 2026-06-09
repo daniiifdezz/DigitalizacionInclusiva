@@ -53,6 +53,8 @@ fun Route.titularRoutes() {
 
         // POST /api/titulares
         post {
+            val tenantId = call.tenantId()
+                ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
             val request = call.receive<TitularRequest>()
             if (request.nombre.isBlank() || request.nif.isBlank()) {
                 return@post call.respond(
@@ -62,20 +64,46 @@ fun Route.titularRoutes() {
             }
 
             val creado = transaction {
-                val nuevoId = Titulares.insertAndGetId {
-                    it[nombre]       = request.nombre
-                    it[apellidos]    = request.apellidos
-                    it[nif]          = request.nif
-                    it[direccion]    = request.direccion
-                    it[localidad]    = request.localidad
-                    it[codigoPostal] = request.codigoPostal
-                    it[provincia]    = request.provincia
-                    it[telefono]     = request.telefono
-                    it[email]        = request.email
-                }.value
+                // Upsert por NIF: si ya existe un Titular con ese NIF (estado roto previo),
+                // simplemente lo vinculamos en lugar de duplicar.
+                val existente = Titulares.selectAll()
+                    .where { Titulares.nif eq request.nif }
+                    .singleOrNull()
+
+                val resolvedId = if (existente != null) {
+                    // Actualizar datos y reutilizar el registro existente
+                    Titulares.update({ Titulares.nif eq request.nif }) {
+                        it[nombre]       = request.nombre
+                        it[apellidos]    = request.apellidos
+                        it[direccion]    = request.direccion
+                        it[localidad]    = request.localidad
+                        it[codigoPostal] = request.codigoPostal
+                        it[provincia]    = request.provincia
+                        it[telefono]     = request.telefono
+                        it[email]        = request.email
+                    }
+                    existente[Titulares.id].value
+                } else {
+                    Titulares.insertAndGetId {
+                        it[nombre]       = request.nombre
+                        it[apellidos]    = request.apellidos
+                        it[nif]          = request.nif
+                        it[direccion]    = request.direccion
+                        it[localidad]    = request.localidad
+                        it[codigoPostal] = request.codigoPostal
+                        it[provincia]    = request.provincia
+                        it[telefono]     = request.telefono
+                        it[email]        = request.email
+                    }.value
+                }
+
+                // Vincular el Titular a la Explotacion del TECNICO
+                Explotaciones.update({ Explotaciones.id eq tenantId }) {
+                    it[titularId] = resolvedId
+                }
 
                 Titulares.selectAll()
-                    .where { Titulares.id eq nuevoId }
+                    .where { Titulares.id eq resolvedId }
                     .single()
                     .toTitularResponse()
             }
@@ -90,8 +118,8 @@ fun Route.titularRoutes() {
 
             val request = call.receive<TitularRequest>()
 
-            val filas = transaction {
-                Titulares.update({ Titulares.id eq id }) {
+            val actualizado = transaction {
+                val filas = Titulares.update({ Titulares.id eq id }) {
                     it[nombre]       = request.nombre
                     it[apellidos]    = request.apellidos
                     it[nif]          = request.nif
@@ -102,10 +130,12 @@ fun Route.titularRoutes() {
                     it[telefono]     = request.telefono
                     it[email]        = request.email
                 }
+                if (filas > 0) Titulares.selectAll().where { Titulares.id eq id }.singleOrNull()?.toTitularResponse()
+                else null
             }
 
-            if (filas == 0) call.respond(HttpStatusCode.NotFound)
-            else call.respond(HttpStatusCode.OK)
+            if (actualizado == null) call.respond(HttpStatusCode.NotFound)
+            else call.respond(HttpStatusCode.OK, actualizado)
         }
 
         // DELETE /api/titulares/{id}

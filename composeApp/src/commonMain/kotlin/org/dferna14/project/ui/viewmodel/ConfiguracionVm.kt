@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.dferna14.project.data.local.SessionStorage
 import org.dferna14.project.data.repository.ExplotacionRepository
 import org.dferna14.project.data.repository.TitularRepository
 import org.dferna14.project.domain.model.Explotacion
@@ -23,7 +24,8 @@ import org.dferna14.project.domain.model.Titular
  */
 class ConfiguracionVm(
     private val titularRepository: TitularRepository,
-    private val explotacionRepository: ExplotacionRepository
+    private val explotacionRepository: ExplotacionRepository,
+    private val sessionStorage: SessionStorage
 ) : ViewModel() {
 
     private val _titular = MutableStateFlow<Result<Titular?>>(Result.Loading)
@@ -98,6 +100,7 @@ class ConfiguracionVm(
                 }
                 when (resultado) {
                     is Result.Success -> {
+                        sessionStorage.guardarNombreExplotacion(resultado.data.nombre)
                         _explotacion.value = Result.Success(resultado.data)
                         _guardadoExitoso.emit("Explotación guardada correctamente")
                     }

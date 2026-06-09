@@ -35,9 +35,8 @@ class TitularRepository(
 
     suspend fun actualizarTitular(titular: Titular): Result<Titular> {
         return try {
-            val ok = api.actualizarTitular(titular.id, titular.toCreateDto())
-            if (ok) Result.Success(titular)
-            else Result.Error("No se pudo actualizar el titular")
+            val dto = api.actualizarTitular(titular.id, titular.toCreateDto())
+            Result.Success(dto.toDomain())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

@@ -94,8 +94,8 @@ fun Route.explotacionRoutes() {
 
             val request = call.receive<ExplotacionRequest>()
 
-            val filas = transaction {
-                Explotaciones.update({ Explotaciones.id eq id }) {
+            val actualizada = transaction {
+                val filas = Explotaciones.update({ Explotaciones.id eq id }) {
                     it[nombre]             = request.nombre
                     it[titularId]          = request.titularId
                     it[nifEmpresa]         = request.nifEmpresa
@@ -109,10 +109,12 @@ fun Route.explotacionRoutes() {
                     it[telefonoMovil]      = request.telefonoMovil
                     it[email]              = request.email
                 }
+                if (filas > 0) Explotaciones.selectAll().where { Explotaciones.id eq id }.singleOrNull()?.toExplotacionResponse()
+                else null
             }
 
-            if (filas == 0) call.respond(HttpStatusCode.NotFound)
-            else call.respond(HttpStatusCode.OK)
+            if (actualizada == null) call.respond(HttpStatusCode.NotFound)
+            else call.respond(HttpStatusCode.OK, actualizada)
         }
 
         // DELETE /api/explotaciones/{id}

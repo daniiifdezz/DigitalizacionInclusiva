@@ -73,11 +73,10 @@ class ExplotacionApi(private val client: HttpClient, private val sessionStorage:
         }.body<ExplotacionDto>()
     }
 
-    suspend fun actualizarExplotacion(id: Int, request: ExplotacionCreateDto): Boolean {
-        val response = client.put("${baseUrl(sessionStorage)}/api/explotaciones/$id") {
+    suspend fun actualizarExplotacion(id: Int, request: ExplotacionCreateDto): ExplotacionDto {
+        return client.put("${baseUrl(sessionStorage)}/api/explotaciones/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
-        }
-        return response.status == HttpStatusCode.OK
+        }.body<ExplotacionDto>()
     }
 }

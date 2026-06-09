@@ -59,11 +59,10 @@ class TitularApi(private val client: HttpClient, private val sessionStorage: Ses
         }.body<TitularDto>()
     }
 
-    suspend fun actualizarTitular(id: Int, request: TitularCreateDto): Boolean {
-        val response = client.put("${baseUrl(sessionStorage)}/api/titulares/$id") {
+    suspend fun actualizarTitular(id: Int, request: TitularCreateDto): TitularDto {
+        return client.put("${baseUrl(sessionStorage)}/api/titulares/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
-        }
-        return response.status == HttpStatusCode.OK
+        }.body<TitularDto>()
     }
 }
