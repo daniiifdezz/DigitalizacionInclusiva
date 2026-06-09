@@ -10,12 +10,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Business
-import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,11 +22,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.dferna14.project.data.remote.BASE_URL_POR_DEFECTO
-import org.dferna14.project.ui.components.CampoAvisoInfo
-import org.dferna14.project.ui.components.CampoCard
-import org.dferna14.project.ui.components.CampoPrimaryButton
-import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.theme.BlancoPuro
 import org.dferna14.project.ui.theme.BordeSuave
 import org.dferna14.project.ui.theme.CremaSecundario
@@ -101,86 +93,12 @@ fun AjustesSc(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            AjusteSeccion(titulo = "CONFIGURACIÓN DE RED") {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Outlined.Dns,
-                            contentDescription = null,
-                            tint = NaranjaPrimario,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "URL del servidor backend",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextoPrimario
-                        )
-                    }
-
-                    Text(
-                        "Cambia esto si tu red es distinta: WiFi de casa, hotspot del móvil o servidor de producción.",
-                        fontSize = 12.sp,
-                        color = TextoSecundario
-                    )
-
-                    val urlActual by ajustesVm.urlActual.collectAsState()
-                    var urlInput by remember(urlActual) { mutableStateOf(urlActual) }
-
-                    CampoTextField(
-                        label = "URL del servidor",
-                        value = urlInput,
-                        onValueChange = { urlInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = "http://192.168.1.138:8080"
-                    )
-
-                    Text(
-                        "Ejemplo: http://192.168.1.138:8080",
-                        fontSize = 11.sp,
-                        color = TextoTerciario
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        CampoPrimaryButton(
-                            text = "Guardar URL",
-                            onClick = { ajustesVm.guardarUrl(urlInput) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedButton(
-                            onClick = {
-                                ajustesVm.restaurarUrlPorDefecto()
-                                urlInput = BASE_URL_POR_DEFECTO
-                            },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = TextoSecundario
-                            )
-                        ) {
-                            Text("Por defecto", fontSize = 13.sp)
-                        }
-                    }
-
-                    CampoAvisoInfo(
-                        mensaje = "Los cambios se aplican en la siguiente petición al servidor"
-                    )
-                }
-            }
 
             if (mostrarBotonCerrarSesion) {
                 AjusteSeccion(titulo = "MI CUENTA") {
-                    AjusteFilaPerfil(nombre = "Daniel Fernández", rol = "Agricultor")
-                    HorizontalDivider(color = CremaSecundario, thickness = 0.5.dp)
-                    AjusteFila(
-                        icono = Icons.Outlined.Business,
-                        texto = "Explotación",
-                        valor = "Hermanos Martín"
+                    AjusteFilaPerfil(
+                        nombre = ajustesVm.nombreMostrado.ifBlank { ajustesVm.emailUsuario },
+                        rol    = ajustesVm.rolUsuario.lowercase().replaceFirstChar { it.uppercase() }
                     )
                 }
 

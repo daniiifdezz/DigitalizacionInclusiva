@@ -1,6 +1,8 @@
 package org.dferna14.project.backend.routes
 
 import io.ktor.http.*
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -20,6 +22,7 @@ import org.dferna14.project.backend.model.ParcelaCompletaResponse
 import org.dferna14.project.backend.model.ParcelaRequest
 import org.dferna14.project.backend.model.ParcelaResponse
 import org.dferna14.project.backend.model.ReferenciaSigpacResponse
+import org.dferna14.project.backend.plugins.currentUserId
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -33,8 +36,15 @@ fun Route.parcelaRoutes() {
         get {
             val tenantId = call.tenantId()
                 ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
+            val userId = call.currentUserId()
+            val rol = call.principal<JWTPrincipal>()?.payload?.getClaim("rol")?.asString()
             val parcelas = transaction {
-                Parcelas.selectAll().where { Parcelas.explotacionId eq tenantId }.map {
+                val condicion = if (rol == "TECNICO") {
+                    Parcelas.explotacionId eq tenantId
+                } else {
+                    (Parcelas.explotacionId eq tenantId) and (Parcelas.creadorId eq userId)
+                }
+                Parcelas.selectAll().where(condicion).map {
                     ParcelaResponse(
                         id                   = it[Parcelas.id].value,
                         explotacionId        = it[Parcelas.explotacionId],
@@ -52,12 +62,19 @@ fun Route.parcelaRoutes() {
         get("{id}") {
             val tenantId = call.tenantId()
                 ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
+            val userId = call.currentUserId()
+            val rol = call.principal<JWTPrincipal>()?.payload?.getClaim("rol")?.asString()
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val parcela = transaction {
+                val condicion = if (rol == "TECNICO") {
+                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId)
+                } else {
+                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) and (Parcelas.creadorId eq userId)
+                }
                 Parcelas.selectAll()
-                    .where { (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }
+                    .where(condicion)
                     .singleOrNull()
                     ?.let {
                         ParcelaResponse(
@@ -84,12 +101,19 @@ fun Route.parcelaRoutes() {
         get("{id}/completa") {
             val tenantId = call.tenantId()
                 ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
+            val userId = call.currentUserId()
+            val rol = call.principal<JWTPrincipal>()?.payload?.getClaim("rol")?.asString()
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val parcelaCompleta = transaction {
+                val condicion = if (rol == "TECNICO") {
+                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId)
+                } else {
+                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) and (Parcelas.creadorId eq userId)
+                }
                 val parcela = Parcelas.selectAll()
-                    .where { (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }
+                    .where(condicion)
                     .singleOrNull()
                     ?: return@transaction null
 
@@ -152,11 +176,13 @@ fun Route.parcelaRoutes() {
         post {
             val tenantId = call.tenantId()
                 ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
+            val userId = call.currentUserId()
             val request = call.receive<ParcelaRequest>()
 
             val creada = transaction {
                 val nuevaId = Parcelas.insertAndGetId {
                     it[explotacionId] = tenantId
+                    it[creadorId]     = userId
                     it[orden] = request.orden
                     it[alias] = request.alias
                     it[sistemaAsesoramiento] = request.sistemaAsesoramiento

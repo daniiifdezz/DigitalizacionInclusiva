@@ -11,6 +11,13 @@ import org.dferna14.project.data.remote.BASE_URL_POR_DEFECTO
 
 class AjustesVm(private val sessionStorage: SessionStorage) : ViewModel() {
 
+    val emailUsuario: String = sessionStorage.obtenerEmail() ?: ""
+    val rolUsuario: String   = sessionStorage.obtenerRol()   ?: "AGRICULTOR"
+    val nombreMostrado: String = emailUsuario
+        .substringBefore("@")
+        .replaceFirstChar { it.uppercase() }
+        .ifBlank { emailUsuario }
+
     private val _urlActual = MutableStateFlow(obtenerUrlInicial())
     val urlActual: StateFlow<String> = _urlActual.asStateFlow()
 
