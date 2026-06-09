@@ -382,14 +382,15 @@ data class UsuarioRequest(
 
 @Serializable
 data class UsuarioResponse(
-    val id             : Int,
-    val nombre         : String,
-    val apellidos      : String? = null,
-    val email          : String,
-    val rol            : String,
-    val explotacionId  : Int?    = null,
-    val fechaAlta      : String? = null,
-    val tipoCarnetRopo : String? = null
+    val id                : Int,
+    val nombre            : String,
+    val apellidos         : String? = null,
+    val email             : String,
+    val rol               : String,
+    val explotacionId     : Int?    = null,
+    val explotacionNombre : String? = null,
+    val fechaAlta         : String? = null,
+    val tipoCarnetRopo    : String? = null
 )
 
 // Auth — registro y login

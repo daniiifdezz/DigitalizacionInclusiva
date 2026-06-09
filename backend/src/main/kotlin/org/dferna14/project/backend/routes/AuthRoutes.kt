@@ -75,7 +75,10 @@ fun Route.authRoutes() {
                     rol           = resultado.rol,
                     explotacionId = resultado.explotacionId
                 )
-                call.respond(HttpStatusCode.Created, LoginResponse(token = token, usuario = resultado))
+                val usuarioConExp = resultado.copy(
+                    explotacionNombre = "Explotación de ${req.nombre.trim()}"
+                )
+                call.respond(HttpStatusCode.Created, LoginResponse(token = token, usuario = usuarioConExp))
             }
         }
 
@@ -110,7 +113,15 @@ fun Route.authRoutes() {
             if (!coincide) {
                 call.respond(HttpStatusCode.Unauthorized, "Credenciales inválidas")
             } else {
-                val usuarioResponse = usuarioRow.toUsuarioResponse()
+                val expNombre = usuarioRow[Usuarios.explotacionId]?.let { expId ->
+                    transaction {
+                        Explotaciones.selectAll()
+                            .where { Explotaciones.id eq expId }
+                            .singleOrNull()
+                            ?.get(Explotaciones.nombre)
+                    }
+                }
+                val usuarioResponse = usuarioRow.toUsuarioResponse().copy(explotacionNombre = expNombre)
                 val token = JwtConfig.generarToken(
                     userId        = usuarioResponse.id,
                     email         = usuarioResponse.email,
@@ -130,10 +141,16 @@ fun Route.authRoutes() {
                 val userId = principal.payload.getClaim("userId").asInt()
 
                 val usuario = transaction {
-                    Usuarios.selectAll()
+                    val row = Usuarios.selectAll()
                         .where { Usuarios.id eq userId }
-                        .singleOrNull()
-                        ?.toUsuarioResponse()
+                        .singleOrNull() ?: return@transaction null
+                    val expNombre = row[Usuarios.explotacionId]?.let { expId ->
+                        Explotaciones.selectAll()
+                            .where { Explotaciones.id eq expId }
+                            .singleOrNull()
+                            ?.get(Explotaciones.nombre)
+                    }
+                    row.toUsuarioResponse().copy(explotacionNombre = expNombre)
                 }
 
                 if (usuario != null) {
