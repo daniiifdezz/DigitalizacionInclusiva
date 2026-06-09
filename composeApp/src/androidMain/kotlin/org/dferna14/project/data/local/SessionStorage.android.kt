@@ -34,15 +34,20 @@ class SessionStorageAndroid(context: Context) : SessionStorage {
     override fun obtenerExplotacionId(): Int? =
         if (prefs.contains("explotacion_id")) prefs.getInt("explotacion_id", -1) else null
 
+    override fun guardarNombre(nombre: String) {
+        prefs.edit().putString("nombre", nombre).apply()
+    }
+    override fun obtenerNombre(): String? = prefs.getString("nombre", null)
 
+    override fun guardarNombreExplotacion(nombre: String) {
+        prefs.edit().putString("explotacion_nombre", nombre).apply()
+    }
+    override fun obtenerNombreExplotacion(): String? = prefs.getString("explotacion_nombre", null)
 
     override fun guardarUrlBackend(url: String) {
         prefs.edit().putString("url_backend", url).apply()
     }
-
-    override fun obtenerUrlBackend(): String? {
-        return prefs.getString("url_backend", null)
-    }
+    override fun obtenerUrlBackend(): String? = prefs.getString("url_backend", null)
 
     override fun limpiarSesion() {
         prefs.edit().apply {
@@ -51,12 +56,13 @@ class SessionStorageAndroid(context: Context) : SessionStorage {
             remove("email")
             remove("rol")
             remove("explotacion_id")
+            remove("nombre")
+            remove("explotacion_nombre")
             apply()
         }
     }
+
     override fun haySesion(): Boolean = obtenerToken() != null
-
-
 }
 
 private lateinit var contextoApp: Context

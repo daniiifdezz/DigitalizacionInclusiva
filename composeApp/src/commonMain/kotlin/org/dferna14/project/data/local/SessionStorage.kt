@@ -17,6 +17,11 @@ interface SessionStorage {
     fun limpiarSesion()
     fun haySesion(): Boolean
 
+    fun guardarNombre(nombre: String)
+    fun obtenerNombre(): String?
+    fun guardarNombreExplotacion(nombre: String)
+    fun obtenerNombreExplotacion(): String?
+
     fun guardarUrlBackend(url: String)
     fun obtenerUrlBackend(): String?
 }

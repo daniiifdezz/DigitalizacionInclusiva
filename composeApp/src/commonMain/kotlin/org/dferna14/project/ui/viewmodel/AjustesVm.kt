@@ -13,10 +13,10 @@ class AjustesVm(private val sessionStorage: SessionStorage) : ViewModel() {
 
     val emailUsuario: String = sessionStorage.obtenerEmail() ?: ""
     val rolUsuario: String   = sessionStorage.obtenerRol()   ?: "AGRICULTOR"
-    val nombreMostrado: String = emailUsuario
-        .substringBefore("@")
-        .replaceFirstChar { it.uppercase() }
-        .ifBlank { emailUsuario }
+    val nombreMostrado: String = sessionStorage.obtenerNombre()
+        ?.takeIf { it.isNotBlank() }
+        ?: emailUsuario.substringBefore("@").replaceFirstChar { it.uppercase() }.ifBlank { emailUsuario }
+    val explotacionNombre: String? = sessionStorage.obtenerNombreExplotacion()
 
     private val _urlActual = MutableStateFlow(obtenerUrlInicial())
     val urlActual: StateFlow<String> = _urlActual.asStateFlow()

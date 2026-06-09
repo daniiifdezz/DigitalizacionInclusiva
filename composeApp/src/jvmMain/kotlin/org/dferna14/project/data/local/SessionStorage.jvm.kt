@@ -42,16 +42,26 @@ class SessionStorageJvm : SessionStorage {
     override fun obtenerUserId(): Int? = cargar().getProperty("userId")?.toIntOrNull()
     override fun obtenerExplotacionId(): Int? = cargar().getProperty("explotacion_id")?.toIntOrNull()
 
+    override fun guardarNombre(nombre: String) {
+        val props = cargar()
+        props.setProperty("nombre", nombre)
+        guardar(props)
+    }
+    override fun obtenerNombre(): String? = cargar().getProperty("nombre")
+
+    override fun guardarNombreExplotacion(nombre: String) {
+        val props = cargar()
+        props.setProperty("explotacion_nombre", nombre)
+        guardar(props)
+    }
+    override fun obtenerNombreExplotacion(): String? = cargar().getProperty("explotacion_nombre")
 
     override fun guardarUrlBackend(url: String) {
         val props = cargar()
         props.setProperty("url_backend", url)
         guardar(props)
     }
-
-    override fun obtenerUrlBackend(): String? {
-        return cargar().getProperty("url_backend")
-    }
+    override fun obtenerUrlBackend(): String? = cargar().getProperty("url_backend")
 
     override fun limpiarSesion() {
         val props = cargar()
@@ -60,6 +70,8 @@ class SessionStorageJvm : SessionStorage {
         props.remove("email")
         props.remove("rol")
         props.remove("explotacion_id")
+        props.remove("nombre")
+        props.remove("explotacion_nombre")
         if (props.isEmpty) {
             if (ficheroSesion.exists()) ficheroSesion.delete()
         } else {

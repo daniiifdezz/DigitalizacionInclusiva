@@ -108,8 +108,10 @@ fun AjustesSc(
             if (mostrarBotonCerrarSesion) {
                 AjusteSeccion(titulo = "MI CUENTA") {
                     AjusteFilaPerfil(
-                        nombre = ajustesVm.nombreMostrado.ifBlank { ajustesVm.emailUsuario },
-                        rol    = ajustesVm.rolUsuario.lowercase().replaceFirstChar { it.uppercase() }
+                        nombre      = ajustesVm.nombreMostrado.ifBlank { ajustesVm.emailUsuario },
+                        email       = ajustesVm.emailUsuario,
+                        rol         = ajustesVm.rolUsuario.lowercase().replaceFirstChar { it.uppercase() },
+                        explotacion = ajustesVm.explotacionNombre
                     )
                 }
 
@@ -346,7 +348,7 @@ private fun AjusteFila(
 }
 
 @Composable
-private fun AjusteFilaPerfil(nombre: String, rol: String) {
+private fun AjusteFilaPerfil(nombre: String, email: String, rol: String, explotacion: String? = null) {
     val iniciales = nombre.split(" ")
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }
         .take(2)
@@ -374,7 +376,11 @@ private fun AjusteFilaPerfil(nombre: String, rol: String) {
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(text = nombre, color = TextoPrimario, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text(text = rol, color = TextoTerciario, fontSize = 12.sp)
+            Text(text = email, color = TextoSecundario, fontSize = 12.sp)
+            Text(text = rol, color = TextoTerciario, fontSize = 11.sp)
+            if (!explotacion.isNullOrBlank()) {
+                Text(text = explotacion, color = TextoTerciario, fontSize = 11.sp)
+            }
         }
     }
 }

@@ -50,6 +50,8 @@ class AuthVm(
             }
             when (val resultado = repository.getMe()) {
                 is Result.Success -> {
+                    sessionStorage.guardarNombre(resultado.data.nombre)
+                    resultado.data.explotacionNombre?.let { sessionStorage.guardarNombreExplotacion(it) }
                     _usuarioActual.value = resultado.data
                     _estadoSesion.value = EstadoSesion.Autenticado(resultado.data)
                 }

@@ -883,6 +883,8 @@ class ActividadRepository(
                 rol           = resp.usuario.rol,
                 explotacionId = resp.usuario.explotacionId
             )
+            sessionStorage.guardarNombre(resp.usuario.nombre)
+            resp.usuario.explotacionNombre?.let { sessionStorage.guardarNombreExplotacion(it) }
             emit(Result.Success(resp.usuario))
         } catch (e: CancellationException) {
             throw e
@@ -902,6 +904,8 @@ class ActividadRepository(
                 rol           = resp.usuario.rol,
                 explotacionId = resp.usuario.explotacionId
             )
+            sessionStorage.guardarNombre(resp.usuario.nombre)
+            resp.usuario.explotacionNombre?.let { sessionStorage.guardarNombreExplotacion(it) }
             emit(Result.Success(resp.usuario))
         } catch (e: CancellationException) {
             throw e
