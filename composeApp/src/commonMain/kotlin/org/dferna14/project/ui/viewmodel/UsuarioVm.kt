@@ -41,10 +41,10 @@ class UsuarioVm(
         }
     }
 
-    fun crearAplicador(usuario: Usuario) {
+    fun crearAplicador(usuario: Usuario, contrasena: String? = null) {
         viewModelScope.launch {
             try {
-                val resultado = repository.crearUsuario(usuario)
+                val resultado = repository.crearUsuario(usuario, contrasena)
                 if (resultado is Result.Success) {
                     cargarUsuarios()
                 } else if (resultado is Result.Error) {

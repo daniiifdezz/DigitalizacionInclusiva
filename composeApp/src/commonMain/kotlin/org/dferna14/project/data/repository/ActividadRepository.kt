@@ -688,13 +688,14 @@ class ActividadRepository(
         }
     }
 
-    suspend fun crearUsuario(usuario: Usuario): Result<Usuario> {
+    suspend fun crearUsuario(usuario: Usuario, contrasena: String? = null): Result<Usuario> {
         return try {
             val dto = api.crearUsuario(
                 org.dferna14.project.data.remote.UsuarioCreateDto(
                     nombre         = usuario.nombre,
                     apellidos      = usuario.apellidos,
                     email          = usuario.email,
+                    contrasena     = contrasena,
                     rol            = usuario.rol,
                     explotacionId  = usuario.explotacionId,
                     tipoCarnetRopo = usuario.tipoCarnetRopo

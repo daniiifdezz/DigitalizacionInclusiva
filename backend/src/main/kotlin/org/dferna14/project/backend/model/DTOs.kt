@@ -374,6 +374,7 @@ data class UsuarioRequest(
     val nombre         : String,
     val apellidos      : String? = null,
     val email          : String,
+    val contrasena     : String? = null,
     val rol            : String? = null,
     val explotacionId  : Int?    = null,
     val tipoCarnetRopo : String? = null

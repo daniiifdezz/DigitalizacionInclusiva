@@ -7,11 +7,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Logout
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,8 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.dferna14.project.domain.model.Result
+import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.ui.theme.BlancoPuro
 import org.dferna14.project.ui.theme.BordeSuave
 import org.dferna14.project.ui.theme.CremaSecundario
@@ -35,33 +43,37 @@ import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.VerdeValidada
 import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.AuthVm
+import org.dferna14.project.ui.viewmodel.UsuarioVm
 import org.koin.compose.viewmodel.koinViewModel
 
-/**
- * Pantalla de Ajustes: configuración de red (URL del backend) y, opcionalmente,
- * el bloque de cerrar sesión.
- *
- * [mostrarBotonCerrarSesion] = true  → versión móvil (con cerrar sesión al final)
- * [mostrarBotonCerrarSesion] = false → versión Desktop (solo configuración de red;
- *   el logout ya está en el menú lateral)
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AjustesSc(
     mostrarBotonCerrarSesion: Boolean = true,
     authVm: AuthVm = koinViewModel(),
     ajustesVm: AjustesVm = koinViewModel(),
+    usuarioVm: UsuarioVm = koinViewModel(),
     onVolver: (() -> Unit)? = null,
-
 ) {
     var mostrarConfirmacion by remember { mutableStateOf(false) }
+    var mostrarDialogoAgricultor by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+
     val mensaje by ajustesVm.mensaje.collectAsState()
+    val usuariosResult by usuarioVm.usuarios.collectAsState()
+    val mensajeUsuario by usuarioVm.mensajeError.collectAsState()
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
             snackbarHostState.showSnackbar(it)
             ajustesVm.limpiarMensaje()
+        }
+    }
+
+    LaunchedEffect(mensajeUsuario) {
+        mensajeUsuario?.let {
+            snackbarHostState.showSnackbar(it)
+            usuarioVm.limpiarMensajeError()
         }
     }
 
@@ -93,7 +105,6 @@ fun AjustesSc(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-
             if (mostrarBotonCerrarSesion) {
                 AjusteSeccion(titulo = "MI CUENTA") {
                     AjusteFilaPerfil(
@@ -116,8 +127,54 @@ fun AjustesSc(
                 }
             }
 
+            if (ajustesVm.rolUsuario == "TECNICO") {
+                val agricultores = (usuariosResult as? Result.Success)?.data
+                    ?.filter { it.rol == "AGRICULTOR" } ?: emptyList()
+
+                AjusteSeccion(titulo = "MIS AGRICULTORES") {
+                    if (agricultores.isEmpty()) {
+                        Text(
+                            text = "Sin agricultores registrados",
+                            modifier = Modifier.padding(14.dp),
+                            color = TextoTerciario,
+                            fontSize = 13.sp
+                        )
+                    } else {
+                        agricultores.forEachIndexed { i, ag ->
+                            if (i > 0) HorizontalDivider(color = CremaSecundario, thickness = 0.5.dp)
+                            AjusteFilaAgricultor(
+                                usuario    = ag,
+                                onEliminar = { usuarioVm.eliminarAplicador(ag.id) }
+                            )
+                        }
+                    }
+                    HorizontalDivider(color = CremaSecundario, thickness = 0.5.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { mostrarDialogoAgricultor = true }
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.PersonAdd,
+                            contentDescription = null,
+                            tint = NaranjaPrimario,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Añadir agricultor",
+                            color = NaranjaPrimario,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
             if (mostrarBotonCerrarSesion) {
-                Spacer(Modifier.height(4.dp ))
+                Spacer(Modifier.height(4.dp))
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -171,6 +228,64 @@ fun AjustesSc(
             },
             dismissButton = {
                 TextButton(onClick = { mostrarConfirmacion = false }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            }
+        )
+    }
+
+    if (mostrarDialogoAgricultor) {
+        var nombre by remember { mutableStateOf("") }
+        var email by remember { mutableStateOf("") }
+        var contrasena by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoAgricultor = false },
+            title = { Text("Nuevo agricultor") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = nombre,
+                        onValueChange = { nombre = it },
+                        label = { Text("Nombre") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = contrasena,
+                        onValueChange = { contrasena = it },
+                        label = { Text("Contraseña") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        usuarioVm.crearAplicador(
+                            usuario    = Usuario(nombre = nombre.trim(), email = email.trim(), rol = "AGRICULTOR"),
+                            contrasena = contrasena
+                        )
+                        mostrarDialogoAgricultor = false
+                    },
+                    enabled = nombre.isNotBlank() && email.isNotBlank() && contrasena.length >= 6
+                ) {
+                    Text("Crear", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoAgricultor = false }) {
                     Text("Cancelar", color = TextoSecundario)
                 }
             }
@@ -260,6 +375,39 @@ private fun AjusteFilaPerfil(nombre: String, rol: String) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = nombre, color = TextoPrimario, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Text(text = rol, color = TextoTerciario, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun AjusteFilaAgricultor(usuario: Usuario, onEliminar: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Person,
+            contentDescription = null,
+            tint = NaranjaPrimario,
+            modifier = Modifier.size(18.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = usuario.nombre, color = TextoPrimario, fontSize = 14.sp)
+            Text(text = usuario.email, color = TextoTerciario, fontSize = 12.sp)
+        }
+        IconButton(
+            onClick = onEliminar,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = "Eliminar agricultor",
+                tint = RojoEliminar,
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }

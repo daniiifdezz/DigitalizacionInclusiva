@@ -8,6 +8,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.Usuarios
+import org.mindrot.jbcrypt.BCrypt
 import org.dferna14.project.backend.mapper.toUsuarioResponse
 import org.dferna14.project.backend.model.CambioRolRequest
 import org.dferna14.project.backend.model.UsuarioRequest
@@ -92,6 +93,9 @@ fun Route.usuarioRoutes() {
                     it[nombre]         = request.nombre.trim()
                     it[apellidos]      = request.apellidos?.trim()
                     it[email]          = emailNorm
+                    it[passwordHash]   = request.contrasena
+                        ?.takeIf { p -> p.isNotBlank() }
+                        ?.let { p -> BCrypt.hashpw(p, BCrypt.gensalt(12)) }
                     it[rol]            = request.rol?.takeIf { r -> r.isNotBlank() } ?: "AGRICULTOR"
                     it[explotacionId]  = tenantId
                     it[fechaAlta]      = LocalDate.now()

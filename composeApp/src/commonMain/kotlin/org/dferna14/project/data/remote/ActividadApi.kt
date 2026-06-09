@@ -225,6 +225,7 @@ data class UsuarioCreateDto(
     @SerialName("nombre")         val nombre         : String,
     @SerialName("apellidos")      val apellidos      : String? = null,
     @SerialName("email")          val email          : String,
+    @SerialName("contrasena")     val contrasena     : String? = null,
     @SerialName("rol")            val rol            : String? = null,
     @SerialName("explotacionId")  val explotacionId  : Int?    = null,
     @SerialName("tipoCarnetRopo") val tipoCarnetRopo : String? = null
