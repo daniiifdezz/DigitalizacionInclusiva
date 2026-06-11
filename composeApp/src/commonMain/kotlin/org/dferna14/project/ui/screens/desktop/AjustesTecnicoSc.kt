@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.ui.components.desktop.DesktopFormField
@@ -89,10 +90,19 @@ fun AjustesTecnicoSc(
     authVm: AuthVm = koinViewModel(),
 ) {
     val usuariosResult by usuarioVm.usuarios.collectAsState()
-    var nuevoFs by remember { mutableStateOf(NuevoAgricultorFs()) }
+    val mensajeError   by usuarioVm.mensajeError.collectAsState()
+    val mensajeRol     by usuarioVm.mensajeRol.collectAsState()
+    var nuevoFs        by remember { mutableStateOf(NuevoAgricultorFs()) }
 
     LaunchedEffect(Unit) {
         usuarioVm.cargarUsuarios(rol = "AGRICULTOR")
+    }
+
+    LaunchedEffect(mensajeError) {
+        if (mensajeError != null) { delay(4_000); usuarioVm.limpiarMensajeError() }
+    }
+    LaunchedEffect(mensajeRol) {
+        if (mensajeRol != null) { delay(4_000); usuarioVm.limpiarMensajeRol() }
     }
 
     val agricultores: List<Usuario> = (usuariosResult as? Result.Success)?.data ?: emptyList()
@@ -349,8 +359,45 @@ fun AjustesTecnicoSc(
                         )
                     }
                 }
+
+                mensajeError?.let { msg ->
+                    Spacer(Modifier.height(12.dp))
+                    FeedbackBanner(msg, esError = true) { usuarioVm.limpiarMensajeError() }
+                }
+                mensajeRol?.let { msg ->
+                    Spacer(Modifier.height(12.dp))
+                    FeedbackBanner(msg, esError = msg.startsWith("Error")) { usuarioVm.limpiarMensajeRol() }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun FeedbackBanner(mensaje: String, esError: Boolean, onDismiss: () -> Unit) {
+    val color = if (esError) TerracotaAccent else OlivaPrimario
+    val bg    = if (esError) TerracotaAccent.copy(alpha = 0.08f) else OlivaTint
+    Row(
+        modifier              = Modifier
+            .fillMaxWidth()
+            .background(bg, RoundedCornerShape(8.dp))
+            .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment     = Alignment.CenterVertically,
+    ) {
+        Text(
+            text     = mensaje,
+            fontSize = 13.sp,
+            color    = color,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector        = Icons.Outlined.Close,
+            contentDescription = "Cerrar",
+            tint               = color,
+            modifier           = Modifier.size(16.dp).clickable(onClick = onDismiss),
+        )
     }
 }
 
