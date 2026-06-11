@@ -13,6 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import org.dferna14.project.ui.screens.*
+import org.dferna14.project.ui.screens.desktop.AjustesTecnicoSc
+import org.dferna14.project.ui.screens.desktop.ConfiguracionInicialSc
+import org.dferna14.project.ui.screens.desktop.DesktopMainSc
+import org.dferna14.project.ui.screens.desktop.PantallaBloqueadaSc
+import org.dferna14.project.ui.screens.desktop.ParcelasDesktopSc
+import org.dferna14.project.ui.screens.desktop.ValidarActividadSc
 import org.dferna14.project.ui.theme.AppTheme
 import org.dferna14.project.ui.theme.BlancoPuro
 import org.dferna14.project.ui.theme.CremaPrincipal
@@ -73,7 +79,7 @@ fun App(isDesktop: Boolean = false) {
 
             is EstadoSesion.Autenticado -> {
                 if (isDesktop && sesion.usuario.rol == "AGRICULTOR") {
-                    PantallaBloqueada(onCerrarSesion = { authVm.cerrarSesion() })
+                    PantallaBloqueadaSc(onCerrarSesion = { authVm.cerrarSesion() })
                 } else {
                     AppContent(isDesktop = isDesktop)
                 }
@@ -151,27 +157,62 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
     when (val screen = currentScreen) {
         is Screen.DesktopHome -> {
             DesktopMainSc(
-                onVerListado = { onNavigate(Screen.MisActividades) },
-                onVerPendientes = { onNavigate(Screen.Pendientes(0)) },
-                onVerParcelas = { onNavigate(Screen.Parcelas) },
-                onVerProductos = { onNavigate(Screen.Productos) },
-                onVerValidar = { id -> onNavigate(Screen.Validar(id)) },
-                onVerCuadernoPdf = { onNavigate(Screen.CuadernoPdf) },
-                onVerAjustes = { onNavigate(Screen.DesktopAjustes) },
-                onVerConfiguracion = { onNavigate(Screen.Configuracion) }
+                onVerActividades   = { onNavigate(Screen.MisActividades) },
+                onVerParcelas      = { onNavigate(Screen.Parcelas) },
+                onVerProductos     = { onNavigate(Screen.Productos) },
+                onVerAjustes       = { onNavigate(Screen.DesktopAjustes) },
+                onVerConfiguracion = { onNavigate(Screen.Configuracion) },
+                onVerValidar       = { id -> onNavigate(Screen.Validar(id)) },
+                onNuevaEntrada     = { onNavigate(Screen.NuevaActividad) },
+                onExportarPdf      = { onNavigate(Screen.CuadernoPdf) },
             )
         }
         is Screen.Configuracion -> {
-            ConfiguracionSc(
-                onVolver = { onNavigate(Screen.DesktopHome) }
+            ConfiguracionInicialSc(
+                onVerInicio        = { onNavigate(Screen.DesktopHome) },
+                onVerActividades   = { onNavigate(Screen.MisActividades) },
+                onVerParcelas      = { onNavigate(Screen.Parcelas) },
+                onVerProductos     = { onNavigate(Screen.Productos) },
+                onVerAjustes       = { onNavigate(Screen.DesktopAjustes) },
+            )
+        }
+        is Screen.Validar -> {
+            ValidarActividadSc(
+                actividadId        = screen.actividadId,
+                onVolver           = { onNavigate(Screen.MisActividades) },
+                onVerInicio        = { onNavigate(Screen.DesktopHome) },
+                onVerActividades   = { onNavigate(Screen.MisActividades) },
+                onVerParcelas      = { onNavigate(Screen.Parcelas) },
+                onVerProductos     = { onNavigate(Screen.Productos) },
+                onVerAjustes       = { onNavigate(Screen.DesktopAjustes) },
+                onVerConfiguracion = { onNavigate(Screen.Configuracion) },
+            )
+        }
+        is Screen.Parcelas -> {
+            ParcelasDesktopSc(
+                onVerInicio        = { onNavigate(Screen.DesktopHome) },
+                onVerActividades   = { onNavigate(Screen.MisActividades) },
+                onVerProductos     = { onNavigate(Screen.Productos) },
+                onVerAjustes       = { onNavigate(Screen.DesktopAjustes) },
+                onVerConfiguracion = { onNavigate(Screen.Configuracion) },
+            )
+        }
+        is Screen.DesktopAjustes -> {
+            AjustesTecnicoSc(
+                onVerInicio        = { onNavigate(Screen.DesktopHome) },
+                onVerActividades   = { onNavigate(Screen.MisActividades) },
+                onVerParcelas      = { onNavigate(Screen.Parcelas) },
+                onVerProductos     = { onNavigate(Screen.Productos) },
+                onVerConfiguracion = { onNavigate(Screen.Configuracion) },
+                onCerrarSesion     = {},
             )
         }
         is Screen.MisActividades -> {
             ActividadListadoSc(
                 onNuevaActividad = { onNavigate(Screen.NuevaActividad) },
-                onVerDetalle = { id -> onNavigate(Screen.Detalle(id)) },
-                isDesktop = true,
-                onVolver = { onNavigate(Screen.DesktopHome) }
+                onVerDetalle     = { id -> onNavigate(Screen.Detalle(id)) },
+                isDesktop        = true,
+                onVolver         = { onNavigate(Screen.DesktopHome) }
             )
         }
         is Screen.NuevaActividad -> {
@@ -181,60 +222,24 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         }
         is Screen.Detalle -> {
             ActividadDetalleSc(
-                actividadId = screen.actividadId,
-                onVolver = { onNavigate(Screen.MisActividades) },
-                onEditar = { id -> onNavigate(Screen.Editar(id)) },
-                onVerSemillas = { id -> onNavigate(Screen.Semillas(id)) },
-                onVerFertilizacion = { parcelaId -> onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId)) }
+                actividadId        = screen.actividadId,
+                onVolver           = { onNavigate(Screen.MisActividades) },
+                onEditar           = { id -> onNavigate(Screen.Editar(id)) },
+                onVerSemillas      = { id -> onNavigate(Screen.Semillas(id)) },
+                onVerFertilizacion = { parcelaId ->
+                    onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId))
+                }
             )
         }
         is Screen.Editar -> {
             EditarActividadSc(
                 actividadId = screen.actividadId,
-                onVolver = { onNavigate(Screen.MisActividades) }
-            )
-        }
-        is Screen.Validar -> {
-            ValidarActividadSc(
-                actividadId = screen.actividadId,
-                onVolver = { onNavigate(Screen.DesktopHome) },
-                onIrAEditarParcela = { parcelaId -> onNavigate(Screen.EditarParcela(parcelaId)) }
-            )
-        }
-        is Screen.Pendientes -> {
-            PendientesSc(
-                onVolver = { onNavigate(Screen.DesktopHome) },
-                onVerActividad = { id -> onNavigate(Screen.Validar(id)) }
-            )
-        }
-        is Screen.Parcelas -> {
-            ParcelasSc(
-                onVolver = { onNavigate(Screen.DesktopHome) },
-                onEditarParcela = { id -> onNavigate(Screen.EditarParcela(id)) }
-            )
-        }
-        is Screen.EditarParcela -> {
-            EditarParcelaSc(
-                parcelaId = screen.parcelaId,
-                onVolver = { onNavigate(Screen.Parcelas) }
-            )
-        }
-        is Screen.Semillas -> {
-            SemillasTratadasSc(
-                actividadId = screen.actividadId,
-                onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
-            )
-        }
-        is Screen.Fertilizacion -> {
-            FertilizacionSc(
-                parcelaId = screen.parcelaId,
-                actividadId = screen.actividadId,
-                onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
+                onVolver    = { onNavigate(Screen.MisActividades) }
             )
         }
         is Screen.Productos -> {
             ProductosSc(
-                onVolver = { onNavigate(Screen.DesktopHome) },
+                onVolver  = { onNavigate(Screen.DesktopHome) },
                 isDesktop = true
             )
         }
@@ -243,10 +248,17 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 onVolver = { onNavigate(Screen.DesktopHome) }
             )
         }
-        is Screen.DesktopAjustes -> {
-            AjustesSc(
-                mostrarBotonCerrarSesion = false,
-                onVolver = { onNavigate(Screen.DesktopHome) }
+        is Screen.Semillas -> {
+            SemillasTratadasSc(
+                actividadId = screen.actividadId,
+                onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
+            )
+        }
+        is Screen.Fertilizacion -> {
+            FertilizacionSc(
+                parcelaId   = screen.parcelaId,
+                actividadId = screen.actividadId,
+                onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
             )
         }
         else -> {}

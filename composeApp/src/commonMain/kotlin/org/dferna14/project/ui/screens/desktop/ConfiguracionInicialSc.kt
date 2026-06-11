@@ -124,6 +124,7 @@ private data class NuevoAplicadorFs(
     val apellidos: String = "",
     val email: String = "",
     val password: String = "",
+    val tipoCarnetRopo: String = "",
 )
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -314,10 +315,11 @@ fun ConfiguracionInicialSc(
                         if (nuevoAplicadorFs.nombre.isNotBlank() && nuevoAplicadorFs.email.isNotBlank()) {
                             usuarioVm.crearAplicador(
                                 usuario   = Usuario(
-                                    nombre    = nuevoAplicadorFs.nombre,
-                                    apellidos = nuevoAplicadorFs.apellidos.ifBlank { null },
-                                    email     = nuevoAplicadorFs.email,
-                                    rol       = "APLICADOR",
+                                    nombre         = nuevoAplicadorFs.nombre,
+                                    apellidos      = nuevoAplicadorFs.apellidos.ifBlank { null },
+                                    email          = nuevoAplicadorFs.email,
+                                    rol            = "APLICADOR",
+                                    tipoCarnetRopo = nuevoAplicadorFs.tipoCarnetRopo.ifBlank { null },
                                 ),
                                 contrasena = nuevoAplicadorFs.password.ifBlank { null },
                             )
@@ -648,6 +650,13 @@ private fun TabAplicadores(
                 label         = "Contraseña provisional",
                 value         = nuevoAplicador.password,
                 onValueChange = { onNuevoChange(nuevoAplicador.copy(password = it)) },
+                modifier      = Modifier.weight(1f),
+            )
+            DesktopFormField(
+                label         = "Tipo de carné ROPO",
+                value         = nuevoAplicador.tipoCarnetRopo,
+                onValueChange = { onNuevoChange(nuevoAplicador.copy(tipoCarnetRopo = it)) },
+                placeholder   = "Básico, Cualificado…",
                 modifier      = Modifier.weight(1f),
             )
         }
