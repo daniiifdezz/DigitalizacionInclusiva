@@ -63,11 +63,7 @@ fun DesktopTabBar(
                     fontSize   = 14.sp,
                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
                     color      = if (isActive) OlivaPrimario else TextoSecundario,
-                    modifier   = Modifier.padding(
-                        horizontal = 16.dp,
-                        top        = 11.dp,
-                        bottom     = 9.dp,
-                    ),
+                    modifier   = Modifier.padding(start = 16.dp, end = 16.dp, top = 11.dp, bottom = 9.dp),
                 )
                 // Indicador 3dp — Color.Transparent en tabs inactivas
                 Box(
