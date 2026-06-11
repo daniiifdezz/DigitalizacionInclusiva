@@ -22,9 +22,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -92,7 +94,9 @@ fun AjustesTecnicoSc(
     val usuariosResult by usuarioVm.usuarios.collectAsState()
     val mensajeError   by usuarioVm.mensajeError.collectAsState()
     val mensajeRol     by usuarioVm.mensajeRol.collectAsState()
-    var nuevoFs        by remember { mutableStateOf(NuevoAgricultorFs()) }
+    var nuevoFs             by remember { mutableStateOf(NuevoAgricultorFs()) }
+    var usuarioSeleccionado by remember { mutableStateOf<Usuario?>(null) }
+    var confirmar           by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         usuarioVm.cargarUsuarios(rol = "AGRICULTOR")
@@ -106,6 +110,74 @@ fun AjustesTecnicoSc(
     }
 
     val agricultores: List<Usuario> = (usuariosResult as? Result.Success)?.data ?: emptyList()
+
+    usuarioSeleccionado?.let { u ->
+        val esAgricultor = u.rol == "AGRICULTOR"
+        val nuevoRol     = if (esAgricultor) "TECNICO" else "AGRICULTOR"
+        val accionLabel  = if (esAgricultor) "Promover a Técnico" else "Degradar a Agricultor"
+        val accionColor  = if (esAgricultor) OlivaPrimario else TerracotaAccent
+
+        AlertDialog(
+            onDismissRequest = { usuarioSeleccionado = null; confirmar = false },
+            title = {
+                Text(
+                    text  = if (!confirmar) "Gestionar usuario" else "Confirmar cambio de rol",
+                    style = MaterialTheme.extraTypography.display.copy(fontSize = 17.sp),
+                    color = TextoPrimario,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (!confirmar) {
+                        Text(
+                            text  = listOfNotNull(u.nombre, u.apellidos).joinToString(" "),
+                            style = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(u.email, style = MaterialTheme.typography.bodySmall.copy(color = TextoSecundario))
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text  = "Rol actual: ${u.rol}",
+                            style = MaterialTheme.typography.bodySmall.copy(color = TextoTerciario),
+                        )
+                    } else {
+                        Text(
+                            text  = "¿Cambiar el rol de ${u.nombre} a $nuevoRol?",
+                            style = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text  = "Esta acción es reversible.",
+                            style = MaterialTheme.typography.bodySmall.copy(color = TextoTerciario),
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (!confirmar) {
+                        confirmar = true
+                    } else {
+                        usuarioVm.cambiarRolUsuario(u.id, nuevoRol)
+                        usuarioSeleccionado = null
+                        confirmar = false
+                    }
+                }) {
+                    Text(
+                        text       = if (!confirmar) accionLabel else "Confirmar",
+                        color      = accionColor,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { usuarioSeleccionado = null; confirmar = false }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            },
+            containerColor = SuperficieSepia,
+        )
+    }
 
     DesktopWrapper(
         activeIndex   = 6,
@@ -276,6 +348,7 @@ fun AjustesTecnicoSc(
                                         fontSize   = 12.sp,
                                         fontWeight = FontWeight.Medium,
                                         color      = OlivaPrimario,
+                                        modifier   = Modifier.clickable { usuarioSeleccionado = u },
                                     )
                                 },
                             ),
