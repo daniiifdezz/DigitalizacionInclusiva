@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Usuario
-import org.dferna14.project.ui.components.CampoField
 import org.dferna14.project.ui.components.desktop.DesktopFormField
 import org.dferna14.project.ui.components.desktop.DesktopTableColumn
 import org.dferna14.project.ui.components.desktop.DesktopTableHeader
@@ -174,9 +173,9 @@ fun AjustesTecnicoSc(
                         )
                     }
                     Spacer(Modifier.height(4.dp))
-                    CampoField(label = "Correo",      value = ajustesVm.emailUsuario)
-                    CampoField(label = "Rol",         value = ajustesVm.rolUsuario)
-                    CampoField(label = "Explotación", value = ajustesVm.explotacionNombre ?: "—")
+                    DesktopFormField(label = "Correo",      value = ajustesVm.emailUsuario,            readOnly = true)
+                    DesktopFormField(label = "Rol",         value = ajustesVm.rolUsuario,              readOnly = true)
+                    DesktopFormField(label = "Explotación", value = ajustesVm.explotacionNombre ?: "—", readOnly = true)
                 }
                 Spacer(Modifier.height(16.dp))
                 // Botón cerrar sesión
