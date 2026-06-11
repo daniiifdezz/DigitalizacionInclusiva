@@ -147,6 +147,7 @@ fun ConfiguracionInicialSc(
     val usuariosResult    by usuarioVm.usuarios.collectAsState()
 
     var activeTab         by remember { mutableStateOf(0) }
+    val scrollState       = rememberScrollState()
     var titularFs         by remember { mutableStateOf(TitularFs()) }
     var explotacionFs     by remember { mutableStateOf(ExplotacionFs()) }
     var nuevoEquipoFs     by remember { mutableStateOf(NuevoEquipoFs()) }
@@ -157,6 +158,8 @@ fun ConfiguracionInicialSc(
         equipoVm.cargarEquipos()
         usuarioVm.cargarUsuarios(rol = "APLICADOR")
     }
+
+    LaunchedEffect(activeTab) { scrollState.scrollTo(0) }
 
     // Sync form state when remote data arrives
     LaunchedEffect(titularResult) {
@@ -279,7 +282,7 @@ fun ConfiguracionInicialSc(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 28.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {

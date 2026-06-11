@@ -21,9 +21,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,15 +51,19 @@ import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.ReferenciaSigpac
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.components.desktop.DesktopFormField
+import org.dferna14.project.ui.components.desktop.DesktopSelectField
 import org.dferna14.project.ui.components.desktop.DesktopTopBar
 import org.dferna14.project.ui.components.desktop.DesktopTopBarAction
 import org.dferna14.project.ui.components.desktop.DesktopWrapper
 import org.dferna14.project.ui.theme.BordeClaro
 import org.dferna14.project.ui.theme.BordeNormal
 import org.dferna14.project.ui.theme.CremaPrincipal
+import org.dferna14.project.ui.theme.OlivaClaro
 import org.dferna14.project.ui.theme.OlivaOscuro
 import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.OlivaTint
 import org.dferna14.project.ui.theme.SuperficieSepia
+import org.dferna14.project.ui.theme.TerracotaAccent
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
@@ -61,7 +72,21 @@ import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
 
-// ── SIGPAC form state ─────────────────────────────────────────────────────────
+//desplegable
+private val ECOREGIMEN_OPCIONES = listOf("P1", "P2A", "P3", "P4", "P5", "P6", "P7")
+private val AIRE_LIBRE_OPCIONES = mapOf(
+    "AL"  to "Aire libre",
+    "M"   to "Malla",
+    "BP"  to "Bajo plástico",
+    "INV" to "Invernadero",
+)
+
+
+private data class ParcelaFs(
+    val alias                : String  = "",
+    val sistemaAsesoramiento : String  = "",
+    val zonaNitratos         : Boolean = false,
+)
 
 private data class SigpacFs(
     val id: Int = 0,
@@ -86,7 +111,6 @@ private data class AgronomicaFs(
     val aireLibreProtegido: String = "",
 )
 
-// ── Screen ────────────────────────────────────────────────────────────────────
 
 @Composable
 fun ParcelasDesktopSc(
@@ -101,10 +125,12 @@ fun ParcelasDesktopSc(
     val parcelasResult       by parcelaVm.parcelas.collectAsState()
     val parcelaCompletaResult by parcelaVm.parcelaCompleta.collectAsState()
 
-    var selectedId   by remember { mutableStateOf<Int?>(null) }
-    var sigpacFs     by remember { mutableStateOf(SigpacFs()) }
-    var agronomicaFs by remember { mutableStateOf(AgronomicaFs()) }
-    var sigpacCargado by remember { mutableStateOf(false) }
+    var selectedId      by remember { mutableStateOf<Int?>(null) }
+    var parcelaFs       by remember { mutableStateOf(ParcelaFs()) }
+    var sigpacFs        by remember { mutableStateOf(SigpacFs()) }
+    var agronomicaFs    by remember { mutableStateOf(AgronomicaFs()) }
+    var sigpacCargado   by remember { mutableStateOf(false) }
+    var parcelaAEliminar by remember { mutableStateOf<Parcela?>(null) }
 
     val parcelas = (parcelasResult as? Result.Success)?.data ?: emptyList()
 
@@ -112,7 +138,6 @@ fun ParcelasDesktopSc(
         parcelaVm.cargarParcelas()
     }
 
-    // Auto-select first parcela when list arrives
     LaunchedEffect(parcelasResult) {
         val lista = (parcelasResult as? Result.Success)?.data ?: return@LaunchedEffect
         if (selectedId == null && lista.isNotEmpty()) {
@@ -121,23 +146,27 @@ fun ParcelasDesktopSc(
         }
     }
 
-    // Sync form state when parcelaCompleta loads
     LaunchedEffect(parcelaCompletaResult) {
         val pc = (parcelaCompletaResult as? Result.Success)?.data ?: return@LaunchedEffect
         sigpacCargado = false
         val s = pc.referenciaSigpac
         val a = pc.datosAgronomicos
+        parcelaFs = ParcelaFs(
+            alias                = pc.parcela.alias                ?: "",
+            sistemaAsesoramiento = pc.parcela.sistemaAsesoramiento ?: "",
+            zonaNitratos         = pc.parcela.zonaNitratos         ?: false,
+        )
         sigpacFs = SigpacFs(
-            id              = s?.id              ?: 0,
-            provincia       = s?.provincia       ?: "",
+            id               = s?.id               ?: 0,
+            provincia        = s?.provincia        ?: "",
             terminoMunicipal = s?.terminoMunicipal ?: "",
-            codigoAgregado  = s?.codigoAgregado  ?: "",
-            zona            = s?.zona            ?: "",
-            numeroPoligono  = s?.numeroPoligono  ?: "",
-            numeroParcela   = s?.numeroParcela   ?: "",
-            numeroRecinto   = s?.numeroRecinto   ?: "",
-            usoSigpac       = s?.usoSigpac       ?: "",
-            superficieHa    = s?.superficieHa?.toString() ?: "",
+            codigoAgregado   = s?.codigoAgregado   ?: "",
+            zona             = s?.zona             ?: "",
+            numeroPoligono   = s?.numeroPoligono   ?: "",
+            numeroParcela    = s?.numeroParcela    ?: "",
+            numeroRecinto    = s?.numeroRecinto    ?: "",
+            usoSigpac        = s?.usoSigpac        ?: "",
+            superficieHa     = s?.superficieHa?.toString() ?: "",
         )
         agronomicaFs = AgronomicaFs(
             id                 = a?.id                 ?: 0,
@@ -153,6 +182,41 @@ fun ParcelasDesktopSc(
 
     val parcelaSeleccionada = parcelas.find { it.id == selectedId }
 
+    //confirmacion borrado
+    parcelaAEliminar?.let { p ->
+        AlertDialog(
+            onDismissRequest = { parcelaAEliminar = null },
+            title = {
+                Text(
+                    "Eliminar parcela",
+                    style = MaterialTheme.extraTypography.display.copy(fontSize = 17.sp),
+                    color = TextoPrimario,
+                )
+            },
+            text = {
+                Text(
+                    "¿Seguro que quieres eliminar \"${p.alias ?: "Parcela ${p.id}"}\" y todos sus datos SIGPAC y agronómicos?",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    parcelaVm.eliminarParcelaEnCascada(p.id)
+                    if (selectedId == p.id) selectedId = null
+                    parcelaAEliminar = null
+                }) {
+                    Text("Eliminar", color = TerracotaAccent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { parcelaAEliminar = null }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            },
+            containerColor = SuperficieSepia,
+        )
+    }
+
     DesktopWrapper(
         activeIndex   = 2,
         onNavigate    = { idx ->
@@ -160,7 +224,6 @@ fun ParcelasDesktopSc(
                 0    -> onVerInicio()
                 1    -> onVerActividades()
                 3    -> onVerProductos()
-                4    -> onVerAjustes()
                 5    -> onVerConfiguracion()
                 6    -> onVerAjustes()
                 else -> {}
@@ -187,7 +250,7 @@ fun ParcelasDesktopSc(
         )
 
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            // ── Master: lista de parcelas ─────────────────────────────────
+            // listar parcelas
             Column(
                 modifier = Modifier
                     .width(264.dp)
@@ -198,7 +261,6 @@ fun ParcelasDesktopSc(
                     }
                     .verticalScroll(rememberScrollState()),
             ) {
-                // Header
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -210,14 +272,12 @@ fun ParcelasDesktopSc(
                         color = TextoTerciario,
                     )
                 }
-                // Parcela items
                 parcelas.forEach { parcela ->
                     val isActive = parcela.id == selectedId
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .drawBehind {
-                                // left accent bar
                                 val barWidth = 3.dp.toPx()
                                 drawLine(
                                     color       = if (isActive) OlivaPrimario else Color.Transparent,
@@ -225,7 +285,6 @@ fun ParcelasDesktopSc(
                                     end         = Offset(0f, size.height),
                                     strokeWidth = barWidth,
                                 )
-                                // bottom separator
                                 drawLine(
                                     color       = BordeClaro,
                                     start       = Offset(0f, size.height),
@@ -238,9 +297,10 @@ fun ParcelasDesktopSc(
                                 selectedId = parcela.id
                                 parcelaVm.cargarParcelaCompleta(parcela.id)
                             }
-                            .padding(horizontal = 16.dp, vertical = 13.dp),
+                            .padding(start = 16.dp, end = 8.dp, top = 13.dp, bottom = 13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text       = parcela.alias ?: "Parcela ${parcela.id}",
                                 fontSize   = 14.sp,
@@ -257,6 +317,15 @@ fun ParcelasDesktopSc(
                                 modifier = Modifier.padding(top = 2.dp),
                             )
                         }
+                        Icon(
+                            imageVector        = Icons.Outlined.Delete,
+                            contentDescription = "Eliminar parcela",
+                            tint               = TerracotaAccent.copy(alpha = 0.6f),
+                            modifier           = Modifier
+                                .size(16.dp)
+                                .clickable { parcelaAEliminar = parcela },
+                        )
+                        Spacer(Modifier.width(4.dp))
                     }
                 }
                 if (parcelas.isEmpty()) {
@@ -269,7 +338,7 @@ fun ParcelasDesktopSc(
                 }
             }
 
-            // ── Detail: formulario SIGPAC + agronómico ────────────────────
+            // forms
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -284,9 +353,21 @@ fun ParcelasDesktopSc(
                     }
                 } else {
                     ParcelaDetail(
-                        parcela      = parcelaSeleccionada,
-                        sigpacFs     = sigpacFs,
-                        agronomicaFs = agronomicaFs,
+                        parcela            = parcelaSeleccionada,
+                        parcelaFs          = parcelaFs,
+                        onParcelaFsChange  = { parcelaFs = it },
+                        onGuardarParcela   = {
+                            parcelaVm.actualizarParcela(
+                                parcelaSeleccionada.copy(
+                                    alias                = parcelaFs.alias.ifBlank { null },
+                                    sistemaAsesoramiento = parcelaFs.sistemaAsesoramiento.ifBlank { null },
+                                    zonaNitratos         = parcelaFs.zonaNitratos,
+                                )
+                            )
+                        },
+                        explotacionNombre  = ajustesVm.explotacionNombre,
+                        sigpacFs           = sigpacFs,
+                        agronomicaFs       = agronomicaFs,
                         onSigpacChange     = { sigpacFs = it },
                         onAgronomicaChange = { agronomicaFs = it },
                         onGuardarSigpac    = {
@@ -329,28 +410,77 @@ fun ParcelasDesktopSc(
     }
 }
 
-//detalles de parcela
+// deetalle de parcelas
+
 @Composable
 private fun ParcelaDetail(
-    parcela: Parcela,
-    sigpacFs: SigpacFs,
-    agronomicaFs: AgronomicaFs,
-    onSigpacChange: (SigpacFs) -> Unit,
-    onAgronomicaChange: (AgronomicaFs) -> Unit,
-    onGuardarSigpac: () -> Unit,
+    parcela            : Parcela,
+    parcelaFs          : ParcelaFs,
+    onParcelaFsChange  : (ParcelaFs) -> Unit,
+    onGuardarParcela   : () -> Unit,
+    explotacionNombre  : String?,
+    sigpacFs           : SigpacFs,
+    agronomicaFs       : AgronomicaFs,
+    onSigpacChange     : (SigpacFs) -> Unit,
+    onAgronomicaChange : (AgronomicaFs) -> Unit,
+    onGuardarSigpac    : () -> Unit,
     onGuardarAgronomico: () -> Unit,
 ) {
-    // Header de parcela + botón guardar SIGPAC
-    Row(
-        modifier              = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment     = Alignment.CenterVertically,
+    var ecoExpanded  by remember { mutableStateOf(false) }
+    var aireExpanded by remember { mutableStateOf(false) }
+
+    // basicos
+    SectionHeader(title = "Datos básicos", onGuardar = onGuardarParcela)
+    Column(
+        modifier            = Modifier
+            .fillMaxWidth()
+            .background(SuperficieSepia, RoundedCornerShape(12.dp))
+            .border(1.dp, BordeNormal, RoundedCornerShape(12.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(
-            text  = parcela.alias ?: "Parcela ${parcela.id}",
-            style = MaterialTheme.extraTypography.display.copy(fontSize = 20.sp),
-            color = TextoPrimario,
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            DesktopFormField(
+                label         = "Alias / Nombre",
+                value         = parcelaFs.alias,
+                onValueChange = { onParcelaFsChange(parcelaFs.copy(alias = it)) },
+                placeholder   = "Ej. La Vega Norte",
+                modifier      = Modifier.weight(1.5f),
+            )
+            DesktopFormField(
+                label    = "Explotación",
+                value    = explotacionNombre ?: "—",
+                readOnly = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        DesktopFormField(
+            label         = "Sistema de asesoramiento GIP",
+            value         = parcelaFs.sistemaAsesoramiento,
+            onValueChange = { onParcelaFsChange(parcelaFs.copy(sistemaAsesoramiento = it)) },
+            placeholder   = "Oficial, privado, ADF…",
         )
+        Row(
+            modifier              = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment     = Alignment.CenterVertically,
+        ) {
+            Text(
+                text  = "Zona vulnerable a nitratos",
+                style = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
+            )
+            Switch(
+                checked         = parcelaFs.zonaNitratos,
+                onCheckedChange = { onParcelaFsChange(parcelaFs.copy(zonaNitratos = it)) },
+                colors          = SwitchDefaults.colors(
+                    checkedThumbColor       = CremaPrincipal,
+                    checkedTrackColor       = OlivaPrimario,
+                    uncheckedThumbColor     = CremaPrincipal,
+                    uncheckedTrackColor     = BordeNormal,
+                    uncheckedBorderColor    = BordeNormal,
+                ),
+            )
+        }
     }
 
     //sigpac
@@ -364,9 +494,9 @@ private fun ParcelaDetail(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            DesktopFormField("Provincia (cód.)",   sigpacFs.provincia,       { onSigpacChange(sigpacFs.copy(provincia = it)) },       modifier = Modifier.weight(1f))
+            DesktopFormField("Provincia (cód.)",   sigpacFs.provincia,        { onSigpacChange(sigpacFs.copy(provincia = it)) },        modifier = Modifier.weight(1f))
             DesktopFormField("Término municipal",  sigpacFs.terminoMunicipal, { onSigpacChange(sigpacFs.copy(terminoMunicipal = it)) }, modifier = Modifier.weight(1f))
-            DesktopFormField("Municipio (cód.)",   sigpacFs.codigoAgregado,   { onSigpacChange(sigpacFs.copy(codigoAgregado = it)) },  modifier = Modifier.weight(1f))
+            DesktopFormField("Municipio (cód.)",   sigpacFs.codigoAgregado,   { onSigpacChange(sigpacFs.copy(codigoAgregado = it)) },   modifier = Modifier.weight(1f))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             DesktopFormField("Polígono", sigpacFs.numeroPoligono, { onSigpacChange(sigpacFs.copy(numeroPoligono = it)) }, modifier = Modifier.weight(1f))
@@ -391,12 +521,66 @@ private fun ParcelaDetail(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            DesktopFormField("Especie / variedad",     agronomicaFs.especieVariedad,    { onAgronomicaChange(agronomicaFs.copy(especieVariedad = it)) },    modifier = Modifier.weight(1.5f))
-            DesktopFormField("Régimen hídrico",        agronomicaFs.secanoRegadio,      { onAgronomicaChange(agronomicaFs.copy(secanoRegadio = it)) },      modifier = Modifier.weight(1f))
+            DesktopFormField(
+                label         = "Especie / variedad",
+                value         = agronomicaFs.especieVariedad,
+                onValueChange = { onAgronomicaChange(agronomicaFs.copy(especieVariedad = it)) },
+                modifier      = Modifier.weight(1.5f),
+            )
+            DesktopFormField(
+                label         = "Régimen hídrico",
+                value         = agronomicaFs.secanoRegadio,
+                onValueChange = { onAgronomicaChange(agronomicaFs.copy(secanoRegadio = it)) },
+                modifier      = Modifier.weight(1f),
+            )
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            DesktopFormField("Eco-régimen FEADER",    agronomicaFs.ecoregimenPractica, { onAgronomicaChange(agronomicaFs.copy(ecoregimenPractica = it)) }, modifier = Modifier.weight(1.5f))
-            DesktopFormField("Aire libre / protegido", agronomicaFs.aireLibreProtegido, { onAgronomicaChange(agronomicaFs.copy(aireLibreProtegido = it)) }, modifier = Modifier.weight(1f))
+            // Eco-régimen FEADER — desplegable
+            Box(modifier = Modifier.weight(1.5f)) {
+                DesktopSelectField(
+                    label = "Eco-régimen FEADER",
+                    value = agronomicaFs.ecoregimenPractica,
+                    onClick = { ecoExpanded = true },
+                )
+                DropdownMenu(
+                    expanded          = ecoExpanded,
+                    onDismissRequest  = { ecoExpanded = false },
+                ) {
+                    ECOREGIMEN_OPCIONES.forEach { opcion ->
+                        DropdownMenuItem(
+                            text    = { Text(opcion) },
+                            onClick = {
+                                onAgronomicaChange(agronomicaFs.copy(ecoregimenPractica = opcion))
+                                ecoExpanded = false
+                            },
+                        )
+                    }
+                }
+            }
+            // Aire libre / Protegido — desplegable
+            Box(modifier = Modifier.weight(1f)) {
+                DesktopSelectField(
+                    label = "Aire libre / Protegido",
+                    value = agronomicaFs.aireLibreProtegido.let { code ->
+                        if (code.isBlank()) "" else "$code — ${AIRE_LIBRE_OPCIONES[code].orEmpty()}"
+                    },
+                    onClick = { aireExpanded = true },
+                )
+                DropdownMenu(
+                    expanded         = aireExpanded,
+                    onDismissRequest = { aireExpanded = false },
+                ) {
+                    AIRE_LIBRE_OPCIONES.forEach { (code, label) ->
+                        DropdownMenuItem(
+                            text    = { Text("$code — $label") },
+                            onClick = {
+                                onAgronomicaChange(agronomicaFs.copy(aireLibreProtegido = code))
+                                aireExpanded = false
+                            },
+                        )
+                    }
+                }
+            }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             DesktopFormField("Fecha de siembra (AAAA-MM-DD)",       agronomicaFs.fechaInicio, { onAgronomicaChange(agronomicaFs.copy(fechaInicio = it)) }, modifier = Modifier.weight(1f))
@@ -405,7 +589,8 @@ private fun ParcelaDetail(
     }
 }
 
-//ayudas
+//ayudass
+
 @Composable
 private fun SectionHeader(title: String, onGuardar: () -> Unit) {
     Row(
