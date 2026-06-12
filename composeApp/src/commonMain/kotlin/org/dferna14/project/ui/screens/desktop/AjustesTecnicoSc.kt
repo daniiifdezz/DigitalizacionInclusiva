@@ -66,6 +66,13 @@ import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
 import org.koin.compose.viewmodel.koinViewModel
 
+private val COLS_TECNICOS = listOf(
+    DesktopTableColumn("Técnico",  weight = 1.4f),
+    DesktopTableColumn("Correo",   weight = 1.8f),
+    DesktopTableColumn("Estado",   weight = 0.8f),
+    DesktopTableColumn("",         fixedWidth = 60.dp),
+)
+
 private val COLS_AGRICULTORES = listOf(
     DesktopTableColumn("Agricultor",  weight = 1.4f),
     DesktopTableColumn("Correo",      weight = 1.8f),
@@ -91,15 +98,17 @@ fun AjustesTecnicoSc(
     ajustesVm: AjustesVm = koinViewModel(),
     authVm: AuthVm = koinViewModel(),
 ) {
-    val usuariosResult by usuarioVm.usuarios.collectAsState()
-    val mensajeError   by usuarioVm.mensajeError.collectAsState()
-    val mensajeRol     by usuarioVm.mensajeRol.collectAsState()
+    val usuariosResult  by usuarioVm.usuarios.collectAsState()
+    val tecnicosResult  by usuarioVm.tecnicos.collectAsState()
+    val mensajeError    by usuarioVm.mensajeError.collectAsState()
+    val mensajeRol      by usuarioVm.mensajeRol.collectAsState()
     var nuevoFs             by remember { mutableStateOf(NuevoAgricultorFs()) }
     var usuarioSeleccionado by remember { mutableStateOf<Usuario?>(null) }
     var confirmar           by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         usuarioVm.cargarUsuarios(rol = "AGRICULTOR")
+        usuarioVm.cargarTecnicos()
     }
 
     LaunchedEffect(mensajeError) {
@@ -110,6 +119,7 @@ fun AjustesTecnicoSc(
     }
 
     val agricultores: List<Usuario> = (usuariosResult as? Result.Success)?.data ?: emptyList()
+    val tecnicos: List<Usuario>     = (tecnicosResult as? Result.Success)?.data ?: emptyList()
 
     usuarioSeleccionado?.let { u ->
         val esAgricultor = u.rol == "AGRICULTOR"
@@ -180,14 +190,14 @@ fun AjustesTecnicoSc(
     }
 
     DesktopWrapper(
-        activeIndex   = 6,
+        activeIndex   = 5,
         onNavigate    = { idx ->
             when (idx) {
                 0    -> onVerInicio()
                 1    -> onVerActividades()
                 2    -> onVerParcelas()
                 3    -> onVerProductos()
-                5    -> onVerConfiguracion()
+                4    -> onVerConfiguracion()
                 else -> {}
             }
         },
@@ -440,6 +450,88 @@ fun AjustesTecnicoSc(
                 mensajeRol?.let { msg ->
                     Spacer(Modifier.height(12.dp))
                     FeedbackBanner(msg, esError = msg.startsWith("Error")) { usuarioVm.limpiarMensajeRol() }
+                }
+
+                Spacer(Modifier.height(28.dp))
+
+                // ── Técnicos de la explotación ────────────────────────────
+                Row(
+                    modifier              = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text  = "Técnicos de la explotación".uppercase(),
+                        style = MaterialTheme.extraTypography.eyebrow,
+                        color = TextoTerciario,
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(SuperficieSepia, RoundedCornerShape(12.dp))
+                        .border(1.dp, BordeNormal, RoundedCornerShape(12.dp)),
+                ) {
+                    DesktopTableHeader(COLS_TECNICOS)
+                    tecnicos.forEachIndexed { i, u ->
+                        DesktopTableRow(
+                            columns = COLS_TECNICOS,
+                            last    = i == tecnicos.lastIndex,
+                            cells   = listOf(
+                                {
+                                    Text(
+                                        text       = listOfNotNull(u.nombre, u.apellidos).joinToString(" "),
+                                        fontSize   = 13.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color      = TextoPrimario,
+                                    )
+                                },
+                                {
+                                    Text(
+                                        text     = u.email,
+                                        fontSize = 12.5.sp,
+                                        color    = TextoSecundario,
+                                    )
+                                },
+                                {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(OlivaTint, RoundedCornerShape(999.dp))
+                                            .border(1.dp, OlivaClaro, RoundedCornerShape(999.dp))
+                                            .padding(horizontal = 9.dp, vertical = 3.dp),
+                                    ) {
+                                        Text(
+                                            text       = "Activo",
+                                            fontSize   = 11.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color      = OlivaOscuro,
+                                        )
+                                    }
+                                },
+                                {
+                                    Text(
+                                        text       = "Editar →",
+                                        fontSize   = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color      = TerracotaAccent,
+                                        modifier   = Modifier.clickable { usuarioSeleccionado = u },
+                                    )
+                                },
+                            ),
+                        )
+                    }
+                    if (tecnicos.isEmpty()) {
+                        Box(
+                            modifier         = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                "Sin técnicos registrados",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = TextoTerciario),
+                            )
+                        }
+                    }
                 }
             }
         }

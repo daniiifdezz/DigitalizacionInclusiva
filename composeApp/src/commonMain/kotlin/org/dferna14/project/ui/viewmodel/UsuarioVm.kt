@@ -18,6 +18,9 @@ class UsuarioVm(
     private val _usuarios = MutableStateFlow<Result<List<Usuario>>>(Result.Loading)
     val usuarios: StateFlow<Result<List<Usuario>>> = _usuarios.asStateFlow()
 
+    private val _tecnicos = MutableStateFlow<Result<List<Usuario>>>(Result.Loading)
+    val tecnicos: StateFlow<Result<List<Usuario>>> = _tecnicos.asStateFlow()
+
     private val _mensajeError = MutableStateFlow<String?>(null)
     val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
 
@@ -26,6 +29,19 @@ class UsuarioVm(
 
     init {
         cargarUsuarios()
+    }
+
+    fun cargarTecnicos() {
+        viewModelScope.launch {
+            _tecnicos.value = Result.Loading
+            try {
+                _tecnicos.value = repository.getUsuarios("TECNICO")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _tecnicos.value = Result.Error("Error al cargar técnicos: ${e.message}")
+            }
+        }
     }
 
     fun cargarUsuarios(rol: String? = null) {
@@ -75,10 +91,7 @@ class UsuarioVm(
         }
     }
 
-    /**
-     * Promueve (TECNICO) o degrada (AGRICULTOR) a un usuario. Al terminar refresca
-     * la lista y publica un mensaje de feedback en [mensajeRol].
-     */
+
     fun cambiarRolUsuario(usuarioId: Int, nuevoRol: String) {
         viewModelScope.launch {
             when (val resultado = repository.cambiarRolUsuario(usuarioId, nuevoRol)) {
@@ -87,7 +100,8 @@ class UsuarioVm(
                         "Usuario promovido a técnico correctamente"
                     else
                         "Usuario degradado a agricultor correctamente"
-                    cargarUsuarios()
+                    cargarUsuarios(rol = "AGRICULTOR")
+                    cargarTecnicos()
                 }
                 is Result.Error -> _mensajeRol.value = "Error: ${resultado.message}"
                 else -> Unit
