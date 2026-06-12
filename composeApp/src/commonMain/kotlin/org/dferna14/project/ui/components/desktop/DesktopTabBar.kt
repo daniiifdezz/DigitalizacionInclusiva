@@ -68,7 +68,6 @@ fun DesktopTabBar(
                 // Indicador 3dp — Color.Transparent en tabs inactivas
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .height(3.dp)
                         .background(if (isActive) OlivaPrimario else Color.Transparent),
                 )
