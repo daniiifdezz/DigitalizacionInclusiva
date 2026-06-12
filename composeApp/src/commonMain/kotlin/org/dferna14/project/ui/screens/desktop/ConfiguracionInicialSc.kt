@@ -253,15 +253,14 @@ fun ConfiguracionInicialSc(
     }
 
     DesktopWrapper(
-        activeIndex   = 5,
+        activeIndex   = 4,
         onNavigate    = { idx ->
             when (idx) {
                 0    -> onVerInicio()
                 1    -> onVerActividades()
                 2    -> onVerParcelas()
                 3    -> onVerProductos()
-                4    -> onVerAjustes()
-                6    -> onVerAjustes()
+                5    -> onVerAjustes()
                 else -> {}
             }
         },

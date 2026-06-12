@@ -224,8 +224,8 @@ fun ParcelasDesktopSc(
                 0    -> onVerInicio()
                 1    -> onVerActividades()
                 3    -> onVerProductos()
-                5    -> onVerConfiguracion()
-                6    -> onVerAjustes()
+                4    -> onVerConfiguracion()
+                5    -> onVerAjustes()
                 else -> {}
             }
         },

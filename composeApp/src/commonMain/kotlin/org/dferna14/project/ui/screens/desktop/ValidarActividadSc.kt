@@ -181,9 +181,8 @@ fun ValidarActividadSc(
                 0    -> onVerInicio()
                 2    -> onVerParcelas()
                 3    -> onVerProductos()
-                4    -> onVerAjustes()
-                5    -> onVerConfiguracion()
-                6    -> onVerAjustes()
+                4    -> onVerConfiguracion()
+                5    -> onVerAjustes()
                 else -> {}
             }
         },

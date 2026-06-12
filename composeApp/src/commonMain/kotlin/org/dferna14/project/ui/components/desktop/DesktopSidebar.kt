@@ -23,7 +23,6 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
@@ -54,9 +53,9 @@ import org.dferna14.project.ui.theme.TerracotaAccent
 //  DesktopSidebar — PermanentNavigationDrawer (M3)
 //  Sidebar oscuro fijo con 2 grupos de navegación y pie de usuario.
 //
-//  activeIndex: índice global de 0-6:
+//  activeIndex: índice global de 0-5:
 //    Cuaderno  → 0 Inicio · 1 Actividades · 2 Parcelas · 3 Productos
-//    Gestión   → 4 Agricultores · 5 Configuración · 6 Ajustes
+//    Gestión   → 4 Configuración · 5 Ajustes
 //  badges: mapa índice → número a mostrar en el badge
 // ════════════════════════════════════════════════════════════════════════
 
@@ -70,7 +69,6 @@ private val NAV_GROUPS = listOf(
         NavItem("Productos",     Icons.Outlined.Science),
     ),
     "Gestión" to listOf(
-        NavItem("Agricultores",  Icons.Outlined.Person),
         NavItem("Configuración", Icons.Outlined.Settings),
         NavItem("Ajustes",       Icons.Outlined.ManageAccounts),
     ),
