@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -72,10 +73,14 @@ import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.TextoPlaceholder
 import org.dferna14.project.ui.theme.TextoSecundario
+import org.dferna14.project.ui.theme.BordeNormal
+import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.SuperficieSepia
 import org.dferna14.project.ui.theme.VerdeFondoInfo
 import org.dferna14.project.ui.theme.VerdeFondoValidada
 import org.dferna14.project.ui.theme.VerdeInfo
 import org.dferna14.project.ui.theme.VerdeValidada
+import org.dferna14.project.ui.theme.extraTypography
 
 /**
  * Componentes reutilizables del sistema de diseño "Campo". Cada uno encapsula
@@ -94,7 +99,7 @@ fun CampoCard(
     val baseModifier = modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(14.dp))
-        .background(BlancoPuro)
+        .background(SuperficieSepia)
         .border(0.5.dp, BordeSuave, RoundedCornerShape(14.dp))
 
     val finalModifier = if (onClick != null) {
@@ -165,15 +170,15 @@ fun CampoTextField(
         shape = RoundedCornerShape(12.dp),
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = NaranjaPrimario,
+            focusedBorderColor   = OlivaPrimario,
             unfocusedBorderColor = BordeMedio,
             disabledBorderColor  = BordeMedio,
             focusedContainerColor   = BlancoPuro,
             unfocusedContainerColor = BlancoPuro,
             disabledContainerColor  = BlancoPuro,
-            focusedLabelColor   = NaranjaPrimario,
+            focusedLabelColor   = OlivaPrimario,
             unfocusedLabelColor = TextoTerciario,
-            cursorColor = NaranjaPrimario
+            cursorColor = OlivaPrimario
         )
     )
 }
@@ -230,7 +235,7 @@ fun CampoToggle(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor   = BlancoPuro,
-                checkedTrackColor   = NaranjaPrimario,
+                checkedTrackColor   = OlivaPrimario,
                 uncheckedThumbColor = BlancoPuro,
                 uncheckedTrackColor = TextoTerciario
             )
@@ -283,7 +288,7 @@ fun CampoPrimaryButton(
             .defaultMinSize(minHeight = 52.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor         = NaranjaPrimario,
+            containerColor         = OlivaPrimario,
             contentColor           = BlancoPuro,
             disabledContainerColor = TextoTerciario,
             disabledContentColor   = BlancoPuro
@@ -311,24 +316,24 @@ fun CampoSecondaryButton(
             .fillMaxWidth()
             .defaultMinSize(minHeight = 48.dp),
         shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, BordeNaranjaSuave),
+        border = BorderStroke(1.5.dp, OlivaPrimario),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = CremaSecundario,
-            contentColor   = NaranjaPrimario
+            contentColor   = OlivaPrimario
         )
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = NaranjaPrimario,
+                tint = OlivaPrimario,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
         }
         Text(
             text = text,
-            color = NaranjaPrimario,
+            color = OlivaPrimario,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium
         )
@@ -366,13 +371,13 @@ fun <T> CampoDropdown(
                 color = if (selectedItem != null) TextoPrimario else TextoPlaceholder
             ),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor   = NaranjaPrimario,
+                focusedBorderColor   = OlivaPrimario,
                 unfocusedBorderColor = BordeMedio,
                 disabledBorderColor  = BordeMedio,
                 focusedContainerColor   = BlancoPuro,
                 unfocusedContainerColor = BlancoPuro,
                 disabledContainerColor  = BlancoPuro,
-                focusedLabelColor   = NaranjaPrimario,
+                focusedLabelColor   = OlivaPrimario,
                 unfocusedLabelColor = TextoTerciario,
                 focusedTrailingIconColor   = TextoTerciario,
                 unfocusedTrailingIconColor = TextoTerciario
@@ -573,16 +578,39 @@ fun CampoPasswordField(
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextoPrimario),
         supportingText = supportingText?.let { { Text(it) } },
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = if (isError) RojoEliminar else NaranjaPrimario,
+            focusedBorderColor   = if (isError) RojoEliminar else OlivaPrimario,
             unfocusedBorderColor = if (isError) RojoEliminar else BordeMedio,
             disabledBorderColor  = BordeMedio,
             errorBorderColor     = RojoEliminar,
             focusedContainerColor   = BlancoPuro,
             unfocusedContainerColor = BlancoPuro,
             disabledContainerColor  = BlancoPuro,
-            focusedLabelColor   = if (isError) RojoEliminar else NaranjaPrimario,
+            focusedLabelColor   = if (isError) RojoEliminar else OlivaPrimario,
             unfocusedLabelColor = TextoTerciario,
-            cursorColor         = NaranjaPrimario
+            cursorColor         = OlivaPrimario
         )
     )
+}
+
+@Composable
+fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 4.dp)
+    ) {
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.extraTypography.eyebrow,
+            color = OlivaPrimario
+        )
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 6.dp),
+            color = BordeNormal,
+            thickness = 0.5.dp
+        )
+    }
 }

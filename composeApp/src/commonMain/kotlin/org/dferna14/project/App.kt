@@ -22,9 +22,10 @@ import org.dferna14.project.ui.screens.desktop.ValidarActividadSc
 import org.dferna14.project.ui.theme.AppTheme
 import org.dferna14.project.ui.theme.BlancoPuro
 import org.dferna14.project.ui.theme.CremaPrincipal
-import org.dferna14.project.ui.theme.NaranjaClaro
-import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.OlivaTint
 import org.dferna14.project.ui.theme.RojoEliminar
+import org.dferna14.project.ui.theme.SuperficieSepia
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.AuthVm
@@ -94,7 +95,7 @@ private fun PantallaCargandoSesion() {
         modifier = Modifier.fillMaxSize().background(CremaPrincipal),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(color = NaranjaPrimario)
+        CircularProgressIndicator(color = OlivaPrimario)
     }
 }
 
@@ -300,7 +301,7 @@ private fun MobileApp(
 
     Scaffold(
         bottomBar = {
-            NavigationBar(containerColor = BlancoPuro) {
+            NavigationBar(containerColor = SuperficieSepia) {
                 tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = selectedTab == index,
@@ -315,11 +316,11 @@ private fun MobileApp(
                         icon  = { Icon(tab.icono, contentDescription = tab.titulo) },
                         label = { Text(tab.titulo) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor   = NaranjaPrimario,
-                            selectedTextColor   = NaranjaPrimario,
+                            selectedIconColor   = OlivaPrimario,
+                            selectedTextColor   = OlivaPrimario,
                             unselectedIconColor = TextoTerciario,
                             unselectedTextColor = TextoTerciario,
-                            indicatorColor      = NaranjaClaro
+                            indicatorColor      = OlivaTint
                         )
                     )
                 }
