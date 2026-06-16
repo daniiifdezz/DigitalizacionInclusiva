@@ -1,5 +1,6 @@
 package org.dferna14.project.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,9 +28,12 @@ import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.components.CampoTextoMultilinea
+import org.dferna14.project.ui.components.SectionHeader
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeSuave
-import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.CremaPrincipal
+import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.SuperficieSepia
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
@@ -92,7 +96,7 @@ fun NuevaActividadSc(
     val parcelas = (parcelasState as? Result.Success)?.data.orEmpty()
     val productos = (productosState as? Result.Success)?.data.orEmpty()
 
-    Scaffold { padding ->
+    Scaffold(containerColor = CremaPrincipal) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             NavBarFormulario(titulo = "Nueva actividad", onVolver = onVolver)
             HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
@@ -105,6 +109,7 @@ fun NuevaActividadSc(
                     .padding(top = 12.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                SectionHeader("Datos generales")
                 CampoField(
                     label = "Fecha de registro",
                     value = formatearFecha(fechaHoy)
@@ -135,6 +140,7 @@ fun NuevaActividadSc(
                     )
                 }
 
+                SectionHeader("Problema fitosanitario")
                 CampoTextoMultilinea(
                     label = "Problema fitosanitario",
                     value = problemaFitosanitario,
@@ -145,14 +151,8 @@ fun NuevaActividadSc(
                     mensaje = "Describe la plaga, enfermedad o mala hierba detectada. Ej: Pulgón verde en trigo, Oídio en vid, Malas hierbas gramíneas."
                 )
 
-                // Lista de productos ya añadidos. Cada item se puede eliminar
-                // antes de guardar la actividad.
+                SectionHeader("Productos aplicados")
                 if (productosSeleccionados.isNotEmpty()) {
-                    Text(
-                        text = "Productos añadidos",
-                        fontSize = 13.sp,
-                        color = TextoTerciario
-                    )
                     productosSeleccionados.forEachIndexed { index, (prod, dosisProd) ->
                         CampoCard {
                             Row(
@@ -217,6 +217,7 @@ fun NuevaActividadSc(
                     )
                 }
 
+                SectionHeader("Observaciones")
                 CampoTextoMultilinea(
                     label = "Observaciones (opcional)",
                     value = observaciones,
@@ -262,6 +263,7 @@ internal fun NavBarFormulario(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(SuperficieSepia)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -269,11 +271,11 @@ internal fun NavBarFormulario(
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                 contentDescription = "Volver",
-                tint = NaranjaPrimario,
+                tint = OlivaPrimario,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(Modifier.width(4.dp))
-            Text("Volver", color = NaranjaPrimario, fontSize = 13.sp)
+            Text("Volver", color = OlivaPrimario, fontSize = 13.sp)
         }
         Spacer(Modifier.weight(1f))
         Text(
