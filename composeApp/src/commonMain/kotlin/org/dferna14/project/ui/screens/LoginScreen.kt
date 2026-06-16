@@ -1,39 +1,36 @@
 package org.dferna14.project.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.dferna14.project.data.remote.UsuarioDto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.components.CampoPasswordField
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.theme.BordeNormal
 import org.dferna14.project.ui.theme.CremaPrincipal
-import org.dferna14.project.ui.theme.NaranjaClaro
-import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.OlivaPrimario
 import org.dferna14.project.ui.theme.RojoEliminar
+import org.dferna14.project.ui.theme.SuperficieSepia
 import org.dferna14.project.ui.theme.TextoPrimario
-import org.dferna14.project.ui.theme.TextoSecundario
+import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.AuthVm
 import org.koin.compose.viewmodel.koinViewModel
 
-/**
- * Pantalla de login. Reutiliza los componentes de CampoComponents para mantener
- * la identidad visual del resto de la app. El éxito de autenticación se notifica
- * vía onLoginExitoso(usuario) — la navegación la decide App.kt.
- */
 @Composable
 fun LoginScreen(
     onLoginExitoso: (UsuarioDto) -> Unit,
@@ -62,77 +59,90 @@ fun LoginScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 24.dp),
+                .padding(horizontal = 28.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.Center
         ) {
-            Spacer(Modifier.height(24.dp))
-
+            //marca
             Box(
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(76.dp)
                     .clip(CircleShape)
-                    .background(NaranjaClaro),
+                    .background(SuperficieSepia)
+                    .border(2.dp, BordeNormal, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "CC",
-                    color = NaranjaPrimario,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = Icons.Outlined.MenuBook,
+                    contentDescription = null,
+                    tint = OlivaPrimario,
+                    modifier = Modifier.size(34.dp)
                 )
             }
+
+            Spacer(Modifier.height(16.dp))
 
             Text(
                 text = "Cuaderno de Campo",
-                color = TextoPrimario,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.titleLarge,
+                color = TextoPrimario
             )
             Text(
                 text = "Inicia sesión para continuar",
-                color = TextoSecundario,
-                fontSize = 14.sp
+                style = MaterialTheme.typography.bodySmall,
+                color = TextoTerciario
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(32.dp))
 
-            CampoTextField(
-                label = "Email",
-                value = email,
-                onValueChange = { email = it },
-                placeholder = "usuario@ejemplo.com",
-                keyboardType = KeyboardType.Email
-            )
+            // forms
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                CampoTextField(
+                    label = "Correo electrónico",
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = "nombre@dominio.es",
+                    keyboardType = KeyboardType.Email
+                )
 
-            CampoPasswordField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Contraseña",
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (errorMsg != null) {
-                Text(
-                    text = errorMsg,
-                    color = RojoEliminar,
-                    fontSize = 13.sp,
+                CampoPasswordField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = "Contraseña",
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (errorMsg != null) {
+                    Text(
+                        text = errorMsg,
+                        color = RojoEliminar,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(24.dp))
 
-            CampoPrimaryButton(
-                text = if (cargando) "Entrando…" else "Entrar",
-                enabled = !cargando && email.isNotBlank() && password.isNotBlank(),
-                onClick = { viewModel.login(email.trim(), password) }
-            )
+            //acciones
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CampoPrimaryButton(
+                    text = if (cargando) "Entrando…" else "Entrar",
+                    enabled = !cargando && email.isNotBlank() && password.isNotBlank(),
+                    onClick = { viewModel.login(email.trim(), password) }
+                )
 
-            CampoSecondaryButton(
-                text = "Crear una cuenta",
-                onClick = onIrARegistro
-            )
+                CampoSecondaryButton(
+                    text = "Crear una cuenta",
+                    onClick = onIrARegistro
+                )
+            }
         }
     }
 }
