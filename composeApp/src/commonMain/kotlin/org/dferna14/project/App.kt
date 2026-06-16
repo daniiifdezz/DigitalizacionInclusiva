@@ -210,10 +210,15 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         }
         is Screen.MisActividades -> {
             ActividadListadoSc(
-                onNuevaActividad = { onNavigate(Screen.NuevaActividad) },
-                onVerDetalle     = { id -> onNavigate(Screen.Detalle(id)) },
-                isDesktop        = true,
-                onVolver         = { onNavigate(Screen.DesktopHome) }
+                onNuevaActividad   = { onNavigate(Screen.NuevaActividad) },
+                onVerDetalle       = { id -> onNavigate(Screen.Detalle(id)) },
+                isDesktop          = true,
+                onVolver           = { onNavigate(Screen.DesktopHome) },
+                onVerInicio        = { onNavigate(Screen.DesktopHome) },
+                onVerParcelas      = { onNavigate(Screen.Parcelas) },
+                onVerProductos     = { onNavigate(Screen.Productos) },
+                onVerAjustes       = { onNavigate(Screen.DesktopAjustes) },
+                onVerConfiguracion = { onNavigate(Screen.Configuracion) }
             )
         }
         is Screen.NuevaActividad -> {
