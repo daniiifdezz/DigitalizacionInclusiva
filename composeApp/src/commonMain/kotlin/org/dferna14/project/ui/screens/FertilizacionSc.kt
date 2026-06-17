@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import org.dferna14.project.ui.components.CampoTextoConOcr
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,14 +15,18 @@ import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.components.CampoAvisoInfo
+import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoDropdown
 import org.dferna14.project.ui.components.CampoField
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.components.CampoTextoConOcr
 import org.dferna14.project.ui.components.CampoToggle
+import org.dferna14.project.ui.components.SectionHeader
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeSuave
-import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.CremaPrincipal
+import org.dferna14.project.ui.theme.OlivaPrimario
 import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.viewmodel.FertilizacionVm
 import org.koin.compose.viewmodel.koinViewModel
@@ -48,16 +51,16 @@ fun FertilizacionSc(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp)
+                    modifier            = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = "No hay parcela asociada a esta actividad",
+                        text  = "No hay parcela asociada a esta actividad",
                         color = RojoEliminar,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Asocia una parcela antes de registrar la fertilización.",
+                        text  = "Asocia una parcela antes de registrar la fertilización.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -68,17 +71,16 @@ fun FertilizacionSc(
 
     val fertilizacionState by viewModel.fertilizacion.collectAsState()
     val fertilizantesState by viewModel.fertilizantes.collectAsState()
-    val mensajeError by viewModel.mensajeError.collectAsState()
+    val mensajeError       by viewModel.mensajeError.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
-    var aplica by remember { mutableStateOf(false) }
+    var aplica                   by remember { mutableStateOf(false) }
     var fertilizanteSeleccionado by remember { mutableStateOf<Producto?>(null) }
-    var numeroAlbaran by remember { mutableStateOf("") }
-    var dosis by remember { mutableStateOf("") }
-    var observaciones by remember { mutableStateOf("") }
-    var camposPrecargados by remember { mutableStateOf(false) }
-
+    var numeroAlbaran            by remember { mutableStateOf("") }
+    var dosis                    by remember { mutableStateOf("") }
+    var observaciones            by remember { mutableStateOf("") }
+    var camposPrecargados        by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.cargarFertilizantes()
@@ -92,14 +94,14 @@ fun FertilizacionSc(
     // esté cargado para poder resolver productoId → Producto en el dropdown.
     LaunchedEffect(fertilizacionState, fertilizantesState) {
         if (camposPrecargados) return@LaunchedEffect
-        val fert = (fertilizacionState as? Result.Success)?.data ?: return@LaunchedEffect
+        val fert    = (fertilizacionState as? Result.Success)?.data ?: return@LaunchedEffect
         val catalogo = (fertilizantesState as? Result.Success)?.data ?: return@LaunchedEffect
-        aplica = fert.aplica
-        numeroAlbaran = fert.numeroAlbaran.orEmpty()
-        dosis = fert.dosis?.toString().orEmpty()
-        observaciones = fert.observaciones.orEmpty()
+        aplica                   = fert.aplica
+        numeroAlbaran            = fert.numeroAlbaran.orEmpty()
+        dosis                    = fert.dosis?.toString().orEmpty()
+        observaciones            = fert.observaciones.orEmpty()
         fertilizanteSeleccionado = fert.productoId?.let { pid -> catalogo.find { it.id == pid } }
-        camposPrecargados = true
+        camposPrecargados        = true
     }
 
     LaunchedEffect(Unit) {
@@ -116,7 +118,8 @@ fun FertilizacionSc(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        containerColor = CremaPrincipal,
+        snackbarHost   = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             NavBarFormulario(titulo = "Fertilización básica", onVolver = onVolver)
@@ -131,70 +134,75 @@ fun FertilizacionSc(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 CampoToggle(
-                    label = "¿Aplica fertilización?",
-                    checked = aplica,
+                    label           = "¿Aplica fertilización?",
+                    checked         = aplica,
                     onCheckedChange = { aplica = it }
                 )
 
                 AnimatedVisibility(visible = aplica) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        CampoField(label = "Fecha de inicio", value = formatearFecha(fechaHoy))
+                        SectionHeader("Datos de fertilización")
 
                         CampoAvisoInfo(
                             mensaje = "Selecciona el fertilizante del catálogo. Si no está, pide al técnico que lo añada desde el escritorio."
                         )
 
-                        // Dropdown de fertilizantes del catálogo.
-                        when (val estado = fertilizantesState) {
-                            is Result.Loading -> {
-                                CampoField(
-                                    label = "Fertilizante utilizado",
-                                    value = "Cargando catálogo…"
-                                )
+                        CampoCard {
+                            CampoField(label = "Fecha de inicio", value = formatearFecha(fechaHoy))
+
+                            when (val estado = fertilizantesState) {
+                                is Result.Loading -> {
+                                    CampoField(
+                                        label = "Fertilizante utilizado",
+                                        value = "Cargando catálogo…"
+                                    )
+                                }
+                                is Result.Error -> {
+                                    CampoField(
+                                        label = "Fertilizante utilizado",
+                                        value = "No se pudo cargar el catálogo"
+                                    )
+                                }
+                                is Result.Success -> {
+                                    CampoDropdown(
+                                        label        = "Fertilizante utilizado",
+                                        selectedItem = fertilizanteSeleccionado,
+                                        items        = estado.data,
+                                        itemLabel    = { p ->
+                                            val sufijo = p.riquezaNpk?.let { " · NPK $it" }.orEmpty()
+                                            "${p.nombreComercial}$sufijo"
+                                        },
+                                        onSelect     = { fertilizanteSeleccionado = it },
+                                        placeholder  = if (estado.data.isEmpty())
+                                            "No hay fertilizantes en el catálogo"
+                                        else "Selecciona fertilizante"
+                                    )
+                                }
                             }
-                            is Result.Error -> {
-                                CampoField(
-                                    label = "Fertilizante utilizado",
-                                    value = "No se pudo cargar el catálogo"
-                                )
-                            }
-                            is Result.Success -> {
-                                CampoDropdown(
-                                    label = "Fertilizante utilizado",
-                                    selectedItem = fertilizanteSeleccionado,
-                                    items = estado.data,
-                                    itemLabel = { p ->
-                                        val sufijo = p.riquezaNpk?.let { " · NPK $it" }.orEmpty()
-                                        "${p.nombreComercial}$sufijo"
-                                    },
-                                    onSelect = { fertilizanteSeleccionado = it },
-                                    placeholder = if (estado.data.isEmpty())
-                                        "No hay fertilizantes en el catálogo"
-                                    else "Selecciona fertilizante"
-                                )
-                            }
+
+                            CampoTextoConOcr(
+                                value         = numeroAlbaran,
+                                onValueChange = { numeroAlbaran = it },
+                                label         = "Nº Albarán",
+                                placeholder   = "Número del albarán",
+                                modifier      = Modifier.fillMaxWidth()
+                            )
+
+                            CampoTextField(
+                                label         = "Dosis aplicada (kg/ha)",
+                                value         = dosis,
+                                onValueChange = { dosis = it },
+                                keyboardType  = KeyboardType.Decimal
+                            )
                         }
 
-                        CampoTextoConOcr(
-                            value = numeroAlbaran,
-                            onValueChange = { numeroAlbaran = it },
-                            label = "Nº Albarán",
-                            placeholder = "Número del albarán",
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        SectionHeader("Observaciones")
 
                         CampoTextField(
-                            label = "Dosis aplicada (kg/ha)",
-                            value = dosis,
-                            onValueChange = { dosis = it },
-                            keyboardType = KeyboardType.Decimal
-                        )
-
-                        CampoTextField(
-                            label = "Observaciones (opcional)",
-                            value = observaciones,
+                            label         = "Observaciones (opcional)",
+                            value         = observaciones,
                             onValueChange = { observaciones = it },
-                            minLines = 2
+                            minLines      = 2
                         )
                     }
                 }
@@ -202,7 +210,7 @@ fun FertilizacionSc(
                 Spacer(Modifier.height(4.dp))
 
                 CampoPrimaryButton(
-                    text = "Guardar fertilización",
+                    text    = "Guardar fertilización",
                     onClick = {
                         viewModel.guardarFertilizacion(
                             actividadId   = actividadId,

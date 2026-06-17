@@ -17,13 +17,17 @@ import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.SemillaTratada
 import org.dferna14.project.ui.components.CampoAvisoInfo
+import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoDropdown
 import org.dferna14.project.ui.components.CampoField
+import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.components.CampoToggle
+import org.dferna14.project.ui.components.SectionHeader
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeSuave
-import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.CremaPrincipal
+import org.dferna14.project.ui.theme.OlivaPrimario
 import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
@@ -39,10 +43,10 @@ fun SemillasTratadasSc(
     actividadDetalleVm: ActividadDetalleVm = koinViewModel(),
     productoVm: ProductoVm = koinViewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    val semillaState by viewModel.semilla.collectAsState()
-    val productosState by productoVm.productos.collectAsState()
-    val actividadState by actividadDetalleVm.actividadActual.collectAsState()
+    val scope             = rememberCoroutineScope()
+    val semillaState      by viewModel.semilla.collectAsState()
+    val productosState    by productoVm.productos.collectAsState()
+    val actividadState    by actividadDetalleVm.actividadActual.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(actividadId) {
@@ -52,7 +56,7 @@ fun SemillasTratadasSc(
 
     val parcelaId = (actividadState as? Result.Success)?.data?.parcelaId ?: 0
     val productos = (productosState as? Result.Success)?.data.orEmpty()
-    val fechaHoy = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
+    val fechaHoy  = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()).toString() }
 
     // La semilla existente (puede ser null si aún no hay registro).
     val semillaExistente = (semillaState as? Result.Success)?.data
@@ -79,7 +83,7 @@ fun SemillasTratadasSc(
         if (parcelaId > 0 && superficieHa.isBlank()) {
             val sup = viewModel.getSuperficieParcela(parcelaId)
             if (sup != null && sup > 0.0) {
-                superficieHa = sup.toString()
+                superficieHa       = sup.toString()
                 superficieDeSigpac = true
             }
         }
@@ -104,24 +108,25 @@ fun SemillasTratadasSc(
             when (resultado) {
                 is Result.Success -> snackbarHostState.showSnackbar("Semilla tratada guardada correctamente")
                 is Result.Error   -> snackbarHostState.showSnackbar(resultado.message)
-                else -> {}
+                else              -> {}
             }
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        containerColor = CremaPrincipal,
+        snackbarHost   = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             NavBarFormulario(
-                titulo = "Semilla tratada",
-                onVolver = onVolver,
+                titulo        = "Semilla tratada",
+                onVolver      = onVolver,
                 accionDerecha = {
                     val habilitado = actividadState is Result.Success && parcelaId > 0
                     TextButton(onClick = { guardar() }, enabled = habilitado) {
                         Text(
-                            "Guardar",
-                            color = if (habilitado) NaranjaPrimario else BordeSuave,
+                            text     = "Guardar",
+                            color    = if (habilitado) OlivaPrimario else BordeSuave,
                             fontSize = 13.sp
                         )
                     }
@@ -132,31 +137,32 @@ fun SemillasTratadasSc(
             when (val state = semillaState) {
                 is Result.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = NaranjaPrimario)
+                        CircularProgressIndicator(color = OlivaPrimario)
                     }
                 }
                 is Result.Error -> {
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        modifier            = Modifier.fillMaxSize().padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "No se pudo cargar la semilla tratada",
+                            text  = "No se pudo cargar la semilla tratada",
                             style = MaterialTheme.typography.bodyLarge,
                             color = RojoEliminar
                         )
                         Spacer(Modifier.height(12.dp))
-                        Button(
-                            onClick = { viewModel.cargarSemilla(actividadId) },
-                            colors = ButtonDefaults.buttonColors(containerColor = NaranjaPrimario)
-                        ) { Text("Reintentar") }
+                        CampoPrimaryButton(
+                            text     = "Reintentar",
+                            onClick  = { viewModel.cargarSemilla(actividadId) },
+                            modifier = Modifier.width(180.dp)
+                        )
                     }
                 }
                 is Result.Success -> {
                     if (actividadState !is Result.Success || parcelaId <= 0) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = NaranjaPrimario)
+                            CircularProgressIndicator(color = OlivaPrimario)
                         }
                     } else {
                         Column(
@@ -174,8 +180,8 @@ fun SemillasTratadasSc(
                             }
 
                             CampoToggle(
-                                label = "¿Aplica semilla tratada?",
-                                checked = aplica,
+                                label           = "¿Aplica semilla tratada?",
+                                checked         = aplica,
                                 onCheckedChange = { aplica = it }
                             )
 
@@ -185,42 +191,53 @@ fun SemillasTratadasSc(
 
                             AnimatedVisibility(visible = aplica) {
                                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    CampoField(label = "Fecha de siembra", value = formatearFecha(fechaHoy))
+                                    SectionHeader("Datos de siembra")
 
-                                    CampoTextField(
-                                        label = "Superficie (ha)",
-                                        value = superficieHa,
-                                        onValueChange = {
-                                            superficieHa = it
-                                            superficieDeSigpac = false
-                                        },
-                                        keyboardType = KeyboardType.Decimal
-                                    )
-                                    if (superficieDeSigpac && superficieHa.isNotBlank()) {
-                                        CampoAvisoInfo(
-                                            mensaje = "Pre-rellenado con la superficie SIGPAC de la parcela. Modifícalo si no aplicas en toda la parcela."
+                                    CampoCard {
+                                        CampoField(
+                                            label = "Fecha de siembra",
+                                            value = formatearFecha(fechaHoy)
+                                        )
+
+                                        CampoTextField(
+                                            label         = "Superficie (ha)",
+                                            value         = superficieHa,
+                                            onValueChange = {
+                                                superficieHa       = it
+                                                superficieDeSigpac = false
+                                            },
+                                            keyboardType  = KeyboardType.Decimal
+                                        )
+
+                                        if (superficieDeSigpac && superficieHa.isNotBlank()) {
+                                            CampoAvisoInfo(
+                                                mensaje = "Pre-rellenado con la superficie SIGPAC de la parcela. Modifícalo si no aplicas en toda la parcela."
+                                            )
+                                        }
+
+                                        CampoTextField(
+                                            label         = "Cantidad de semilla (kg)",
+                                            value         = cantidadSemillaKg,
+                                            onValueChange = { cantidadSemillaKg = it },
+                                            keyboardType  = KeyboardType.Decimal
+                                        )
+
+                                        CampoDropdown(
+                                            label        = "Producto utilizado",
+                                            selectedItem = productoSeleccionado,
+                                            items        = productos,
+                                            itemLabel    = { it.nombreComercial.ifBlank { "Producto ${it.id}" } },
+                                            onSelect     = { productoSeleccionado = it },
+                                            placeholder  = "Selecciona producto"
+                                        )
+
+                                        CampoTextField(
+                                            label         = "Variedad de semilla",
+                                            value         = variedadSemilla,
+                                            onValueChange = { variedadSemilla = it },
+                                            placeholder   = "p.ej. Trigo R01"
                                         )
                                     }
-                                    CampoTextField(
-                                        label = "Cantidad de semilla (kg)",
-                                        value = cantidadSemillaKg,
-                                        onValueChange = { cantidadSemillaKg = it },
-                                        keyboardType = KeyboardType.Decimal
-                                    )
-                                    CampoDropdown(
-                                        label = "Producto utilizado",
-                                        selectedItem = productoSeleccionado,
-                                        items = productos,
-                                        itemLabel = { it.nombreComercial.ifBlank { "Producto ${it.id}" } },
-                                        onSelect = { productoSeleccionado = it },
-                                        placeholder = "Selecciona producto"
-                                    )
-                                    CampoTextField(
-                                        label = "Variedad de semilla",
-                                        value = variedadSemilla,
-                                        onValueChange = { variedadSemilla = it },
-                                        placeholder = "p.ej. Trigo R01"
-                                    )
                                 }
                             }
                         }
