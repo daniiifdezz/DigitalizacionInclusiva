@@ -1,9 +1,11 @@
 package org.dferna14.project.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -14,11 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.Result
-import org.dferna14.project.ui.components.CampoCard
+import org.dferna14.project.ui.components.CampoPrimaryButton
+import org.dferna14.project.ui.components.CampoDropdown
 import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.theme.*
 import org.dferna14.project.ui.viewmodel.ParcelaVm
@@ -53,13 +55,14 @@ fun MisParcelasSc(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Mis parcelas", style = MaterialTheme.typography.titleLarge) }
+                title = { Text("Mis parcelas", style = MaterialTheme.typography.titleLarge, color = TextoPrimario) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SuperficieSepia)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { mostrarDialogoCrear = true },
-                containerColor = NaranjaPrimario,
+                containerColor = OlivaPrimario,
                 contentColor = BlancoPuro
             ) {
                 Icon(Icons.Outlined.Add, contentDescription = "Nueva parcela")
@@ -70,7 +73,7 @@ fun MisParcelasSc(
             when (val state = parcelasState) {
                 is Result.Loading -> {
                     CircularProgressIndicator(
-                        color = NaranjaPrimario,
+                        color = OlivaPrimario,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -85,10 +88,11 @@ fun MisParcelasSc(
                             color = TextoSecundario
                         )
                         Spacer(Modifier.height(12.dp))
-                        Button(
+                        CampoPrimaryButton(
+                            text = "Reintentar",
                             onClick = { viewModel.cargarParcelas() },
-                            colors = ButtonDefaults.buttonColors(containerColor = NaranjaPrimario)
-                        ) { Text("Reintentar") }
+                            modifier = Modifier.width(180.dp)
+                        )
                     }
                 }
                 is Result.Success -> {
@@ -186,6 +190,7 @@ fun MisParcelasSc(
         val nombre = parcela.alias ?: "Parcela ${parcela.id}"
         AlertDialog(
             onDismissRequest = { parcelaAEliminar = null },
+            containerColor = SuperficieSepia,
             title = { Text("¿Eliminar parcela?") },
             text = { Text("Esta acción no se puede deshacer. ¿Seguro que quieres eliminar \"$nombre\"?") },
             confirmButton = {
@@ -210,31 +215,45 @@ private fun ParcelaCard(
     parcela: Parcela,
     onEliminar: () -> Unit
 ) {
-    CampoCard {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .clip(RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
+            .background(SuperficieSepia)
+            .border(0.5.dp, BordeNormal, RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
+    ) {
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .background(OlivaPrimario)
+        )
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(horizontal = 13.dp, vertical = 13.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(VerdeFondoInfo),
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(CremaPrincipal)
+                    .border(1.dp, BordeNormal, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Place,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = VerdeValidada
+                    modifier = Modifier.size(18.dp),
+                    tint = OlivaPrimario
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = parcela.alias ?: "Parcela ${parcela.id}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
                     color = TextoPrimario
                 )
                 val subtitulo = buildList {
@@ -244,7 +263,7 @@ private fun ParcelaCard(
                 if (subtitulo.isNotBlank()) {
                     Text(
                         text = subtitulo,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         color = TextoTerciario
                     )
                 }
@@ -260,7 +279,6 @@ private fun ParcelaCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CrearParcelaDialog(
     explotaciones: List<Explotacion>,
@@ -271,13 +289,13 @@ private fun CrearParcelaDialog(
     var explotacionSeleccionada by remember(explotaciones) {
         mutableStateOf(explotaciones.firstOrNull())
     }
-    var dropdownAbierto by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperficieSepia,
         title = { Text("Nueva parcela") },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = "Introduce un nombre para identificar la parcela",
                     style = MaterialTheme.typography.bodySmall,
@@ -285,37 +303,16 @@ private fun CrearParcelaDialog(
                 )
 
                 if (explotaciones.size > 1) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ExposedDropdownMenuBox(
-                        expanded = dropdownAbierto,
-                        onExpandedChange = { dropdownAbierto = it }
-                    ) {
-                        OutlinedTextField(
-                            value = explotacionSeleccionada?.nombre ?: "Selecciona explotación",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Explotación *") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownAbierto) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = dropdownAbierto,
-                            onDismissRequest = { dropdownAbierto = false }
-                        ) {
-                            explotaciones.forEach { exp ->
-                                DropdownMenuItem(
-                                    text = { Text(exp.nombre) },
-                                    onClick = {
-                                        explotacionSeleccionada = exp
-                                        dropdownAbierto = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    CampoDropdown(
+                        label = "Explotación *",
+                        selectedItem = explotacionSeleccionada,
+                        items = explotaciones,
+                        itemLabel = { it.nombre },
+                        onSelect = { explotacionSeleccionada = it },
+                        placeholder = "Selecciona explotación"
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
                 CampoTextField(
                     label = "Nombre / Alias",
                     value = alias,
@@ -332,7 +329,7 @@ private fun CrearParcelaDialog(
                 },
                 enabled = explotacionSeleccionada != null
             ) {
-                Text("Crear", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
+                Text("Crear", color = OlivaPrimario, fontWeight = FontWeight.Medium)
             }
         },
         dismissButton = {
@@ -347,13 +344,14 @@ private fun CrearParcelaDialog(
 private fun CargandoExplotacionesDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperficieSepia,
         title = { Text("Cargando…") },
         text = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = NaranjaPrimario)
+                CircularProgressIndicator(color = OlivaPrimario)
             }
         },
         confirmButton = {
@@ -370,10 +368,13 @@ private fun SinExplotacionesDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperficieSepia,
         title = { Text(titulo) },
         text = { Text(mensaje) },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Entendido", color = NaranjaPrimario, fontWeight = FontWeight.Medium) }
+            TextButton(onClick = onDismiss) {
+                Text("Entendido", color = OlivaPrimario, fontWeight = FontWeight.Medium)
+            }
         }
     )
 }

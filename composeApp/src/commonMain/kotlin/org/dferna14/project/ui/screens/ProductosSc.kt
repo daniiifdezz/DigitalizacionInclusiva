@@ -2,9 +2,13 @@ package org.dferna14.project.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -18,26 +22,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.dferna14.project.data.remote.DependenciasProductoDto
 import org.dferna14.project.domain.model.Producto
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.ui.components.CampoAvisoInfo
-import org.dferna14.project.ui.components.CampoCard
+import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoDropdown
 import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.components.CampoTextoConOcr
-import org.dferna14.project.ui.theme.AmbarFondoProducto
-import org.dferna14.project.ui.theme.AmbarProducto
-import org.dferna14.project.ui.theme.AzulFondoPendiente
-import org.dferna14.project.ui.theme.AzulPendiente
-import org.dferna14.project.ui.theme.BlancoPuro
-import org.dferna14.project.ui.theme.NaranjaClaro
-import org.dferna14.project.ui.theme.NaranjaPrimario
-import org.dferna14.project.ui.theme.RojoEliminar
-import org.dferna14.project.ui.theme.TextoPrimario
-import org.dferna14.project.ui.theme.TextoSecundario
-import org.dferna14.project.ui.theme.TextoTerciario
+import org.dferna14.project.ui.components.desktop.*
+import org.dferna14.project.ui.theme.*
+import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -65,6 +60,13 @@ private val TIPOS_FERTILIZANTE = listOf(
 private fun nombreTipoFert(codigo: String?): String =
     TIPOS_FERTILIZANTE.find { it.codigo == codigo }?.nombre ?: "Sin tipo"
 
+private val COLS_PRODUCTOS = listOf(
+    DesktopTableColumn("Nombre",               weight = 2.5f),
+    DesktopTableColumn("Tipo",                 weight = 1.0f),
+    DesktopTableColumn("Materia activa / NPK", weight = 2.0f),
+    DesktopTableColumn("Acciones",             weight = 1.0f),
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductosSc(
@@ -72,7 +74,13 @@ fun ProductosSc(
     onVolver: () -> Unit,
     // Desktop (técnico): borrado en cascada con diálogo detallado.
     // Móvil (agricultor, valor por defecto): borrado simple bloqueado con 409.
-    isDesktop: Boolean = false
+    isDesktop: Boolean = false,
+    onVerInicio: (() -> Unit)? = null,
+    onVerActividades: (() -> Unit)? = null,
+    onVerParcelas: (() -> Unit)? = null,
+    onVerAjustes: (() -> Unit)? = null,
+    onVerConfiguracion: (() -> Unit)? = null,
+    ajustesVm: AjustesVm = koinViewModel()
 ) {
     val productosState by viewModel.productos.collectAsState()
     val mensajeError by viewModel.mensajeError.collectAsState()
@@ -101,29 +109,121 @@ fun ProductosSc(
         }
     }
 
+    if (isDesktop) {
+        ProductosDesktop(
+            productosState     = productosState,
+            nombreUsuario      = ajustesVm.nombreMostrado,
+            rolUsuario         = ajustesVm.rolUsuario,
+            snackbarHostState  = snackbarHostState,
+            onCrear            = { mostrarDialogoCrear = true },
+            onEliminar         = { productoAEliminar = it },
+            onVerInicio        = onVerInicio ?: {},
+            onVerActividades   = onVerActividades ?: {},
+            onVerParcelas      = onVerParcelas ?: {},
+            onVerAjustes       = onVerAjustes ?: {},
+            onVerConfiguracion = onVerConfiguracion ?: {},
+            onReintentar       = { viewModel.cargarProductos() }
+        )
+    } else {
+        ProductosMovil(
+            productosState    = productosState,
+            filtroActivo      = filtroActivo,
+            onFiltroChange    = { filtroActivo = it },
+            snackbarHostState = snackbarHostState,
+            onVolver          = onVolver,
+            onCrear           = { mostrarDialogoCrear = true },
+            onEliminar        = { productoAEliminar = it },
+            onReintentar      = { viewModel.cargarProductos() }
+        )
+    }
+
+    // Diálogo crear producto
+    if (mostrarDialogoCrear) {
+        CrearProductoDialog(
+            onDismiss = { mostrarDialogoCrear = false },
+            onCrear = { nuevo ->
+                viewModel.crearProducto(nuevo)
+                mostrarDialogoCrear = false
+            }
+        )
+    }
+
+    // Diálogo confirmar eliminación.
+    // Desktop: borrado en cascada con detalle de dependencias.
+    // Móvil: borrado simple (el backend bloquea con 409 si hay datos asociados).
+    productoAEliminar?.let { producto ->
+        if (isDesktop) {
+            ConfirmarBorradoCascadaProductoDialog(
+                producto = producto,
+                dependencias = dependenciasProducto,
+                onConfirmar = {
+                    viewModel.eliminarProductoEnCascada(producto.id)
+                    productoAEliminar = null
+                },
+                onCancelar = { productoAEliminar = null }
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { productoAEliminar = null },
+                containerColor = SuperficieSepia,
+                title = { Text("¿Eliminar producto?") },
+                text = { Text("Esta acción no se puede deshacer. ¿Seguro que quieres eliminar \"${producto.nombreComercial}\"?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.eliminarProducto(producto.id)
+                        productoAEliminar = null
+                    }) {
+                        Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { productoAEliminar = null }) {
+                        Text("Cancelar", color = TextoSecundario)
+                    }
+                }
+            )
+        }
+    }
+}
+
+//mobil
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProductosMovil(
+    productosState: Result<List<Producto>>,
+    filtroActivo: String,
+    onFiltroChange: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    onVolver: () -> Unit,
+    onCrear: () -> Unit,
+    onEliminar: (Producto) -> Unit,
+    onReintentar: () -> Unit
+) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = CremaPrincipal,
         topBar = {
             TopAppBar(
-                title = { Text("Productos", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("Productos", style = MaterialTheme.typography.titleLarge, color = TextoPrimario) },
                 navigationIcon = {
                     TextButton(onClick = onVolver) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = "Volver al menú principal",
-                            tint = NaranjaPrimario,
+                            tint = OlivaPrimario,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Menú principal", color = NaranjaPrimario)
+                        Text("Menú principal", color = OlivaPrimario)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SuperficieSepia)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { mostrarDialogoCrear = true },
-                containerColor = NaranjaPrimario,
+                onClick = onCrear,
+                containerColor = OlivaPrimario,
                 contentColor = BlancoPuro
             ) {
                 Icon(Icons.Outlined.Add, contentDescription = "Nuevo producto")
@@ -134,7 +234,7 @@ fun ProductosSc(
             when (val state = productosState) {
                 is Result.Loading -> {
                     CircularProgressIndicator(
-                        color = NaranjaPrimario,
+                        color = OlivaPrimario,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -149,10 +249,11 @@ fun ProductosSc(
                             color = TextoSecundario
                         )
                         Spacer(Modifier.height(12.dp))
-                        Button(
-                            onClick = { viewModel.cargarProductos() },
-                            colors = ButtonDefaults.buttonColors(containerColor = NaranjaPrimario)
-                        ) { Text("Reintentar") }
+                        CampoPrimaryButton(
+                            text = "Reintentar",
+                            onClick = onReintentar,
+                            modifier = Modifier.width(180.dp)
+                        )
                     }
                 }
                 is Result.Success -> {
@@ -178,7 +279,7 @@ fun ProductosSc(
 
                         FiltrosTipo(
                             filtroActivo = filtroActivo,
-                            onCambiar = { filtroActivo = it }
+                            onCambiar = onFiltroChange
                         )
 
                         Spacer(Modifier.height(4.dp))
@@ -218,7 +319,7 @@ fun ProductosSc(
                                 items(productosMostrados, key = { it.id }) { producto ->
                                     ProductoCard(
                                         producto = producto,
-                                        onEliminar = { productoAEliminar = producto }
+                                        onEliminar = { onEliminar(producto) }
                                     )
                                 }
                             }
@@ -228,111 +329,8 @@ fun ProductosSc(
             }
         }
     }
-
-    // Diálogo crear producto
-    if (mostrarDialogoCrear) {
-        CrearProductoDialog(
-            onDismiss = { mostrarDialogoCrear = false },
-            onCrear = { nuevo ->
-                viewModel.crearProducto(nuevo)
-                mostrarDialogoCrear = false
-            }
-        )
-    }
-
-    // Diálogo confirmar eliminación.
-    // Desktop: borrado en cascada con detalle de dependencias.
-    // Móvil: borrado simple (el backend bloquea con 409 si hay datos asociados).
-    productoAEliminar?.let { producto ->
-        if (isDesktop) {
-            ConfirmarBorradoCascadaProductoDialog(
-                producto = producto,
-                dependencias = dependenciasProducto,
-                onConfirmar = {
-                    viewModel.eliminarProductoEnCascada(producto.id)
-                    productoAEliminar = null
-                },
-                onCancelar = { productoAEliminar = null }
-            )
-        } else {
-            AlertDialog(
-                onDismissRequest = { productoAEliminar = null },
-                title = { Text("¿Eliminar producto?") },
-                text = { Text("Esta acción no se puede deshacer. ¿Seguro que quieres eliminar \"${producto.nombreComercial}\"?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        viewModel.eliminarProducto(producto.id)
-                        productoAEliminar = null
-                    }) {
-                        Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { productoAEliminar = null }) {
-                        Text("Cancelar", color = TextoSecundario)
-                    }
-                }
-            )
-        }
-    }
 }
 
-@Composable
-private fun ConfirmarBorradoCascadaProductoDialog(
-    producto: Producto,
-    dependencias: DependenciasProductoDto?,
-    onConfirmar: () -> Unit,
-    onCancelar: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onCancelar,
-        title = { Text("¿Eliminar producto y sus referencias?") },
-        text = {
-            Column {
-                Text("Se eliminará el producto \"${producto.nombreComercial}\" del catálogo.")
-                Spacer(Modifier.height(8.dp))
-
-                if (dependencias == null) {
-                    Text("Consultando datos asociados…", color = TextoSecundario, fontSize = 13.sp)
-                } else {
-                    val items = buildList {
-                        if (dependencias.actividadProductos > 0)
-                            add("• Se quitará de ${dependencias.actividadProductos} aplicación(es) en actividades")
-                        if (dependencias.semillas > 0)
-                            add("• ${dependencias.semillas} semilla(s) tratada(s) quedarán sin producto")
-                        if (dependencias.fertilizaciones > 0)
-                            add("• ${dependencias.fertilizaciones} fertilización(es) quedarán sin producto")
-                    }
-                    if (items.isEmpty()) {
-                        Text("No está siendo usado en ningún registro.", color = TextoSecundario, fontSize = 13.sp)
-                    } else {
-                        items.forEach { Text(it, color = TextoSecundario, fontSize = 13.sp) }
-                    }
-                }
-
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "Esta acción no se puede deshacer.",
-                    color = RojoEliminar,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.sp
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirmar) {
-                Text("Eliminar todo", color = RojoEliminar, fontWeight = FontWeight.Medium)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancelar) {
-                Text("Cancelar", color = TextoSecundario)
-            }
-        }
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FiltrosTipo(
     filtroActivo: String,
@@ -348,15 +346,23 @@ private fun FiltrosTipo(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         opciones.forEach { (valor, label) ->
-            FilterChip(
-                selected = filtroActivo == valor,
-                onClick = { onCambiar(valor) },
-                label = { Text(label, fontSize = 13.sp) },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = NaranjaClaro,
-                    selectedLabelColor     = NaranjaPrimario
+            val activo = filtroActivo == valor
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(if (activo) OlivaPrimario else SuperficieSepia)
+                    .border(1.dp, if (activo) OlivaOscuro else BordeNormal, RoundedCornerShape(999.dp))
+                    .clickable { onCambiar(valor) }
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (activo) CremaPrincipal else TextoSecundario
                 )
-            )
+            }
         }
     }
 }
@@ -373,23 +379,37 @@ private fun ProductoCard(
         Triple(AmbarFondoProducto, AmbarProducto, "Fitosanitario")
     }
 
-    CampoCard {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .clip(RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
+            .background(SuperficieSepia)
+            .border(0.5.dp, BordeNormal, RoundedCornerShape(topEnd = 10.dp, bottomEnd = 10.dp))
+    ) {
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .background(badgeColor)
+        )
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(horizontal = 13.dp, vertical = 13.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(badgeFondo),
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(CremaPrincipal)
+                    .border(1.dp, BordeNormal, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Science,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(18.dp),
                     tint = badgeColor
                 )
             }
@@ -397,8 +417,8 @@ private fun ProductoCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = producto.nombreComercial,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
                         color = TextoPrimario,
                         modifier = Modifier.weight(1f)
                     )
@@ -409,9 +429,9 @@ private fun ProductoCard(
                     ) {
                         Text(
                             text = badgeLabel,
-                            fontSize = 10.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             color = badgeColor,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -422,7 +442,7 @@ private fun ProductoCard(
                 }
                 Text(
                     text = subtitulo,
-                    fontSize = 11.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = TextoTerciario
                 )
             }
@@ -435,6 +455,207 @@ private fun ProductoCard(
             }
         }
     }
+}
+
+//desktop
+@Composable
+private fun ProductosDesktop(
+    productosState: Result<List<Producto>>,
+    nombreUsuario: String,
+    rolUsuario: String,
+    snackbarHostState: SnackbarHostState,
+    onCrear: () -> Unit,
+    onEliminar: (Producto) -> Unit,
+    onVerInicio: () -> Unit,
+    onVerActividades: () -> Unit,
+    onVerParcelas: () -> Unit,
+    onVerAjustes: () -> Unit,
+    onVerConfiguracion: () -> Unit,
+    onReintentar: () -> Unit
+) {
+    DesktopWrapper(
+        activeIndex   = 3,
+        onNavigate    = { idx ->
+            when (idx) {
+                0 -> onVerInicio()
+                1 -> onVerActividades()
+                2 -> onVerParcelas()
+                4 -> onVerAjustes()
+                5 -> onVerConfiguracion()
+            }
+        },
+        nombreUsuario = nombreUsuario,
+        rolUsuario    = rolUsuario
+    ) {
+        DesktopTopBar(
+            title   = "Productos",
+            actions = listOf(
+                DesktopTopBarAction(
+                    label   = "Añadir producto",
+                    icon    = Icons.Outlined.Add,
+                    primary = true,
+                    onClick = onCrear
+                )
+            )
+        )
+        when (val estado = productosState) {
+            is Result.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = OlivaPrimario)
+                }
+            }
+            is Result.Error -> {
+                Column(
+                    modifier            = Modifier.fillMaxSize().padding(40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text  = "No se pudo cargar el catálogo de productos",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TextoSecundario
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    CampoPrimaryButton(
+                        text     = "Reintentar",
+                        onClick  = onReintentar,
+                        modifier = Modifier.width(200.dp)
+                    )
+                }
+            }
+            is Result.Success -> {
+                val productos = estado.data
+                if (productos.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector        = Icons.Outlined.Science,
+                                contentDescription = null,
+                                modifier           = Modifier.size(48.dp),
+                                tint               = OlivaPrimario
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text  = "No hay productos en el catálogo",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = TextoPrimario
+                            )
+                        }
+                    }
+                } else {
+                    DesktopTableHeader(columns = COLS_PRODUCTOS)
+                    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                        itemsIndexed(productos, key = { _, p -> p.id }) { index, producto ->
+                            DesktopTableRow(
+                                columns = COLS_PRODUCTOS,
+                                last    = index == productos.lastIndex,
+                                cells   = listOf(
+                                    {
+                                        Text(
+                                            text  = producto.nombreComercial,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextoPrimario
+                                        )
+                                    },
+                                    {
+                                        val (color, label) = if (producto.tipo == TIPO_FERTILIZANTE)
+                                            Pair(AzulPendiente, "Fertilizante")
+                                        else
+                                            Pair(AmbarProducto, "Fitosanitario")
+                                        Text(
+                                            text       = label,
+                                            style      = MaterialTheme.typography.bodySmall,
+                                            color      = color,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    },
+                                    {
+                                        val materia = if (producto.tipo == TIPO_FERTILIZANTE)
+                                            "NPK: ${producto.riquezaNpk ?: "—"}"
+                                        else
+                                            producto.materiaActiva ?: "—"
+                                        Text(
+                                            text  = materia,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextoSecundario
+                                        )
+                                    },
+                                    {
+                                        IconButton(onClick = { onEliminar(producto) }) {
+                                            Icon(
+                                                imageVector        = Icons.Outlined.Delete,
+                                                contentDescription = "Eliminar producto",
+                                                tint               = RojoEliminar,
+                                                modifier           = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        SnackbarHost(snackbarHostState)
+    }
+}
+
+// ─── Dialogs ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ConfirmarBorradoCascadaProductoDialog(
+    producto: Producto,
+    dependencias: DependenciasProductoDto?,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        containerColor = SuperficieSepia,
+        title = { Text("¿Eliminar producto y sus referencias?") },
+        text = {
+            Column {
+                Text("Se eliminará el producto \"${producto.nombreComercial}\" del catálogo.")
+                Spacer(Modifier.height(8.dp))
+
+                if (dependencias == null) {
+                    Text("Consultando datos asociados…", color = TextoSecundario)
+                } else {
+                    val items = buildList {
+                        if (dependencias.actividadProductos > 0)
+                            add("• Se quitará de ${dependencias.actividadProductos} aplicación(es) en actividades")
+                        if (dependencias.semillas > 0)
+                            add("• ${dependencias.semillas} semilla(s) tratada(s) quedarán sin producto")
+                        if (dependencias.fertilizaciones > 0)
+                            add("• ${dependencias.fertilizaciones} fertilización(es) quedarán sin producto")
+                    }
+                    if (items.isEmpty()) {
+                        Text("No está siendo usado en ningún registro.", color = TextoSecundario)
+                    } else {
+                        items.forEach { Text(it, color = TextoSecundario) }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Esta acción no se puede deshacer.",
+                    color = RojoEliminar,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmar) {
+                Text("Eliminar todo", color = RojoEliminar, fontWeight = FontWeight.Medium)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) {
+                Text("Cancelar", color = TextoSecundario)
+            }
+        }
+    )
 }
 
 @Composable
@@ -462,6 +683,7 @@ private fun CrearProductoDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SuperficieSepia,
         title = { Text("Nuevo producto") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -536,7 +758,7 @@ private fun CrearProductoDialog(
                     )
                 }
             ) {
-                Text("Añadir", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
+                Text("Añadir", color = OlivaPrimario, fontWeight = FontWeight.Medium)
             }
         },
         dismissButton = {
