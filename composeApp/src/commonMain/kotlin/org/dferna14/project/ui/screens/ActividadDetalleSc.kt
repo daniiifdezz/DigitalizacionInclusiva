@@ -50,7 +50,8 @@ fun ActividadDetalleSc(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        containerColor = CremaPrincipal,
+        snackbarHost   = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             NavBarFormulario(
@@ -60,7 +61,7 @@ fun ActividadDetalleSc(
                     val act = (actividadState as? Result.Success)?.data
                     if (act != null && act.estado == EstadoActividad.BORRADOR) {
                         TextButton(onClick = { onEditar(actividadId) }) {
-                            Text("Editar", color = NaranjaPrimario, fontSize = 13.sp)
+                            Text("Editar", color = OlivaPrimario, fontSize = 13.sp)
                         }
                     } else {
                         Spacer(Modifier.width(60.dp))
@@ -72,7 +73,7 @@ fun ActividadDetalleSc(
             when (val estado = actividadState) {
                 is Result.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = NaranjaPrimario)
+                        CircularProgressIndicator(color = OlivaPrimario)
                     }
                 }
                 is Result.Error -> {
@@ -114,19 +115,22 @@ fun ActividadDetalleSc(
                             EstadoBadge(act.estado)
                         }
 
-                        CampoField(label = "Parcela", value = nombreParcela)
-                        CampoField(label = "Fecha de inicio", value = formatearFecha(act.fechaInicio))
-                        act.superficieTratada?.let {
-                            CampoField(label = "Superficie tratada", value = "$it ha")
-                        }
-                        act.problemaFitosanitario?.takeIf { it.isNotBlank() }?.let {
-                            CampoField(label = "Problema fitosanitario", value = it)
-                        }
-                        act.observaciones?.takeIf { it.isNotBlank() }?.let {
-                            CampoField(label = "Observaciones", value = it)
-                        }
-                        act.eficacia?.takeIf { it.isNotBlank() }?.let {
-                            CampoField(label = "Eficacia", value = it)
+                        SectionHeader("Datos de la actividad")
+                        CampoCard {
+                            CampoField(label = "Parcela", value = nombreParcela)
+                            CampoField(label = "Fecha de inicio", value = formatearFecha(act.fechaInicio))
+                            act.superficieTratada?.let {
+                                CampoField(label = "Superficie tratada", value = "$it ha")
+                            }
+                            act.problemaFitosanitario?.takeIf { it.isNotBlank() }?.let {
+                                CampoField(label = "Problema fitosanitario", value = it)
+                            }
+                            act.observaciones?.takeIf { it.isNotBlank() }?.let {
+                                CampoField(label = "Observaciones", value = it)
+                            }
+                            act.eficacia?.takeIf { it.isNotBlank() }?.let {
+                                CampoField(label = "Eficacia", value = it)
+                            }
                         }
 
                         if (act.estado == EstadoActividad.PENDIENTE_VALIDAR) {
@@ -160,12 +164,7 @@ fun ActividadDetalleSc(
                             }
                         }
 
-                        HorizontalDivider(
-                            color = BordeSuave,
-                            thickness = 0.5.dp,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
+                        SectionHeader("Sub-formularios")
                         CampoSecondaryButton(
                             text = "Semillas tratadas",
                             icon = Icons.Outlined.Grass,
