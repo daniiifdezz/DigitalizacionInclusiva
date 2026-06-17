@@ -2,45 +2,35 @@ package org.dferna14.project.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PersonAdd
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Usuario
-import org.dferna14.project.ui.theme.BlancoPuro
-import org.dferna14.project.ui.theme.BordeSuave
-import org.dferna14.project.ui.theme.CremaSecundario
-import org.dferna14.project.ui.theme.NaranjaClaro
-import org.dferna14.project.ui.theme.NaranjaPrimario
-import org.dferna14.project.ui.theme.RojoEliminar
-import org.dferna14.project.ui.theme.RojoFondoEliminar
-import org.dferna14.project.ui.theme.TextoPrimario
-import org.dferna14.project.ui.theme.TextoSecundario
-import org.dferna14.project.ui.theme.TextoTerciario
-import org.dferna14.project.ui.theme.VerdeValidada
+import org.dferna14.project.ui.components.CampoCard
+import org.dferna14.project.ui.components.CampoField
+import org.dferna14.project.ui.components.CampoPasswordField
+import org.dferna14.project.ui.components.CampoTextField
+import org.dferna14.project.ui.components.SectionHeader
+import org.dferna14.project.ui.theme.*
 import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
@@ -79,15 +69,18 @@ fun AjustesSc(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = CremaPrincipal,
         topBar = {
             TopAppBar(
-                title = { Text("Ajustes", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("Ajustes", style = MaterialTheme.typography.titleLarge, color = TextoPrimario) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SuperficieSepia),
                 navigationIcon = {
                     if (onVolver != null) {
                         IconButton(onClick = onVolver) {
                             Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver al menú principal"
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = OlivaPrimario
                             )
                         }
                     }
@@ -101,56 +94,99 @@ fun AjustesSc(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
-                .padding(top = 12.dp, bottom = 24.dp),
+                .padding(top = 24.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
             if (mostrarBotonCerrarSesion) {
-                AjusteSeccion(titulo = "MI CUENTA") {
-                    AjusteFilaPerfil(
-                        nombre      = ajustesVm.nombreMostrado.ifBlank { ajustesVm.emailUsuario },
-                        email       = ajustesVm.emailUsuario,
-                        rol         = ajustesVm.rolUsuario.lowercase().replaceFirstChar { it.uppercase() },
-                        explotacion = ajustesVm.explotacionNombre
+                val nombre = ajustesVm.nombreMostrado.ifBlank { ajustesVm.emailUsuario }
+                val iniciales = nombre.split(" ")
+                    .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                    .take(2)
+                    .joinToString("")
+                val rol = ajustesVm.rolUsuario.lowercase().replaceFirstChar { it.uppercase() }
+
+                // Avatar + nombre + rol
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(OlivaTint)
+                            .border(2.dp, OlivaClaro, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = iniciales,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = OlivaPrimario,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Text(
+                        text = nombre,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = TextoPrimario
                     )
+                    Box(
+                        modifier = Modifier
+                            .background(OlivaTint, RoundedCornerShape(999.dp))
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = rol,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OlivaPrimario,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
-                AjusteSeccion(titulo = "ACERCA DE") {
-                    AjusteFila(
-                        icono = Icons.Outlined.Info,
-                        texto = "Cuaderno de Campo Digital",
-                        valor = "v1.0.0"
-                    )
-                    HorizontalDivider(color = CremaSecundario, thickness = 0.5.dp)
-                    AjusteFila(
-                        icono = Icons.Outlined.School,
-                        texto = "TFG — Daniel Fernández"
-                    )
+                // MI CUENTA
+                SectionHeader("MI CUENTA")
+                CampoCard {
+                    CampoField(label = "Correo", value = ajustesVm.emailUsuario)
+                    if (!ajustesVm.explotacionNombre.isNullOrBlank()) {
+                        CampoField(label = "Explotación", value = ajustesVm.explotacionNombre!!)
+                    }
+                }
+
+                // ACERCA DE
+                SectionHeader("ACERCA DE")
+                CampoCard {
+                    CampoField(label = "Aplicación", value = "Cuaderno de Campo Digital v1.0.0")
+                    CampoField(label = "Autoría", value = "TFG — Daniel Fernández")
                 }
             }
 
+            // MIS AGRICULTORES (solo TECNICO)
             if (ajustesVm.rolUsuario == "TECNICO") {
                 val agricultores = (usuariosResult as? Result.Success)?.data
                     ?.filter { it.rol == "AGRICULTOR" } ?: emptyList()
 
-                AjusteSeccion(titulo = "MIS AGRICULTORES") {
+                SectionHeader("MIS AGRICULTORES")
+                CampoCard {
                     if (agricultores.isEmpty()) {
                         Text(
                             text = "Sin agricultores registrados",
                             modifier = Modifier.padding(14.dp),
-                            color = TextoTerciario,
-                            fontSize = 13.sp
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextoTerciario
                         )
                     } else {
                         agricultores.forEachIndexed { i, ag ->
-                            if (i > 0) HorizontalDivider(color = CremaSecundario, thickness = 0.5.dp)
-                            AjusteFilaAgricultor(
+                            if (i > 0) HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
+                            AgricultorFila(
                                 usuario    = ag,
                                 onEliminar = { usuarioVm.eliminarAplicador(ag.id) }
                             )
                         }
+                        HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
                     }
-                    HorizontalDivider(color = CremaSecundario, thickness = 0.5.dp)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -162,62 +198,60 @@ fun AjustesSc(
                         Icon(
                             imageVector = Icons.Outlined.PersonAdd,
                             contentDescription = null,
-                            tint = NaranjaPrimario,
+                            tint = OlivaPrimario,
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
                             text = "Añadir agricultor",
-                            color = NaranjaPrimario,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OlivaPrimario,
                             fontWeight = FontWeight.Medium
                         )
                     }
                 }
             }
 
+            // Botón cerrar sesión
             if (mostrarBotonCerrarSesion) {
                 Spacer(Modifier.height(4.dp))
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { mostrarConfirmacion = true },
-                    colors = CardDefaults.cardColors(containerColor = RojoFondoEliminar),
-                    border = BorderStroke(0.5.dp, RojoEliminar.copy(alpha = 0.2f)),
-                    shape = RoundedCornerShape(12.dp)
+                OutlinedButton(
+                    onClick = { mostrarConfirmacion = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                    border = BorderStroke(1.dp, TerracotaAccent),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TerracotaAccent),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Logout,
-                            contentDescription = null,
-                            tint = RojoEliminar,
-                            modifier = Modifier.size(18.dp)
+                    Icon(
+                        imageVector = Icons.Outlined.Logout,
+                        contentDescription = null,
+                        tint = TerracotaAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Cerrar sesión",
+                            color = TerracotaAccent,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
                         )
-                        Column {
-                            Text(
-                                text = "Cerrar sesión",
-                                color = RojoEliminar,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = "Saldrás de tu cuenta en este dispositivo",
-                                color = TextoSecundario,
-                                fontSize = 13.sp
-                            )
-                        }
+                        Text(
+                            text = "Saldrás de tu cuenta en este dispositivo",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextoSecundario
+                        )
                     }
                 }
             }
         }
     }
 
+    // Diálogo confirmar cerrar sesión
     if (mostrarConfirmacion) {
         AlertDialog(
             onDismissRequest = { mostrarConfirmacion = false },
+            containerColor = SuperficieSepia,
             title = { Text("¿Cerrar sesión?") },
             text = { Text("Tendrás que iniciar sesión de nuevo la próxima vez.") },
             confirmButton = {
@@ -236,6 +270,7 @@ fun AjustesSc(
         )
     }
 
+    // Diálogo nuevo agricultor
     if (mostrarDialogoAgricultor) {
         var nombre by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
@@ -243,32 +278,25 @@ fun AjustesSc(
 
         AlertDialog(
             onDismissRequest = { mostrarDialogoAgricultor = false },
+            containerColor = SuperficieSepia,
             title = { Text("Nuevo agricultor") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
+                    CampoTextField(
+                        label = "Nombre",
                         value = nombre,
-                        onValueChange = { nombre = it },
-                        label = { Text("Nombre") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        onValueChange = { nombre = it }
                     )
-                    OutlinedTextField(
+                    CampoTextField(
+                        label = "Email",
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Email") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth()
+                        keyboardType = KeyboardType.Email
                     )
-                    OutlinedTextField(
+                    CampoPasswordField(
+                        label = "Contraseña",
                         value = contrasena,
-                        onValueChange = { contrasena = it },
-                        label = { Text("Contraseña") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth()
+                        onValueChange = { contrasena = it }
                     )
                 }
             },
@@ -283,7 +311,7 @@ fun AjustesSc(
                     },
                     enabled = nombre.isNotBlank() && email.isNotBlank() && contrasena.length >= 6
                 ) {
-                    Text("Crear", color = NaranjaPrimario, fontWeight = FontWeight.Medium)
+                    Text("Crear", color = OlivaPrimario, fontWeight = FontWeight.Medium)
                 }
             },
             dismissButton = {
@@ -296,97 +324,7 @@ fun AjustesSc(
 }
 
 @Composable
-private fun AjusteSeccion(titulo: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = titulo.uppercase(),
-            color = TextoTerciario,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = 4.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = BlancoPuro),
-            border = BorderStroke(0.5.dp, BordeSuave),
-            shape = RoundedCornerShape(14.dp)
-        ) {
-            Column(content = content)
-        }
-    }
-}
-
-@Composable
-private fun AjusteFila(
-    icono: ImageVector,
-    texto: String,
-    valor: String? = null
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector = icono,
-            contentDescription = null,
-            tint = NaranjaPrimario,
-            modifier = Modifier.size(18.dp)
-        )
-        Text(
-            text = texto,
-            color = TextoPrimario,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f)
-        )
-        if (valor != null) {
-            Text(text = valor, color = TextoTerciario, fontSize = 13.sp)
-        }
-    }
-}
-
-@Composable
-private fun AjusteFilaPerfil(nombre: String, email: String, rol: String, explotacion: String? = null) {
-    val iniciales = nombre.split(" ")
-        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-        .take(2)
-        .joinToString("")
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(NaranjaClaro),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = iniciales,
-                color = NaranjaPrimario,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = nombre, color = TextoPrimario, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text(text = email, color = TextoSecundario, fontSize = 12.sp)
-            Text(text = rol, color = TextoTerciario, fontSize = 11.sp)
-            if (!explotacion.isNullOrBlank()) {
-                Text(text = explotacion, color = TextoTerciario, fontSize = 11.sp)
-            }
-        }
-    }
-}
-
-@Composable
-private fun AjusteFilaAgricultor(usuario: Usuario, onEliminar: () -> Unit) {
+private fun AgricultorFila(usuario: Usuario, onEliminar: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -394,15 +332,32 @@ private fun AjusteFilaAgricultor(usuario: Usuario, onEliminar: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Person,
-            contentDescription = null,
-            tint = NaranjaPrimario,
-            modifier = Modifier.size(18.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(OlivaTint),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Person,
+                contentDescription = null,
+                tint = OlivaPrimario,
+                modifier = Modifier.size(16.dp)
+            )
+        }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = usuario.nombre, color = TextoPrimario, fontSize = 14.sp)
-            Text(text = usuario.email, color = TextoTerciario, fontSize = 12.sp)
+            Text(
+                text = usuario.nombre,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextoPrimario,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = usuario.email,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextoTerciario
+            )
         }
         IconButton(
             onClick = onEliminar,
