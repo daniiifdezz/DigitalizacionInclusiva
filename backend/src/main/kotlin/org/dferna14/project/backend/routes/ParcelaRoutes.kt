@@ -36,15 +36,8 @@ fun Route.parcelaRoutes() {
         get {
             val tenantId = call.tenantId()
                 ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
-            val userId = call.currentUserId()
-            val rol = call.principal<JWTPrincipal>()?.payload?.getClaim("rol")?.asString()
             val parcelas = transaction {
-                val condicion = if (rol == "TECNICO") {
-                    Parcelas.explotacionId eq tenantId
-                } else {
-                    (Parcelas.explotacionId eq tenantId) and (Parcelas.creadorId eq userId)
-                }
-                Parcelas.selectAll().where(condicion).map {
+                Parcelas.selectAll().where(Parcelas.explotacionId eq tenantId).map {
                     ParcelaResponse(
                         id                   = it[Parcelas.id].value,
                         explotacionId        = it[Parcelas.explotacionId],
