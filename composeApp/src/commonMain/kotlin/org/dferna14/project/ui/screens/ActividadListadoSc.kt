@@ -129,7 +129,7 @@ private fun ActividadListadoMovil(
                 onClick        = onNuevaActividad,
                 text           = { Text("Nueva actividad") },
                 icon           = { Icon(Icons.Outlined.Add, contentDescription = null) },
-                containerColor = NaranjaPrimario,
+                containerColor = TerracotaAccent,
                 contentColor   = BlancoPuro
             )
         }

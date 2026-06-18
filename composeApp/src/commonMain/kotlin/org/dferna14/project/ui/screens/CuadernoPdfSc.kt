@@ -20,9 +20,11 @@ import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.CampoCard
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoTextField
-import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.CremaPrincipal
+import org.dferna14.project.ui.theme.OlivaPrimario
 import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.RojoFondoEliminar
+import org.dferna14.project.ui.theme.SuperficieSepia
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.viewmodel.CuadernoVm
@@ -53,19 +55,21 @@ fun CuadernoPdfSc(
     val estado by cuadernoVm.estadoDescarga.collectAsState()
 
     Scaffold(
+        containerColor = CremaPrincipal,
         topBar = {
             TopAppBar(
                 title = { Text("Cuaderno PDF", style = MaterialTheme.typography.titleLarge) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SuperficieSepia),
                 navigationIcon = {
                     TextButton(onClick = onVolver) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = "Volver al menú principal",
-                            tint = NaranjaPrimario,
+                            tint = OlivaPrimario,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text("Menú principal", color = NaranjaPrimario)
+                        Text("Menú principal", color = OlivaPrimario)
                     }
                 }
             )
@@ -157,7 +161,7 @@ fun CuadernoPdfSc(
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp,
-                            color = NaranjaPrimario
+                            color = OlivaPrimario
                         )
                         Text(
                             "Generando el PDF... esto puede tardar unos segundos.",

@@ -22,8 +22,8 @@ import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.theme.CremaPrincipal
-import org.dferna14.project.ui.theme.NaranjaClaro
-import org.dferna14.project.ui.theme.NaranjaPrimario
+import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.OlivaTint
 import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
@@ -77,12 +77,12 @@ fun RegisterScreen(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(NaranjaClaro),
+                    .background(OlivaTint),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "+",
-                    color = NaranjaPrimario,
+                    color = OlivaPrimario,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold
                 )
