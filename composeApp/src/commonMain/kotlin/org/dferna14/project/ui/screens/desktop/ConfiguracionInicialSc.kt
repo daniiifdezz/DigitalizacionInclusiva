@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,6 +44,7 @@ import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Titular
 import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.ui.components.desktop.DesktopFormField
+import org.dferna14.project.ui.components.desktop.DesktopSelectField
 import org.dferna14.project.ui.components.desktop.DesktopTableColumn
 import org.dferna14.project.ui.components.desktop.DesktopTableHeader
 import org.dferna14.project.ui.components.desktop.DesktopTableRow
@@ -592,6 +595,8 @@ private fun TabAplicadores(
     onNuevoChange: (NuevoAplicadorFs) -> Unit,
     onCrear: () -> Unit,
 ) {
+    var ropoExpandido by remember { mutableStateOf(false) }
+
     SectionEyebrow("Aplicadores habilitados")
     DesktopTableHeader(COLS_APLICADORES)
     aplicadores.forEachIndexed { i, u ->
@@ -654,21 +659,35 @@ private fun TabAplicadores(
                 onValueChange = { onNuevoChange(nuevoAplicador.copy(password = it)) },
                 modifier      = Modifier.weight(1f),
             )
-            DesktopFormField(
-                label         = "Tipo de carné ROPO",
-                value         = nuevoAplicador.tipoCarnetRopo,
-                onValueChange = { onNuevoChange(nuevoAplicador.copy(tipoCarnetRopo = it)) },
-                placeholder   = "Básico, Cualificado…",
-                modifier      = Modifier.weight(1f),
-            )
+            Box(modifier = Modifier.weight(1f)) {
+                DesktopSelectField(
+                    label       = "Tipo de carné ROPO",
+                    value       = nuevoAplicador.tipoCarnetRopo,
+                    placeholder = "Sin carnet ROPO asignado",
+                    onClick     = { ropoExpandido = true },
+                )
+                DropdownMenu(
+                    expanded         = ropoExpandido,
+                    onDismissRequest = { ropoExpandido = false },
+                ) {
+                    listOf("BASICO", "CUALIFICADO", "FUMIGADOR", "PILOTO").forEach { opcion ->
+                        DropdownMenuItem(
+                            text    = { Text(opcion) },
+                            onClick = {
+                                onNuevoChange(nuevoAplicador.copy(tipoCarnetRopo = opcion))
+                                ropoExpandido = false
+                            },
+                        )
+                    }
+                }
+            }
         }
         Spacer(Modifier.height(4.dp))
         ActionButton(label = "Crear aplicador", icon = Icons.Outlined.Group, onClick = onCrear)
     }
 }
 
-// ── Helpers privados ──────────────────────────────────────────────────────────
-
+//helpers
 @Composable
 private fun SectionEyebrow(text: String) {
     Text(
