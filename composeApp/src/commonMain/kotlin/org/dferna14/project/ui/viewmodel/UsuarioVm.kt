@@ -30,9 +30,7 @@ class UsuarioVm(
     private val _mensajeRol = MutableStateFlow<String?>(null)
     val mensajeRol: StateFlow<String?> = _mensajeRol.asStateFlow()
 
-    init {
-        cargarUsuarios()
-    }
+    private var ultimoFiltroRol: String? = null
 
     fun cargarTecnicos() {
         viewModelScope.launch {
@@ -48,6 +46,7 @@ class UsuarioVm(
     }
 
     fun cargarUsuarios(rol: String? = null) {
+        ultimoFiltroRol = rol
         viewModelScope.launch {
             _usuarios.value = Result.Loading
             try {
@@ -65,9 +64,9 @@ class UsuarioVm(
             try {
                 val resultado = repository.crearUsuario(usuario, contrasena)
                 if (resultado is Result.Success) {
-                    cargarUsuarios()
+                    cargarUsuarios(ultimoFiltroRol)
                 } else if (resultado is Result.Error) {
-                    _mensajeError.tryEmit(resultado.message ?: "Error desconocido")
+                    _mensajeError.tryEmit(resultado.message)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -82,9 +81,9 @@ class UsuarioVm(
             try {
                 val resultado = repository.eliminarUsuario(id)
                 if (resultado is Result.Success) {
-                    cargarUsuarios()
+                    cargarUsuarios(ultimoFiltroRol)
                 } else if (resultado is Result.Error) {
-                    _mensajeError.tryEmit(resultado.message ?: "Error desconocido")
+                    _mensajeError.tryEmit(resultado.message)
                 }
             } catch (e: CancellationException) {
                 throw e

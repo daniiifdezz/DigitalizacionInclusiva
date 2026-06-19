@@ -122,7 +122,8 @@ fun AjustesTecnicoSc(
         if (mensajeRol != null) { delay(4_000); usuarioVm.limpiarMensajeRol() }
     }
 
-    val agricultores: List<Usuario> = (usuariosResult as? Result.Success)?.data ?: emptyList()
+    val agricultores: List<Usuario> = (usuariosResult as? Result.Success)?.data
+        ?.filter { it.rol == "AGRICULTOR" } ?: emptyList()
     val tecnicos: List<Usuario>     = (tecnicosResult as? Result.Success)?.data ?: emptyList()
 
     usuarioSeleccionado?.let { u ->

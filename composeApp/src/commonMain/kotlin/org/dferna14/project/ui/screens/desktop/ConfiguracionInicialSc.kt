@@ -55,8 +55,13 @@ import org.dferna14.project.ui.components.desktop.DesktopWrapper
 import org.dferna14.project.ui.components.desktop.InlineCreateCard
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeNormal
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.outlined.Close
 import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.OlivaTint
 import org.dferna14.project.ui.theme.SuperficieSepia
+import org.dferna14.project.ui.theme.TerracotaAccent
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
@@ -130,8 +135,7 @@ private data class NuevoAplicadorFs(
     val tipoCarnetRopo: String = "",
 )
 
-// ── Screen ────────────────────────────────────────────────────────────────────
-
+//pantalla
 @Composable
 fun ConfiguracionInicialSc(
     onVerInicio: () -> Unit,
@@ -155,6 +159,7 @@ fun ConfiguracionInicialSc(
     var explotacionFs     by remember { mutableStateOf(ExplotacionFs()) }
     var nuevoEquipoFs     by remember { mutableStateOf(NuevoEquipoFs()) }
     var nuevoAplicadorFs  by remember { mutableStateOf(NuevoAplicadorFs()) }
+    var mensajeErrorAplicador by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         configuracionVm.cargarDatos()
@@ -163,6 +168,14 @@ fun ConfiguracionInicialSc(
     }
 
     LaunchedEffect(activeTab) { scrollState.scrollTo(0) }
+
+    LaunchedEffect(Unit) {
+        usuarioVm.mensajeError.collect { error ->
+            mensajeErrorAplicador = error
+            delay(4_000)
+            mensajeErrorAplicador = null
+        }
+    }
 
     // Sync form state when remote data arrives
     LaunchedEffect(titularResult) {
@@ -312,26 +325,31 @@ fun ConfiguracionInicialSc(
                         }
                     },
                 )
-                3 -> TabAplicadores(
-                    aplicadores      = aplicadores,
-                    nuevoAplicador   = nuevoAplicadorFs,
-                    onNuevoChange    = { nuevoAplicadorFs = it },
-                    onCrear          = {
-                        if (nuevoAplicadorFs.nombre.isNotBlank() && nuevoAplicadorFs.email.isNotBlank()) {
-                            usuarioVm.crearAplicador(
-                                usuario   = Usuario(
-                                    nombre         = nuevoAplicadorFs.nombre,
-                                    apellidos      = nuevoAplicadorFs.apellidos.ifBlank { null },
-                                    email          = nuevoAplicadorFs.email,
-                                    rol            = "APLICADOR",
-                                    tipoCarnetRopo = nuevoAplicadorFs.tipoCarnetRopo.ifBlank { null },
-                                ),
-                                contrasena = nuevoAplicadorFs.password.ifBlank { null },
-                            )
-                            nuevoAplicadorFs = NuevoAplicadorFs()
-                        }
-                    },
-                )
+                3 -> {
+                    mensajeErrorAplicador?.let { msg ->
+                        FeedbackBanner(msg, esError = true) { mensajeErrorAplicador = null }
+                    }
+                    TabAplicadores(
+                        aplicadores      = aplicadores,
+                        nuevoAplicador   = nuevoAplicadorFs,
+                        onNuevoChange    = { nuevoAplicadorFs = it },
+                        onCrear          = {
+                            if (nuevoAplicadorFs.nombre.isNotBlank() && nuevoAplicadorFs.email.isNotBlank()) {
+                                usuarioVm.crearAplicador(
+                                    usuario   = Usuario(
+                                        nombre         = nuevoAplicadorFs.nombre,
+                                        apellidos      = nuevoAplicadorFs.apellidos.ifBlank { null },
+                                        email          = nuevoAplicadorFs.email,
+                                        rol            = "APLICADOR",
+                                        tipoCarnetRopo = nuevoAplicadorFs.tipoCarnetRopo.ifBlank { null },
+                                    ),
+                                    contrasena = nuevoAplicadorFs.password.ifBlank { null },
+                                )
+                                nuevoAplicadorFs = NuevoAplicadorFs()
+                            }
+                        },
+                    )
+                }
             }
         }
     }
@@ -751,6 +769,34 @@ private fun EmptyTableRow(message: String) {
         Text(
             text  = message,
             style = MaterialTheme.typography.bodyMedium.copy(color = TextoTerciario),
+        )
+    }
+}
+
+@Composable
+private fun FeedbackBanner(mensaje: String, esError: Boolean, onDismiss: () -> Unit) {
+    val color = if (esError) TerracotaAccent else OlivaPrimario
+    val bg    = if (esError) TerracotaAccent.copy(alpha = 0.08f) else OlivaTint
+    Row(
+        modifier              = Modifier
+            .fillMaxWidth()
+            .background(bg, RoundedCornerShape(8.dp))
+            .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment     = Alignment.CenterVertically,
+    ) {
+        Text(
+            text     = mensaje,
+            fontSize = 13.sp,
+            color    = color,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector        = Icons.Outlined.Close,
+            contentDescription = "Cerrar",
+            tint               = color,
+            modifier           = Modifier.size(16.dp).clickable(onClick = onDismiss),
         )
     }
 }

@@ -64,6 +64,9 @@ fun AjustesSc(
         }
     }
 
+    val usuarioActual by authVm.usuarioActual.collectAsState()
+    LaunchedEffect(Unit) { usuarioVm.cargarUsuarios(rol = "AGRICULTOR") }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = CremaPrincipal,
@@ -96,12 +99,14 @@ fun AjustesSc(
         ) {
 
             if (mostrarBotonCerrarSesion) {
-                val nombre = ajustesVm.nombreMostrado.ifBlank { ajustesVm.emailUsuario }
+                val nombre = usuarioActual?.nombre?.takeIf { it.isNotBlank() }
+                    ?: usuarioActual?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+                    ?: ""
                 val iniciales = nombre.split(" ")
                     .mapNotNull { it.firstOrNull()?.uppercaseChar() }
                     .take(2)
                     .joinToString("")
-                val rol = ajustesVm.rolUsuario.lowercase().replaceFirstChar { it.uppercase() }
+                val rol = (usuarioActual?.rol ?: "AGRICULTOR").lowercase().replaceFirstChar { it.uppercase() }
 
                 // Avatar + nombre + rol
                 Column(
@@ -146,9 +151,9 @@ fun AjustesSc(
                 // MI CUENTA
                 SectionHeader("MI CUENTA")
                 CampoCard {
-                    CampoField(label = "Correo", value = ajustesVm.emailUsuario)
-                    if (!ajustesVm.explotacionNombre.isNullOrBlank()) {
-                        CampoField(label = "Explotación", value = ajustesVm.explotacionNombre!!)
+                    CampoField(label = "Correo", value = usuarioActual?.email ?: "")
+                    usuarioActual?.explotacionNombre?.takeIf { it.isNotBlank() }?.let {
+                        CampoField(label = "Explotación", value = it)
                     }
                 }
 
@@ -161,7 +166,7 @@ fun AjustesSc(
             }
 
             // MIS AGRICULTORES (solo TECNICO)
-            if (ajustesVm.rolUsuario == "TECNICO") {
+            if (usuarioActual?.rol == "TECNICO") {
                 val agricultores = (usuariosResult as? Result.Success)?.data
                     ?.filter { it.rol == "AGRICULTOR" } ?: emptyList()
 
