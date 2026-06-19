@@ -51,8 +51,6 @@ fun AjustesSc(
 
     val mensaje by ajustesVm.mensaje.collectAsState()
     val usuariosResult by usuarioVm.usuarios.collectAsState()
-    val mensajeUsuario by usuarioVm.mensajeError.collectAsState()
-
     LaunchedEffect(mensaje) {
         mensaje?.let {
             snackbarHostState.showSnackbar(it)
@@ -60,10 +58,9 @@ fun AjustesSc(
         }
     }
 
-    LaunchedEffect(mensajeUsuario) {
-        mensajeUsuario?.let {
-            snackbarHostState.showSnackbar(it)
-            usuarioVm.limpiarMensajeError()
+    LaunchedEffect(Unit) {
+        usuarioVm.mensajeError.collect { error ->
+            snackbarHostState.showSnackbar(error)
         }
     }
 

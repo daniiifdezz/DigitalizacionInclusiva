@@ -47,7 +47,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ConfiguracionSc(
     onVolver: () -> Unit,
-    viewModel: ConfiguracionVm = koinViewModel()
+    viewModel: ConfiguracionVm = koinViewModel(),
+    usuarioVm: UsuarioVm = koinViewModel(),
 ) {
     val titularState by viewModel.titular.collectAsState()
     val explotacionState by viewModel.explotacion.collectAsState()
@@ -62,6 +63,12 @@ fun ConfiguracionSc(
     LaunchedEffect(Unit) {
         viewModel.guardadoExitoso.collect { mensaje ->
             snackbarHostState.showSnackbar(mensaje)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        usuarioVm.mensajeError.collect { error ->
+            snackbarHostState.showSnackbar(error)
         }
     }
 
@@ -679,7 +686,6 @@ private fun PestanaAplicadores(
     authVm: AuthVm = koinViewModel()
 ) {
     val usuariosState by usuarioVm.usuarios.collectAsState()
-    val mensajeError by usuarioVm.mensajeError.collectAsState()
     val mensajeRol by usuarioVm.mensajeRol.collectAsState()
     val usuarioActual by authVm.usuarioActual.collectAsState()
     val idUsuarioActual = usuarioActual?.id
@@ -688,15 +694,7 @@ private fun PestanaAplicadores(
     var mostrarDialogoPromocion by remember { mutableStateOf<Int?>(null) }
     var mostrarDialogoDegradacion by remember { mutableStateOf<Int?>(null) }
 
-
     LaunchedEffect(Unit) { usuarioVm.cargarUsuarios() }
-
-    LaunchedEffect(mensajeError) {
-        mensajeError?.let {
-            snackbarHostState.showSnackbar(it)
-            usuarioVm.limpiarMensajeError()
-        }
-    }
 
     LaunchedEffect(mensajeRol) {
         mensajeRol?.let {

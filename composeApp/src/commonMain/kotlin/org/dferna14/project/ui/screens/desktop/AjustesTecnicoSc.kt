@@ -100,7 +100,7 @@ fun AjustesTecnicoSc(
 ) {
     val usuariosResult  by usuarioVm.usuarios.collectAsState()
     val tecnicosResult  by usuarioVm.tecnicos.collectAsState()
-    val mensajeError    by usuarioVm.mensajeError.collectAsState()
+    var mensajeError    by remember { mutableStateOf<String?>(null) }
     val mensajeRol      by usuarioVm.mensajeRol.collectAsState()
     var nuevoFs             by remember { mutableStateOf(NuevoAgricultorFs()) }
     var usuarioSeleccionado by remember { mutableStateOf<Usuario?>(null) }
@@ -111,8 +111,12 @@ fun AjustesTecnicoSc(
         usuarioVm.cargarTecnicos()
     }
 
-    LaunchedEffect(mensajeError) {
-        if (mensajeError != null) { delay(4_000); usuarioVm.limpiarMensajeError() }
+    LaunchedEffect(Unit) {
+        usuarioVm.mensajeError.collect { error ->
+            mensajeError = error
+            delay(4_000)
+            mensajeError = null
+        }
     }
     LaunchedEffect(mensajeRol) {
         if (mensajeRol != null) { delay(4_000); usuarioVm.limpiarMensajeRol() }
@@ -445,7 +449,7 @@ fun AjustesTecnicoSc(
 
                 mensajeError?.let { msg ->
                     Spacer(Modifier.height(12.dp))
-                    FeedbackBanner(msg, esError = true) { usuarioVm.limpiarMensajeError() }
+                    FeedbackBanner(msg, esError = true) { mensajeError = null }
                 }
                 mensajeRol?.let { msg ->
                     Spacer(Modifier.height(12.dp))

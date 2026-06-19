@@ -3,8 +3,11 @@ package org.dferna14.project.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.dferna14.project.data.repository.ActividadRepository
@@ -21,8 +24,8 @@ class UsuarioVm(
     private val _tecnicos = MutableStateFlow<Result<List<Usuario>>>(Result.Loading)
     val tecnicos: StateFlow<Result<List<Usuario>>> = _tecnicos.asStateFlow()
 
-    private val _mensajeError = MutableStateFlow<String?>(null)
-    val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
+    private val _mensajeError = MutableSharedFlow<String>(replay = 0, extraBufferCapacity = 1)
+    val mensajeError: SharedFlow<String> = _mensajeError.asSharedFlow()
 
     private val _mensajeRol = MutableStateFlow<String?>(null)
     val mensajeRol: StateFlow<String?> = _mensajeRol.asStateFlow()
@@ -64,12 +67,12 @@ class UsuarioVm(
                 if (resultado is Result.Success) {
                     cargarUsuarios()
                 } else if (resultado is Result.Error) {
-                    _mensajeError.value = resultado.message
+                    _mensajeError.tryEmit(resultado.message ?: "Error desconocido")
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _mensajeError.value = "Error al crear aplicador: ${e.message}"
+                _mensajeError.tryEmit("Error al crear aplicador: ${e.message}")
             }
         }
     }
@@ -81,12 +84,12 @@ class UsuarioVm(
                 if (resultado is Result.Success) {
                     cargarUsuarios()
                 } else if (resultado is Result.Error) {
-                    _mensajeError.value = resultado.message
+                    _mensajeError.tryEmit(resultado.message ?: "Error desconocido")
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _mensajeError.value = "Error al eliminar aplicador: ${e.message}"
+                _mensajeError.tryEmit("Error al eliminar aplicador: ${e.message}")
             }
         }
     }
@@ -107,10 +110,6 @@ class UsuarioVm(
                 else -> Unit
             }
         }
-    }
-
-    fun limpiarMensajeError() {
-        _mensajeError.value = null
     }
 
     fun limpiarMensajeRol() {
