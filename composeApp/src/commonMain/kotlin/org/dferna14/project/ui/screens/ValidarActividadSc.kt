@@ -65,6 +65,7 @@ fun ValidarActividadSc(
     val tabs = listOf("Datos", "Productos", "Parcela", "Validar")
 
     // Campos para validar
+    var fechaInicio by remember { mutableStateOf("") }
     var fechaFin by remember { mutableStateOf("") }
     var eficacia by remember { mutableStateOf("") }
     var aplicadorSeleccionado by remember { mutableStateOf<Usuario?>(null) }
@@ -73,6 +74,7 @@ fun ValidarActividadSc(
     var desplegableEquipo by remember { mutableStateOf(false) }
     var desplegableAplicador by remember { mutableStateOf(false) }
 
+    var errorFechaInicio by remember { mutableStateOf<String?>(null) }
     var errorFecha by remember { mutableStateOf<String?>(null) }
     var errorEficacia by remember { mutableStateOf<String?>(null) }
 
@@ -108,6 +110,7 @@ fun ValidarActividadSc(
     LaunchedEffect(actividadState) {
         if (!datosCargados && actividadState is Result.Success) {
             val act = (actividadState as Result.Success).data
+            fechaInicio = act.fechaInicio
             fechaFin = act.fechaFin ?: ""
             eficacia = act.eficacia ?: ""
             observaciones = act.observaciones ?: ""
@@ -215,6 +218,7 @@ fun ValidarActividadSc(
                         )
                         3 -> PestanaValidar(
                             act = act,
+                            fechaInicio = fechaInicio,
                             fechaFin = fechaFin,
                             eficacia = eficacia,
                             aplicadorSeleccionado = aplicadorSeleccionado,
@@ -224,8 +228,20 @@ fun ValidarActividadSc(
                             desplegableEquipo = desplegableEquipo,
                             desplegableAplicador = desplegableAplicador,
                             observaciones = observaciones,
+                            errorFechaInicio = errorFechaInicio,
                             errorFecha = errorFecha,
                             errorEficacia = errorEficacia,
+                            onFechaInicioChange = { nuevo ->
+                                fechaInicio = nuevo
+                                errorFechaInicio = if (nuevo.isNotBlank() && !validarFormatoFecha(nuevo))
+                                    "Formato incorrecto. Usa AAAA-MM-DD (ej: 2026-05-29)"
+                                else null
+                                if (fechaFin.isNotBlank() && validarFormatoFecha(nuevo)) {
+                                    errorFecha = if (!esFechaPosterior(fechaFin, nuevo))
+                                        "La fecha fin no puede ser anterior a la fecha de inicio"
+                                    else null
+                                }
+                            },
                             onFechaFinChange = { nuevo ->
                                 fechaFin = nuevo
                                 errorFecha = when {
@@ -233,7 +249,7 @@ fun ValidarActividadSc(
                                         null
                                     !validarFormatoFecha(nuevo) ->
                                         "Formato incorrecto. Usa AAAA-MM-DD (ej: 2026-05-29)"
-                                    !esFechaPosterior(nuevo, act.fechaInicio) ->
+                                    !esFechaPosterior(nuevo, fechaInicio) ->
                                         "La fecha fin no puede ser anterior a la fecha de inicio"
                                     else -> null
                                 }
@@ -246,6 +262,7 @@ fun ValidarActividadSc(
                             onObservacionesChange = { observaciones = it },
                             onValidar = {
                                 val actActualizada = act.copy(
+                                    fechaInicio = fechaInicio,
                                     fechaFin = fechaFin,
                                     eficacia = eficacia.uppercase(),
                                     equipoId = equipoSeleccionado?.id,
@@ -707,6 +724,7 @@ private fun TarjetaAviso(
 @Composable
 private fun PestanaValidar(
     act: Actividad,
+    fechaInicio: String,
     fechaFin: String,
     eficacia: String,
     aplicadorSeleccionado: Usuario?,
@@ -716,8 +734,10 @@ private fun PestanaValidar(
     desplegableEquipo: Boolean,
     desplegableAplicador: Boolean,
     observaciones: String,
+    errorFechaInicio: String?,
     errorFecha: String?,
     errorEficacia: String?,
+    onFechaInicioChange: (String) -> Unit,
     onFechaFinChange: (String) -> Unit,
     onEficaciaChange: (String) -> Unit,
     onAplicadorChange: (Usuario?) -> Unit,
@@ -742,6 +762,23 @@ private fun PestanaValidar(
             text = "Completar datos de validación:",
             style = MaterialTheme.typography.titleMedium
         )
+
+        OutlinedTextField(
+            value = fechaInicio,
+            onValueChange = { newValue -> onFechaInicioChange(newValue) },
+            label = { Text("Fecha inicio *") },
+            placeholder = { Text("AAAA-MM-DD") },
+            isError = errorFechaInicio != null,
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (errorFechaInicio != null) {
+            Text(
+                text = errorFechaInicio,
+                color = RojoEliminar,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+            )
+        }
 
         OutlinedTextField(
             value = fechaFin,
@@ -812,13 +849,16 @@ private fun PestanaValidar(
                 Text("Devolver")
             }
 
-            // El botón solo exige fecha fin válida y posterior a la de inicio.
+            // El botón exige fecha inicio y fin válidas (formato + orden cronológico).
             // La eficacia es opcional desde Desktop (el técnico puede dejarla en
             // blanco si todavía no tiene criterio).
-            val esValido = fechaFin.isNotBlank() &&
+            val esValido = fechaInicio.isNotBlank() &&
+                    errorFechaInicio == null &&
+                    validarFormatoFecha(fechaInicio) &&
+                    fechaFin.isNotBlank() &&
                     errorFecha == null &&
                     validarFormatoFecha(fechaFin) &&
-                    esFechaPosterior(fechaFin, act.fechaInicio)
+                    esFechaPosterior(fechaFin, fechaInicio)
 
             Button(
                 onClick = onValidar,

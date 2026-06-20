@@ -227,6 +227,15 @@ fun NuevaActividadSc(
 
                 Spacer(Modifier.height(4.dp))
 
+                val camposFaltantes = buildList {
+                    if (parcelaSeleccionada == null) add("parcela")
+                    if (superficieTratada.toDoubleOrNull()?.let { it > 0 } != true) add("superficie válida (> 0)")
+                    if (productosSeleccionados.isEmpty()) add("al menos un producto")
+                }
+                if (camposFaltantes.isNotEmpty()) {
+                    CampoAvisoInfo(mensaje = "Para guardar falta: ${camposFaltantes.joinToString(", ")}.")
+                }
+
                 CampoPrimaryButton(
                     text = "Guardar actividad",
                     onClick = {
@@ -243,7 +252,7 @@ fun NuevaActividadSc(
                             )
                         }
                     },
-                    enabled = parcelaSeleccionada != null
+                    enabled = camposFaltantes.isEmpty()
                 )
             }
         }

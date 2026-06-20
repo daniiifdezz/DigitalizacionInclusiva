@@ -161,7 +161,7 @@ fun EditarActividadSc(
 
                         CampoPrimaryButton(
                             text    = "Guardar cambios",
-                            enabled = parcelaSeleccionada != null && fechaInicio.isNotBlank(),
+                            enabled = parcelaSeleccionada != null && fechaInicio.isNotBlank() && superficieTratada.toDoubleOrNull()?.let { it > 0 } == true,
                             onClick = {
                                 val parcela = parcelaSeleccionada
                                 if (parcela != null) {
