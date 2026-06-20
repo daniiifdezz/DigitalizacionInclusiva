@@ -98,6 +98,7 @@ object CuadernoPdfGenerator {
             generarSeccion1(documento, cuaderno, ordenes)
             generarSeccion2(documento, cuaderno, ordenes)
             generarSeccion3(documento, cuaderno, ordenes)
+            generarSeccion5(documento, cuaderno)
             generarSeccion6(documento, cuaderno, ordenes)
 
             val output = ByteArrayOutputStream()
@@ -697,6 +698,16 @@ object CuadernoPdfGenerator {
             )
         }
         return y
+    }
+
+    // ===================================================================
+    // SECCIÓN 5 — ASESORAMIENTO
+    // ===================================================================
+    private fun generarSeccion5(doc: PDDocument, cuaderno: CuadernoCompletoDto) {
+        nuevaPagina(doc, cuaderno, numeroSeccion = 5, numeroHoja = 1) { cs, y0 ->
+            val y = dibujarTituloSeccionOficial(cs, "5. ASESORAMIENTO", y0)
+            dibujarTextoLibre(cs, "No procede para esta explotacion", FUENTE_CUERPO_NORMAL, 10f, MARGEN_IZQ, y - 20f)
+        }
     }
 
     // ===================================================================

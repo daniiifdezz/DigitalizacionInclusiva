@@ -60,6 +60,7 @@ import org.dferna14.project.ui.theme.BordeNormal
 import org.dferna14.project.ui.theme.CremaPrincipal
 import org.dferna14.project.ui.theme.OlivaOscuro
 import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.SuperficieSepia
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
@@ -376,6 +377,18 @@ private fun TabDatos(
         )
     }
 
+    val fechaFinInvalida = fs.fechaFin.isNotBlank() &&
+        actividad?.fechaInicio?.let { fs.fechaFin < it } == true
+
+    if (fechaFinInvalida) {
+        Text(
+            text     = "La fecha de finalización no puede ser anterior a la fecha de inicio",
+            color    = RojoEliminar,
+            fontSize = 11.sp,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
     // Aviso legal
     if (actividad?.estado == EstadoActividad.PENDIENTE_VALIDAR) {
         CampoAvisoInfo(
@@ -397,7 +410,7 @@ private fun TabDatos(
                 .background(OlivaPrimario, RoundedCornerShape(8.dp))
                 .border(1.dp, OlivaOscuro, RoundedCornerShape(8.dp))
                 .clickable(
-                    enabled = actividad?.estado == EstadoActividad.PENDIENTE_VALIDAR,
+                    enabled = actividad?.estado == EstadoActividad.PENDIENTE_VALIDAR && !fechaFinInvalida,
                     onClick = onValidar,
                 ),
             horizontalArrangement = Arrangement.Center,

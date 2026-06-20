@@ -55,6 +55,7 @@ import org.dferna14.project.ui.components.desktop.DesktopWrapper
 import org.dferna14.project.ui.components.desktop.InlineCreateCard
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeNormal
+import org.dferna14.project.ui.theme.RojoEliminar
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.outlined.Close
@@ -70,6 +71,7 @@ import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.ConfiguracionVm
 import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
+import org.dferna14.project.util.isEmailValido
 import org.koin.compose.viewmodel.koinViewModel
 
 // ── Columnas de tablas ────────────────────────────────────────────────────────
@@ -334,7 +336,7 @@ fun ConfiguracionInicialSc(
                         nuevoAplicador   = nuevoAplicadorFs,
                         onNuevoChange    = { nuevoAplicadorFs = it },
                         onCrear          = {
-                            if (nuevoAplicadorFs.nombre.isNotBlank() && nuevoAplicadorFs.email.isNotBlank()) {
+                            if (nuevoAplicadorFs.nombre.isNotBlank() && isEmailValido(nuevoAplicadorFs.email)) {
                                 usuarioVm.crearAplicador(
                                     usuario   = Usuario(
                                         nombre         = nuevoAplicadorFs.nombre,
@@ -662,6 +664,13 @@ private fun TabAplicadores(
                 value         = nuevoAplicador.apellidos,
                 onValueChange = { onNuevoChange(nuevoAplicador.copy(apellidos = it)) },
                 modifier      = Modifier.weight(1f),
+            )
+        }
+        if (nuevoAplicador.email.isNotBlank() && !isEmailValido(nuevoAplicador.email)) {
+            Text(
+                text  = "Formato de email no válido",
+                color = RojoEliminar,
+                style = MaterialTheme.typography.labelSmall,
             )
         }
         FormRow {

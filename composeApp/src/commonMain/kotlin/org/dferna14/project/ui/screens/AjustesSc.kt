@@ -34,6 +34,7 @@ import org.dferna14.project.ui.theme.*
 import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
+import org.dferna14.project.util.isEmailValido
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -295,6 +296,13 @@ fun AjustesSc(
                         onValueChange = { email = it },
                         keyboardType = KeyboardType.Email
                     )
+                    if (email.isNotBlank() && !isEmailValido(email)) {
+                        Text(
+                            text  = "Formato de email no válido",
+                            color = RojoEliminar,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                     CampoPasswordField(
                         label = "Contraseña",
                         value = contrasena,
@@ -311,7 +319,7 @@ fun AjustesSc(
                         )
                         mostrarDialogoAgricultor = false
                     },
-                    enabled = nombre.isNotBlank() && email.isNotBlank() && contrasena.length >= 6
+                    enabled = nombre.isNotBlank() && isEmailValido(email) && contrasena.length >= 6
                 ) {
                     Text("Crear", color = OlivaPrimario, fontWeight = FontWeight.Medium)
                 }

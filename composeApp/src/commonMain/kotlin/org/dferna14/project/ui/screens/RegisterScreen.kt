@@ -28,6 +28,7 @@ import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.viewmodel.AuthVm
+import org.dferna14.project.util.isEmailValido
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -155,9 +156,20 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(4.dp))
 
+            val emailInvalido = email.isNotBlank() && !isEmailValido(email)
+            if (emailInvalido) {
+                Text(
+                    text     = "Formato de email no válido",
+                    color    = RojoEliminar,
+                    fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             val puedeEnviar = !cargando
                 && nombre.isNotBlank()
                 && email.isNotBlank()
+                && isEmailValido(email)
                 && passwordValida
                 && passwordsCoinciden
 

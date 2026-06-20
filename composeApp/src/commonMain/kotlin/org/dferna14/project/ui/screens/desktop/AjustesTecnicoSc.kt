@@ -61,9 +61,11 @@ import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.extraTypography
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
+import org.dferna14.project.util.isEmailValido
 import org.koin.compose.viewmodel.koinViewModel
 
 private val COLS_TECNICOS = listOf(
@@ -411,13 +413,20 @@ fun AjustesTecnicoSc(
                             modifier      = Modifier.weight(1f),
                         )
                     }
+                    if (nuevoFs.email.isNotBlank() && !isEmailValido(nuevoFs.email)) {
+                        Text(
+                            text  = "Formato de email no válido",
+                            color = RojoEliminar,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
                     Spacer(Modifier.height(4.dp))
                     Row(
                         modifier              = Modifier
                             .background(OlivaPrimario, RoundedCornerShape(8.dp))
                             .border(1.dp, OlivaOscuro, RoundedCornerShape(8.dp))
                             .clickable(onClick = {
-                                if (nuevoFs.nombre.isNotBlank() && nuevoFs.email.isNotBlank()) {
+                                if (nuevoFs.nombre.isNotBlank() && isEmailValido(nuevoFs.email)) {
                                     usuarioVm.crearAplicador(
                                         usuario    = Usuario(
                                             nombre = nuevoFs.nombre,
