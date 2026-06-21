@@ -54,10 +54,6 @@ sealed class Screen {
     data class Detalle(val actividadId: Int) : Screen()
     data class Editar(val actividadId: Int) : Screen()
     data class Validar(val actividadId: Int) : Screen()
-    data class Semillas(val actividadId: Int) : Screen()
-    // Fertilización: almacenamos parcelaId (referencia) y actividadId (para volver atrás)
-    data class Fertilizacion(val parcelaId: Int, val actividadId: Int) : Screen()
-
     // Desktop screens
     object DesktopHome : Screen()
     object Parcelas : Screen()
@@ -258,19 +254,6 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
                 onVolver = { onNavigate(Screen.DesktopHome) }
             )
         }
-        is Screen.Semillas -> {
-            SemillasTratadasSc(
-                actividadId = screen.actividadId,
-                onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
-            )
-        }
-        is Screen.Fertilizacion -> {
-            FertilizacionSc(
-                parcelaId   = screen.parcelaId,
-                actividadId = screen.actividadId,
-                onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
-            )
-        }
         else -> {}
     }
 }
@@ -391,19 +374,6 @@ private fun MobileApp(
                 }
                 is Screen.Ajustes -> {
                     AjustesSc()
-                }
-                is Screen.Semillas -> {
-                    SemillasTratadasSc(
-                        actividadId = screen.actividadId,
-                        onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
-                    )
-                }
-                is Screen.Fertilizacion -> {
-                    FertilizacionSc(
-                        parcelaId   = screen.parcelaId,
-                        actividadId = screen.actividadId,
-                        onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
-                    )
                 }
                 else -> {}
             }
