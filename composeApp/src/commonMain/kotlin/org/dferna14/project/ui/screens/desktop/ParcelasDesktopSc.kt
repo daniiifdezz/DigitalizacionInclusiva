@@ -592,7 +592,7 @@ private fun ParcelaDetail(
 //ayudass
 
 @Composable
-private fun SectionHeader(title: String, onGuardar: () -> Unit) {
+private fun SectionHeader(title : String, onGuardar: () -> Unit) {
     Row(
         modifier              = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

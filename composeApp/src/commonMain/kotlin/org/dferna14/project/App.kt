@@ -43,6 +43,9 @@ sealed class Screen {
     // Mobile tabs
     object MisActividades : Screen()
     object NuevaActividad : Screen()
+    object NuevoTipoActividad : Screen()
+    object NuevaSemilla : Screen()
+    object NuevaFertilizacion : Screen()
     object MisParcelas : Screen()
     object Productos : Screen()
     object Ajustes : Screen()
@@ -228,13 +231,9 @@ private fun DesktopApp(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
         }
         is Screen.Detalle -> {
             ActividadDetalleSc(
-                actividadId        = screen.actividadId,
-                onVolver           = { onNavigate(Screen.MisActividades) },
-                onEditar           = { id -> onNavigate(Screen.Editar(id)) },
-                onVerSemillas      = { id -> onNavigate(Screen.Semillas(id)) },
-                onVerFertilizacion = { parcelaId ->
-                    onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId))
-                }
+                actividadId = screen.actividadId,
+                onVolver    = { onNavigate(Screen.MisActividades) },
+                onEditar    = { id -> onNavigate(Screen.Editar(id)) }
             )
         }
         is Screen.Editar -> {
@@ -341,9 +340,17 @@ private fun MobileApp(
             when (val screen = currentScreen) {
                 is Screen.MisActividades -> {
                     ActividadListadoSc(
-                        onNuevaActividad = { onNavigate(Screen.NuevaActividad) },
-                        onVerDetalle = { id -> onNavigate(Screen.Detalle(id)) },
-                        isDesktop = false
+                        onNuevaActividad = { onNavigate(Screen.NuevoTipoActividad) },
+                        onVerDetalle     = { id -> onNavigate(Screen.Detalle(id)) },
+                        isDesktop        = false
+                    )
+                }
+                is Screen.NuevoTipoActividad -> {
+                    NuevoTipoActividadSc(
+                        onTratamiento    = { onNavigate(Screen.NuevaActividad) },
+                        onSemilla        = { onNavigate(Screen.NuevaSemilla) },
+                        onFertilizacion  = { onNavigate(Screen.NuevaFertilizacion) },
+                        onVolver         = { onNavigate(Screen.MisActividades) }
                     )
                 }
                 is Screen.NuevaActividad -> {
@@ -351,21 +358,27 @@ private fun MobileApp(
                         onVolver = { onNavigate(Screen.MisActividades) }
                     )
                 }
+                is Screen.NuevaSemilla -> {
+                    NuevaSemillaSc(
+                        onVolver = { onNavigate(Screen.MisActividades) }
+                    )
+                }
+                is Screen.NuevaFertilizacion -> {
+                    NuevaFertilizacionSc(
+                        onVolver = { onNavigate(Screen.MisActividades) }
+                    )
+                }
                 is Screen.Detalle -> {
                     ActividadDetalleSc(
                         actividadId = screen.actividadId,
-                        onVolver = { onNavigate(Screen.MisActividades) },
-                        onEditar = { id -> onNavigate(Screen.Editar(id)) },
-                        onVerSemillas = { id -> onNavigate(Screen.Semillas(id)) },
-                        onVerFertilizacion = { parcelaId ->
-                            onNavigate(Screen.Fertilizacion(parcelaId, screen.actividadId))
-                        }
+                        onVolver    = { onNavigate(Screen.MisActividades) },
+                        onEditar    = { id -> onNavigate(Screen.Editar(id)) }
                     )
                 }
                 is Screen.Editar -> {
                     EditarActividadSc(
                         actividadId = screen.actividadId,
-                        onVolver = { onNavigate(Screen.MisActividades) }
+                        onVolver    = { onNavigate(Screen.MisActividades) }
                     )
                 }
                 is Screen.MisParcelas -> {
@@ -382,14 +395,14 @@ private fun MobileApp(
                 is Screen.Semillas -> {
                     SemillasTratadasSc(
                         actividadId = screen.actividadId,
-                        onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
+                        onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
                     )
                 }
                 is Screen.Fertilizacion -> {
                     FertilizacionSc(
-                        parcelaId = screen.parcelaId,
+                        parcelaId   = screen.parcelaId,
                         actividadId = screen.actividadId,
-                        onVolver = { onNavigate(Screen.Detalle(screen.actividadId)) }
+                        onVolver    = { onNavigate(Screen.Detalle(screen.actividadId)) }
                     )
                 }
                 else -> {}

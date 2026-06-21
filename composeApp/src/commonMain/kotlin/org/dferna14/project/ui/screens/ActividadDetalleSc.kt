@@ -28,8 +28,6 @@ fun ActividadDetalleSc(
     actividadId: Int,
     onVolver: () -> Unit,
     onEditar: (Int) -> Unit,
-    onVerSemillas: (Int) -> Unit = {},
-    onVerFertilizacion: (Int) -> Unit = {},
     viewModel: ActividadDetalleVm = koinViewModel(),
     parcelaVm: ParcelaVm = koinViewModel()
 ) {
@@ -163,19 +161,6 @@ fun ActividadDetalleSc(
                                 }
                             }
                         }
-
-                        SectionHeader("Sub-formularios")
-                        CampoSecondaryButton(
-                            text = "Semillas tratadas",
-                            icon = Icons.Outlined.Grass,
-                            onClick = { onVerSemillas(actividadId) }
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        CampoSecondaryButton(
-                            text = "Fertilización básica",
-                            icon = Icons.Outlined.WaterDrop,
-                            onClick = { onVerFertilizacion(act.parcelaId) }
-                        )
 
                         if (act.estado == EstadoActividad.BORRADOR) {
                             Spacer(Modifier.height(12.dp))

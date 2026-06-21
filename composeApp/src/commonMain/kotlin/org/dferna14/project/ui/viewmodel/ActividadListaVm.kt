@@ -120,6 +120,27 @@ class ActividadListaVm(
     suspend fun getSuperficieParcela(parcelaId: Int): Double? =
         repository.getSuperficieParcela(parcelaId)
 
+    // actividad minima (sin productos ni problema fitosanitario) y devuelve su id,
+    // o null si hay error. Punto de entrada para los flujos de semilla y fertilización.
+    suspend fun crearActividadYObtenerId(actividad: Actividad): Int? {
+        return try {
+            val resultado = repository.crearActividad(actividad)
+            if (resultado is Result.Success) {
+                cargarActividades()
+                cargarActividadesPendientes()
+                resultado.data.id
+            } else {
+                if (resultado is Result.Error) _mensajeError.value = resultado.message
+                null
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            _mensajeError.value = "Error al crear actividad: ${e.message}"
+            null
+        }
+    }
+
     fun resetOperacionExitosa() {
         _operacionExitosa.value = false
     }
