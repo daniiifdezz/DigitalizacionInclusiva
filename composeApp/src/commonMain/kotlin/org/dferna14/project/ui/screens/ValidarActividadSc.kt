@@ -482,13 +482,13 @@ private fun PestanaProductos(
         Button(
             onClick = {
                 val producto = productoSeleccionado ?: return@Button
-                val dosis = dosisTexto.toDoubleOrNull() ?: return@Button
+                val dosis = dosisTexto.replace(",", ".").toDoubleOrNull() ?: return@Button
                 onAñadir(producto.id, dosis)
                 // Reset del form para permitir añadir varios sin recargar la pantalla
                 productoSeleccionado = null
                 dosisTexto = ""
             },
-            enabled = productoSeleccionado != null && dosisTexto.toDoubleOrNull() != null,
+            enabled = productoSeleccionado != null && dosisTexto.replace(",", ".").toDoubleOrNull() != null,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)

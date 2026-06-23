@@ -94,7 +94,7 @@ fun NuevaFertilizacionSc(
                 productoId    = fertilizanteSeleccionado?.id,
                 riquezaNpk    = fertilizanteSeleccionado?.riquezaNpk,
                 numeroAlbaran = numeroAlbaran.ifBlank { null },
-                dosis         = dosis.toDoubleOrNull(),
+                dosis         = dosis.replace(",", ".").toDoubleOrNull(),
                 observaciones = observaciones.ifBlank { null },
                 fechaInicio   = fechaHoy
             )

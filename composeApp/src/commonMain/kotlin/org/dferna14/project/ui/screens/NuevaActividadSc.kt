@@ -209,7 +209,7 @@ fun NuevaActividadSc(
                         text = "Añadir a la actividad",
                         onClick = {
                             val prod = productoSeleccionado
-                            val dosisNum = dosis.toDoubleOrNull()
+                            val dosisNum = dosis.replace(",", ".").toDoubleOrNull()
                             if (prod != null && dosisNum != null) {
                                 productosSeleccionados = productosSeleccionados + (prod to dosisNum)
                                 productoSeleccionado = null
@@ -231,7 +231,7 @@ fun NuevaActividadSc(
 
                 val camposFaltantes = buildList {
                     if (parcelaSeleccionada == null) add("parcela")
-                    if (superficieTratada.toDoubleOrNull()?.let { it > 0 } != true) add("superficie válida (> 0)")
+                    if (superficieTratada.replace(",", ".").toDoubleOrNull()?.let { it > 0 } != true) add("superficie válida (> 0)")
                     if (productosSeleccionados.isEmpty()) add("al menos un producto")
                 }
                 if (camposFaltantes.isNotEmpty()) {
@@ -246,7 +246,7 @@ fun NuevaActividadSc(
                                 actividad = Actividad(
                                     parcelaId             = parcela.id,
                                     fechaInicio           = fechaHoy,
-                                    superficieTratada     = superficieTratada.toDoubleOrNull(),
+                                    superficieTratada     = superficieTratada.replace(",", ".").toDoubleOrNull(),
                                     problemaFitosanitario = problemaFitosanitario.ifBlank { null },
                                     observaciones         = observaciones.ifBlank { null }
                                 ),

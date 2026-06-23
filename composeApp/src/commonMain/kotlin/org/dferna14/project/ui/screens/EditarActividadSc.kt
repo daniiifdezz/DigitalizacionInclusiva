@@ -161,7 +161,7 @@ fun EditarActividadSc(
 
                         CampoPrimaryButton(
                             text    = "Guardar cambios",
-                            enabled = parcelaSeleccionada != null && fechaInicio.isNotBlank() && superficieTratada.toDoubleOrNull()?.let { it > 0 } == true,
+                            enabled = parcelaSeleccionada != null && fechaInicio.isNotBlank() && superficieTratada.replace(",", ".").toDoubleOrNull()?.let { it > 0 } == true,
                             onClick = {
                                 val parcela = parcelaSeleccionada
                                 if (parcela != null) {
@@ -172,7 +172,7 @@ fun EditarActividadSc(
                                             equipoId              = null,
                                             aplicadorId           = null,
                                             fechaInicio           = fechaInicio,
-                                            superficieTratada     = superficieTratada.toDoubleOrNull(),
+                                            superficieTratada     = superficieTratada.replace(",", ".").toDoubleOrNull(),
                                             problemaFitosanitario = problemaFitosanitario.ifBlank { null },
                                             observaciones         = observaciones.ifBlank { null }
                                         )

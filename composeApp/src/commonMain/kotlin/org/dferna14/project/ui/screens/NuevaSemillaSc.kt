@@ -89,8 +89,8 @@ fun NuevaSemillaSc(
                     parcelaId         = parcela.id,
                     aplica            = true,
                     fechaSiembra      = fechaHoy,
-                    superficieHa      = superficieHa.toDoubleOrNull(),
-                    cantidadSemillaKg = cantidadSemillaKg.toDoubleOrNull(),
+                    superficieHa      = superficieHa.replace(",", ".").toDoubleOrNull(),
+                    cantidadSemillaKg = cantidadSemillaKg.replace(",", ".").toDoubleOrNull(),
                     productoId        = productoSeleccionado?.id,
                     variedadSemilla   = variedadSemilla.ifBlank { null },
                     cultivoId         = null

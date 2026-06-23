@@ -149,7 +149,6 @@ private fun ErrorBox(mensaje: String, onReintentar: () -> Unit) {
     }
 }
 
-// ── Tab 1: Datos básicos ──────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -295,7 +294,6 @@ private fun ReadOnlyField(label: String, valor: String) {
     )
 }
 
-// ── Tab 2: SIGPAC ─────────────────────────────────────────────────────────────
 
 @Composable
 private fun SigpacTab(
@@ -356,7 +354,7 @@ private fun SigpacTab(
                         numeroParcela    = numeroParcela.takeIf { it.isNotBlank() },
                         numeroRecinto    = numeroRecinto.takeIf { it.isNotBlank() },
                         usoSigpac        = usoSigpac.takeIf { it.isNotBlank() },
-                        superficieHa     = superficieHa.toDoubleOrNull()
+                        superficieHa     = superficieHa.replace(",", ".").toDoubleOrNull()
                     )
                 )
             },
@@ -370,7 +368,6 @@ private fun SigpacTab(
     }
 }
 
-// ── Tab 3: Datos Agronómicos ──────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
