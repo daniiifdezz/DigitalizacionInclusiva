@@ -43,7 +43,8 @@ data class ActividadResponse(
     val problemaFitosanitario: String?  = null,
     val eficacia             : String?  = null,
     val observaciones        : String?  = null,
-    val estado               : EstadoActividad
+    val estado               : EstadoActividad,
+    val tipoActividad        : String   = "FITOSANITARIA"
 )
 
 // ProductoAPlicado

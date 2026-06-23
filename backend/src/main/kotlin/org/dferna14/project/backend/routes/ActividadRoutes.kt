@@ -9,6 +9,7 @@ import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.ActividadProductos
 import org.dferna14.project.backend.db.Fertilizaciones
 import org.dferna14.project.backend.db.Parcelas
+import org.dferna14.project.backend.db.Productos
 import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.mapper.toActividadProductoResponse
 import org.dferna14.project.backend.mapper.toActividadResponse
@@ -22,6 +23,16 @@ import org.dferna14.project.backend.model.SemillaTratadaResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+
+// Debe llamarse dentro de un bloque transaction { }.
+// Orden de prioridad: SIEMBRA > FERTILIZACION > FITOSANITARIA.
+private fun calcularTipoActividad(actividadId: Int): String {
+    if (SemillasTratadas.selectAll().where { SemillasTratadas.actividadId eq actividadId }.any())
+        return "SIEMBRA"
+    if (Fertilizaciones.selectAll().where { Fertilizaciones.actividadId eq actividadId }.any())
+        return "FERTILIZACION"
+    return "FITOSANITARIA"
+}
 
 fun Route.actividadRoutes() {
 
@@ -42,7 +53,10 @@ fun Route.actividadRoutes() {
                 } else {
                     base
                 }
-                query.map { it.toActividadResponse() }
+                query.map { row ->
+                    val actId = row[Actividades.id].value
+                    row.toActividadResponse(calcularTipoActividad(actId))
+                }
             }
             call.respond(actividades)
         }
@@ -58,7 +72,10 @@ fun Route.actividadRoutes() {
                         (Actividades.estado eq EstadoActividad.PENDIENTE_VALIDAR.name) and
                                 (Parcelas.explotacionId eq tenantId)
                     }
-                    .map { it.toActividadResponse() }
+                    .map { row ->
+                        val actId = row[Actividades.id].value
+                        row.toActividadResponse(calcularTipoActividad(actId))
+                    }
             }
             call.respond(actividades)
         }
@@ -74,7 +91,7 @@ fun Route.actividadRoutes() {
                 (Actividades leftJoin Parcelas).selectAll()
                     .where { (Actividades.id eq id) and (Parcelas.explotacionId eq tenantId) }
                     .singleOrNull()
-                    ?.toActividadResponse()
+                    ?.let { row -> row.toActividadResponse(calcularTipoActividad(id)) }
             }
 
             if (actividad == null) call.respond(HttpStatusCode.NotFound)
@@ -116,7 +133,7 @@ fun Route.actividadRoutes() {
                 (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq nuevaId }
                     .single()
-                    .toActividadResponse()
+                    .toActividadResponse() // nueva actividad, sin semilla/fertilización aún → FITOSANITARIA
             }
 
             call.respond(HttpStatusCode.Created, creada)
@@ -183,7 +200,7 @@ fun Route.actividadRoutes() {
                 else (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq id }
                     .single()
-                    .toActividadResponse()
+                    .let { row -> row.toActividadResponse(calcularTipoActividad(id)) }
 
                 filasActualizadas to act
             }
@@ -212,7 +229,7 @@ fun Route.actividadRoutes() {
                 else (Actividades leftJoin Parcelas).selectAll()
                     .where { Actividades.id eq id }
                     .single()
-                    .toActividadResponse()
+                    .let { row -> row.toActividadResponse(calcularTipoActividad(id)) }
             }
 
             if (actividad == null) call.respond(HttpStatusCode.NotFound)
@@ -269,14 +286,18 @@ fun Route.actividadRoutes() {
                     ?: return@get call.respond(HttpStatusCode.BadRequest)
 
                 val productos = transaction {
-                    ActividadProductos.selectAll()
+                    (ActividadProductos leftJoin Productos)
+                        .selectAll()
                         .where { ActividadProductos.actividadId eq actividadId }
-                        .map {
+                        .map { row ->
                             ActividadProductoResponse(
-                                id          = it[ActividadProductos.id].value,
-                                actividadId = it[ActividadProductos.actividadId],
-                                productoId  = it[ActividadProductos.productoId],
-                                dosis       = it[ActividadProductos.dosis]
+                                id          = row[ActividadProductos.id].value,
+                                actividadId = row[ActividadProductos.actividadId],
+                                productoId  = row[ActividadProductos.productoId],
+                                dosis       = row[ActividadProductos.dosis],
+                                productoNombreComercial = runCatching { row[Productos.nombreComercial] }.getOrNull(),
+                                productoNumeroRegistro  = runCatching { row[Productos.numeroRegistro] }.getOrNull(),
+                                productoMateriaActiva   = runCatching { row[Productos.materiaActiva] }.getOrNull()
                             )
                         }
                 }
@@ -289,23 +310,29 @@ fun Route.actividadRoutes() {
 
                 val request = call.receive<ActividadProductoRequest>()
 
-                val nuevoId = transaction {
-                    ActividadProductos.insertAndGetId {
+                val response = transaction {
+                    val nuevoId = ActividadProductos.insertAndGetId {
                         it[ActividadProductos.actividadId] = actividadId
                         it[ActividadProductos.productoId]  = request.productoId
                         it[ActividadProductos.dosis]       = request.dosis
                     }.value
-                }
 
-                call.respond(
-                    HttpStatusCode.Created,
+                    val productoRow = Productos.selectAll()
+                        .where { Productos.id eq request.productoId }
+                        .singleOrNull()
+
                     ActividadProductoResponse(
                         id          = nuevoId,
                         actividadId = actividadId,
                         productoId  = request.productoId,
-                        dosis       = request.dosis
+                        dosis       = request.dosis,
+                        productoNombreComercial = productoRow?.get(Productos.nombreComercial),
+                        productoNumeroRegistro  = productoRow?.get(Productos.numeroRegistro),
+                        productoMateriaActiva   = productoRow?.get(Productos.materiaActiva)
                     )
-                )
+                }
+
+                call.respond(HttpStatusCode.Created, response)
             }
 
             // DELETE /api/actividades/{id}/productos/{actividadProductoId}

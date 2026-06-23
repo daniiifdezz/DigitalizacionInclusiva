@@ -43,7 +43,8 @@ data class Actividad(
     val eficacia             : String?  = null,
     val observaciones        : String?  = null,
     val estado               : EstadoActividad = EstadoActividad.BORRADOR,
-    val sincronizado         : Boolean  = false
+    val sincronizado         : Boolean  = false,
+    val tipoActividad        : String   = "FITOSANITARIA"
 )
 
 data class ActividadProducto(

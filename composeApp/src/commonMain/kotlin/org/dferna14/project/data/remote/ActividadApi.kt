@@ -31,7 +31,8 @@ data class ActividadDto(
     val problemaFitosanitario: String? = null,
     val eficacia             : String? = null,
     val observaciones        : String? = null,
-    val estado               : EstadoActividadDto = EstadoActividadDto.BORRADOR
+    val estado               : EstadoActividadDto = EstadoActividadDto.BORRADOR,
+    val tipoActividad        : String  = "FITOSANITARIA"
 )
 
 @Serializable

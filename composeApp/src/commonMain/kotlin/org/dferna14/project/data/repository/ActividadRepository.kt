@@ -484,7 +484,8 @@ class ActividadRepository(
             EstadoActividadDto.PENDIENTE_VALIDAR -> EstadoActividad.PENDIENTE_VALIDAR
             EstadoActividadDto.VALIDADA -> EstadoActividad.VALIDADA
         },
-        sincronizado          = true
+        sincronizado          = true,
+        tipoActividad         = tipoActividad
     )
 
     // Semillas tratadas

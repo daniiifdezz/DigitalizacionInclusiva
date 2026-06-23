@@ -97,7 +97,7 @@ fun ResultRow.toDatosAgronomicosResponse(): DatosAgronomicosResponse = DatosAgro
     aireLibreProtegido = this[DatosAgronomicos.aireLibreProtegido]
 )
 
-fun ResultRow.toActividadResponse(): ActividadResponse {
+fun ResultRow.toActividadResponse(tipoActividad: String = "FITOSANITARIA"): ActividadResponse {
     // Si la fila viene de un JOIN con Parcelas leemos el alias; si no, queda null.
     val alias = runCatching { this[Parcelas.alias] }.getOrNull()
     return ActividadResponse(
@@ -114,7 +114,8 @@ fun ResultRow.toActividadResponse(): ActividadResponse {
         observaciones         = this[Actividades.observaciones],
         estado                = runCatching {
             EstadoActividad.valueOf(this[Actividades.estado] ?: "BORRADOR")
-        }.getOrDefault(EstadoActividad.BORRADOR)
+        }.getOrDefault(EstadoActividad.BORRADOR),
+        tipoActividad         = tipoActividad
     )
 }
 
