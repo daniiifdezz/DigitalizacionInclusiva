@@ -25,6 +25,7 @@ import kotlinx.datetime.todayIn
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.EstadoActividad
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.BadgeTipo
 import org.dferna14.project.ui.components.CampoPrimaryButton
 import org.dferna14.project.ui.components.EstadoBadge
 import org.dferna14.project.ui.components.formatearFecha
@@ -51,6 +52,7 @@ private val COLS_ACTIVIDADES = listOf(
     DesktopTableColumn("Parcela",  weight = 1.5f),
     DesktopTableColumn("Problema", weight = 2.5f),
     DesktopTableColumn("Fecha",    weight = 1.0f),
+    DesktopTableColumn("Tipo",     weight = 1.2f),
     DesktopTableColumn("Estado",   weight = 1.5f),
 )
 
@@ -346,7 +348,10 @@ private fun ActividadCard(
                     )
                 }
                 Spacer(Modifier.height(6.dp))
-                EstadoBadge(actividad.estado)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    EstadoBadge(actividad.estado)
+                    BadgeTipo(actividad.tipoActividad)
+                }
                 val problema = actividad.problemaFitosanitario
                 if (!problema.isNullOrBlank()) {
                     Spacer(Modifier.height(4.dp))
@@ -482,6 +487,9 @@ private fun ActividadListadoDesktop(
                                             style = MaterialTheme.typography.bodySmall,
                                             color = TextoTerciario
                                         )
+                                    },
+                                    {
+                                        BadgeTipo(actividad.tipoActividad)
                                     },
                                     {
                                         EstadoBadge(actividad.estado)

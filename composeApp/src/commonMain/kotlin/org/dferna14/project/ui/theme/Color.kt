@@ -66,3 +66,6 @@ val AmbarProducto       = Color(0xFF854F0B)
 val AmbarFondoProducto  = Color(0xFFFAEEDA)
 val VerdeInfo           = Color(0xFF3B6D11)
 val VerdeFondoInfo      = Color(0xFFEAF3DE)
+
+val TerracotaPrimario   = TerracotaAccent      // texto del badge Tratamiento
+val OcreFondo           = AmbarFondoProducto   // fondo del badge Fertilización

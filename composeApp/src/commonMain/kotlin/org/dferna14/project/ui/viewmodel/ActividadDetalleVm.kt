@@ -10,7 +10,9 @@ import kotlinx.coroutines.launch
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.ActividadProducto
+import org.dferna14.project.domain.model.Fertilizacion
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.domain.model.SemillaTratada
 
 class ActividadDetalleVm(
     private val repository: ActividadRepository
@@ -27,6 +29,12 @@ class ActividadDetalleVm(
 
     private val _productosActividad = MutableStateFlow<Result<List<ActividadProducto>>>(Result.Loading)
     val productosActividad: StateFlow<Result<List<ActividadProducto>>> = _productosActividad.asStateFlow()
+
+    private val _semillaTratada = MutableStateFlow<Result<SemillaTratada?>>(Result.Loading)
+    val semillaTratada: StateFlow<Result<SemillaTratada?>> = _semillaTratada.asStateFlow()
+
+    private val _fertilizacion = MutableStateFlow<Result<Fertilizacion?>>(Result.Loading)
+    val fertilizacion: StateFlow<Result<Fertilizacion?>> = _fertilizacion.asStateFlow()
 
     fun cargarActividad(id: Int) {
         viewModelScope.launch {
@@ -142,6 +150,34 @@ class ActividadDetalleVm(
                 throw e
             } catch (e: Exception) {
                 _mensajeError.value = "Error al eliminar actividad: ${e.message}"
+            }
+        }
+    }
+
+    // Sub-datos por tipo de actividad
+
+    fun cargarSemillaTratada(actividadId: Int) {
+        viewModelScope.launch {
+            _semillaTratada.value = Result.Loading
+            try {
+                _semillaTratada.value = repository.getSemillaTratada(actividadId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _semillaTratada.value = Result.Error("Error al cargar semilla: ${e.message}")
+            }
+        }
+    }
+
+    fun cargarFertilizacion(actividadId: Int) {
+        viewModelScope.launch {
+            _fertilizacion.value = Result.Loading
+            try {
+                _fertilizacion.value = repository.getFertilizacionPorActividad(actividadId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _fertilizacion.value = Result.Error("Error al cargar fertilización: ${e.message}")
             }
         }
     }

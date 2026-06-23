@@ -54,8 +54,10 @@ fun NuevaActividadSc(
     productoVm: ProductoVm = koinViewModel()
 ) {
     val parcelasState by parcelaVm.parcelas.collectAsState()
-    val productosState by productoVm.productos.collectAsState()
+    val productosState by productoVm.fitosanitarios.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()
+
+    LaunchedEffect(Unit) { productoVm.cargarFitosanitarios() }
 
     var parcelaSeleccionada by remember { mutableStateOf<Parcela?>(null) }
     var productoSeleccionado by remember { mutableStateOf<Producto?>(null) }

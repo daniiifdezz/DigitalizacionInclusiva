@@ -41,7 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.EquipoAplicacion
 import org.dferna14.project.domain.model.EstadoActividad
+import org.dferna14.project.domain.model.Fertilizacion
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.domain.model.SemillaTratada
 import org.dferna14.project.domain.model.Usuario
 import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.CampoField
@@ -82,7 +84,6 @@ private val COLS_PRODUCTOS = listOf(
     DesktopTableColumn("Dosis",          weight = 0.8f),
 )
 
-// ── Form state ────────────────────────────────────────────────────────────────
 
 private data class ValidacionFs(
     val fechaFin: String = "",
@@ -92,7 +93,6 @@ private data class ValidacionFs(
     val observaciones: String = "",
 )
 
-// ── Screen ────────────────────────────────────────────────────────────────────
 
 @Composable
 fun ValidarActividadSc(
@@ -112,6 +112,8 @@ fun ValidarActividadSc(
 ) {
     val actividadResult   by detalleVm.actividadActual.collectAsState()
     val productosResult   by detalleVm.productosActividad.collectAsState()
+    val semillaResult     by detalleVm.semillaTratada.collectAsState()
+    val fertilizResult    by detalleVm.fertilizacion.collectAsState()
     val equiposResult     by equipoVm.equipos.collectAsState()
     val usuariosResult    by usuarioVm.usuarios.collectAsState()
     val parcelaResult     by parcelaVm.parcelaCompleta.collectAsState()
@@ -128,10 +130,14 @@ fun ValidarActividadSc(
         usuarioVm.cargarUsuarios(rol = "APLICADOR")
     }
 
-    // Sync form fields the first time the activity loads
+    // Sync form fields the first time the activity loads and load type-specific sub-data
     LaunchedEffect(actividadResult) {
         val act = (actividadResult as? Result.Success)?.data ?: return@LaunchedEffect
         if (act.parcelaId > 0) parcelaVm.cargarParcelaCompleta(act.parcelaId)
+        when (act.tipoActividad) {
+            "SIEMBRA"       -> detalleVm.cargarSemillaTratada(actividadId)
+            "FERTILIZACION" -> detalleVm.cargarFertilizacion(actividadId)
+        }
         if (!datosCargados) {
             fs = ValidacionFs(
                 fechaFin     = act.fechaFin ?: "",
@@ -169,6 +175,13 @@ fun ValidarActividadSc(
     val actividad = (actividadResult as? Result.Success)?.data
     val equipos   = (equiposResult  as? Result.Success)?.data ?: emptyList()
     val aplicadores = (usuariosResult as? Result.Success)?.data ?: emptyList()
+    val tipoActividad = actividad?.tipoActividad ?: "FITOSANITARIA"
+
+    val tabLabel = when (tipoActividad) {
+        "SIEMBRA"       -> "Siembra"
+        "FERTILIZACION" -> "Fertilización"
+        else            -> "Tratamiento"
+    }
 
     val topBarSubtitle = buildString {
         actividad?.parcelaAlias?.let { append(it).append(" · ") }
@@ -195,7 +208,7 @@ fun ValidarActividadSc(
             subtitle = topBarSubtitle,
         )
         DesktopTabBar(
-            tabs          = listOf("Datos", "Productos", "Parcela"),
+            tabs          = listOf("Datos", tabLabel, "Parcela"),
             activeIndex   = activeTab,
             onTabSelected = { activeTab = it },
         )
@@ -233,12 +246,15 @@ fun ValidarActividadSc(
                         },
                         onDevolver   = { detalleVm.devolverActividad(actividadId) },
                     )
-                    1 -> TabProductos(productosResult = productosResult)
+                    1 -> when (tipoActividad) {
+                        "SIEMBRA"       -> TabSiembra(semillaResult = semillaResult)
+                        "FERTILIZACION" -> TabFertilizacion(fertilizResult = fertilizResult)
+                        else            -> TabProductos(productosResult = productosResult)
+                    }
                     2 -> TabParcela(parcelaResult = parcelaResult)
                 }
             }
 
-            // ── Columna derecha: resumen fijo ─────────────────────────────
             Column(
                 modifier = Modifier
                     .width(300.dp)
@@ -472,7 +488,98 @@ private fun TabProductos(
     }
 }
 
-// ── Tab 2: Parcela ────────────────────────────────────────────────────────────
+
+@Composable
+private fun TabSiembra(
+    semillaResult: Result<SemillaTratada?>,
+) {
+    Text(
+        text     = "Datos de la siembra".uppercase(),
+        style    = MaterialTheme.extraTypography.eyebrow,
+        color    = TextoTerciario,
+    )
+    val semilla = (semillaResult as? Result.Success)?.data
+    if (semilla == null) {
+        Box(
+            modifier         = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("Sin datos de siembra registrados", style = MaterialTheme.typography.bodyMedium.copy(color = TextoTerciario))
+        }
+    } else {
+        Column(
+            modifier            = Modifier
+                .fillMaxWidth()
+                .background(SuperficieSepia, RoundedCornerShape(12.dp))
+                .border(1.dp, BordeNormal, RoundedCornerShape(12.dp))
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DesktopFormField("Fecha de siembra",     semilla.fechaSiembra?.let { formatearFecha(it) } ?: "—", {}, readOnly = true, modifier = Modifier.weight(1f))
+                DesktopFormField("Superficie (ha)",      semilla.superficieHa?.toString() ?: "—",                 {}, readOnly = true, modifier = Modifier.weight(1f))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DesktopFormField("Cantidad semilla (kg)", semilla.cantidadSemillaKg?.toString() ?: "—",            {}, readOnly = true, modifier = Modifier.weight(1f))
+                DesktopFormField("Variedad",              semilla.variedadSemilla ?: "—",                          {}, readOnly = true, modifier = Modifier.weight(1f))
+            }
+            DesktopFormField(
+                label     = "Producto utilizado",
+                value     = semilla.productoId?.let { "Producto $it" } ?: "—",
+                onValueChange = {},
+                readOnly  = true,
+                modifier  = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun TabFertilizacion(
+    fertilizResult: Result<Fertilizacion?>,
+) {
+    Text(
+        text     = "Datos de fertilización".uppercase(),
+        style    = MaterialTheme.extraTypography.eyebrow,
+        color    = TextoTerciario,
+    )
+    val fert = (fertilizResult as? Result.Success)?.data
+    if (fert == null) {
+        Box(
+            modifier         = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("Sin datos de fertilización registrados", style = MaterialTheme.typography.bodyMedium.copy(color = TextoTerciario))
+        }
+    } else {
+        Column(
+            modifier            = Modifier
+                .fillMaxWidth()
+                .background(SuperficieSepia, RoundedCornerShape(12.dp))
+                .border(1.dp, BordeNormal, RoundedCornerShape(12.dp))
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DesktopFormField("Fertilizante (id)",  fert.productoId?.let { "Producto $it" } ?: "—", {}, readOnly = true, modifier = Modifier.weight(1f))
+                DesktopFormField("Tipo fertilización", fert.tipoFertilizacion ?: "—",                  {}, readOnly = true, modifier = Modifier.weight(1f))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DesktopFormField("Dosis",        fert.dosis?.toString() ?: "—",   {}, readOnly = true, modifier = Modifier.weight(1f))
+                DesktopFormField("Nº Albarán",   fert.numeroAlbaran ?: "—",       {}, readOnly = true, modifier = Modifier.weight(1f))
+            }
+            DesktopFormField(
+                label         = "Observaciones",
+                value         = fert.observaciones ?: "—",
+                onValueChange = {},
+                readOnly      = true,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
 
 @Composable
 private fun TabParcela(

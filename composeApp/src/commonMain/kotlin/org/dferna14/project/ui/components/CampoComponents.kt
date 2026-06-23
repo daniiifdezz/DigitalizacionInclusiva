@@ -74,8 +74,13 @@ import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.TextoPlaceholder
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.BordeNormal
+import org.dferna14.project.ui.theme.AmbarProducto
+import org.dferna14.project.ui.theme.OcreFondo
 import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.OlivaTint
 import org.dferna14.project.ui.theme.SuperficieSepia
+import org.dferna14.project.ui.theme.TerracotaPrimario
+import org.dferna14.project.ui.theme.TerracotaTint
 import org.dferna14.project.ui.theme.VerdeFondoInfo
 import org.dferna14.project.ui.theme.VerdeFondoValidada
 import org.dferna14.project.ui.theme.VerdeInfo
@@ -200,6 +205,28 @@ fun EstadoBadge(estado: EstadoActividad) {
             text = etiqueta,
             color = texto,
             fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun BadgeTipo(tipoActividad: String) {
+    val (fondo, texto, etiqueta) = when (tipoActividad) {
+        "SIEMBRA"       -> Triple(OlivaTint,      OlivaPrimario,    "Siembra")
+        "FERTILIZACION" -> Triple(OcreFondo,      AmbarProducto,    "Fertilización")
+        else            -> Triple(TerracotaTint,  TerracotaPrimario,"Tratamiento")
+    }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(fondo)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text       = etiqueta,
+            color      = texto,
+            fontSize   = 11.sp,
             fontWeight = FontWeight.Medium
         )
     }
