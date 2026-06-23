@@ -20,10 +20,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -80,6 +82,7 @@ private val COLS_AGRICULTORES = listOf(
     DesktopTableColumn("Correo",      weight = 1.8f),
     DesktopTableColumn("Estado",      weight = 0.8f),
     DesktopTableColumn("",            fixedWidth = 60.dp),
+    DesktopTableColumn("",            fixedWidth = 48.dp),
 )
 
 private data class NuevoAgricultorFs(
@@ -107,6 +110,7 @@ fun AjustesTecnicoSc(
     var nuevoFs             by remember { mutableStateOf(NuevoAgricultorFs()) }
     var usuarioSeleccionado by remember { mutableStateOf<Usuario?>(null) }
     var confirmar           by remember { mutableStateOf(false) }
+    var agricultorAEliminar by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
         usuarioVm.cargarUsuarios(rol = "AGRICULTOR")
@@ -189,6 +193,36 @@ fun AjustesTecnicoSc(
             },
             dismissButton = {
                 TextButton(onClick = { usuarioSeleccionado = null; confirmar = false }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            },
+            containerColor = SuperficieSepia,
+        )
+    }
+
+    agricultorAEliminar?.let { id ->
+        AlertDialog(
+            onDismissRequest = { agricultorAEliminar = null },
+            title = {
+                Text(
+                    text  = "Confirmar eliminación",
+                    style = MaterialTheme.extraTypography.display.copy(fontSize = 17.sp),
+                    color = TextoPrimario,
+                )
+            },
+            text = {
+                Text(
+                    text  = "¿Estás seguro de que deseas eliminar este agricultor? Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { usuarioVm.eliminarAgricultor(id); agricultorAEliminar = null }) {
+                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { agricultorAEliminar = null }) {
                     Text("Cancelar", color = TextoSecundario)
                 }
             },
@@ -367,6 +401,19 @@ fun AjustesTecnicoSc(
                                         color      = OlivaPrimario,
                                         modifier   = Modifier.clickable { usuarioSeleccionado = u },
                                     )
+                                },
+                                {
+                                    IconButton(
+                                        onClick  = { agricultorAEliminar = u.id },
+                                        modifier = Modifier.size(32.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector        = Icons.Default.Delete,
+                                            contentDescription = "Eliminar agricultor",
+                                            tint               = RojoEliminar,
+                                            modifier           = Modifier.size(16.dp),
+                                        )
+                                    }
                                 },
                             ),
                         )

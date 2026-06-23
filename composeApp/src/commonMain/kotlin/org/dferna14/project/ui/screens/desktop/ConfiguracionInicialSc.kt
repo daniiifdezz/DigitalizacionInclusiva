@@ -17,14 +17,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -82,12 +86,14 @@ private val COLS_EQUIPOS = listOf(
     DesktopTableColumn("Nº ROMA",            weight = 1.0f),
     DesktopTableColumn("Año",                weight = 0.7f),
     DesktopTableColumn("Últ. inspección",    weight = 1.2f),
+    DesktopTableColumn("",                   fixedWidth = 48.dp),
 )
 
 private val COLS_APLICADORES = listOf(
     DesktopTableColumn("Nombre",      weight = 1.5f),
     DesktopTableColumn("Email",       weight = 2.0f),
     DesktopTableColumn("Carnet ROPO", weight = 1.5f),
+    DesktopTableColumn("",            fixedWidth = 48.dp),
 )
 
 // ── Form state data classes ───────────────────────────────────────────────────
@@ -162,6 +168,16 @@ fun ConfiguracionInicialSc(
     var nuevoEquipoFs     by remember { mutableStateOf(NuevoEquipoFs()) }
     var nuevoAplicadorFs  by remember { mutableStateOf(NuevoAplicadorFs()) }
     var mensajeErrorAplicador by remember { mutableStateOf<String?>(null) }
+    var equipoAEliminar       by remember { mutableStateOf<Int?>(null) }
+    var aplicadorAEliminar    by remember { mutableStateOf<Int?>(null) }
+
+    val mensajeErrorEquipo by equipoVm.mensajeError.collectAsState()
+    LaunchedEffect(mensajeErrorEquipo) {
+        if (mensajeErrorEquipo != null) {
+            delay(4_000)
+            equipoVm.limpiarMensajeError()
+        }
+    }
 
     LaunchedEffect(Unit) {
         configuracionVm.cargarDatos()
@@ -270,6 +286,66 @@ fun ConfiguracionInicialSc(
         else -> emptyList()
     }
 
+    equipoAEliminar?.let { id ->
+        AlertDialog(
+            onDismissRequest = { equipoAEliminar = null },
+            title = {
+                Text(
+                    text  = "Confirmar eliminación",
+                    style = MaterialTheme.extraTypography.display.copy(fontSize = 17.sp),
+                    color = TextoPrimario,
+                )
+            },
+            text = {
+                Text(
+                    text  = "¿Estás seguro de que deseas eliminar este equipo? Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { equipoVm.eliminarEquipo(id); equipoAEliminar = null }) {
+                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { equipoAEliminar = null }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            },
+            containerColor = SuperficieSepia,
+        )
+    }
+
+    aplicadorAEliminar?.let { id ->
+        AlertDialog(
+            onDismissRequest = { aplicadorAEliminar = null },
+            title = {
+                Text(
+                    text  = "Confirmar eliminación",
+                    style = MaterialTheme.extraTypography.display.copy(fontSize = 17.sp),
+                    color = TextoPrimario,
+                )
+            },
+            text = {
+                Text(
+                    text  = "¿Estás seguro de que deseas eliminar este aplicador? Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { usuarioVm.eliminarAplicador(id); aplicadorAEliminar = null }) {
+                    Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { aplicadorAEliminar = null }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            },
+            containerColor = SuperficieSepia,
+        )
+    }
+
     DesktopWrapper(
         activeIndex   = 4,
         onNavigate    = { idx ->
@@ -306,27 +382,33 @@ fun ConfiguracionInicialSc(
             when (activeTab) {
                 0 -> TabTitular(fs = titularFs, onChange = { titularFs = it })
                 1 -> TabExplotacion(fs = explotacionFs, onChange = { explotacionFs = it })
-                2 -> TabEquipos(
-                    equipos      = equipos,
-                    nuevoEquipo  = nuevoEquipoFs,
-                    onNuevoChange = { nuevoEquipoFs = it },
-                    onAñadir     = {
-                        if (nuevoEquipoFs.tipo.isNotBlank()) {
-                            equipoVm.crearEquipo(
-                                EquipoAplicacion(
-                                    explotacionId         = explotacionIdActual,
-                                    tipo                  = nuevoEquipoFs.tipo,
-                                    marca                 = nuevoEquipoFs.marca.ifBlank { null },
-                                    modelo                = nuevoEquipoFs.modelo.ifBlank { null },
-                                    numeroRoma            = nuevoEquipoFs.numeroRoma.ifBlank { null },
-                                    anyoFabricacion       = nuevoEquipoFs.anyo.toIntOrNull(),
-                                    fechaUltimaInspeccion = nuevoEquipoFs.fechaInspeccion.ifBlank { null },
+                2 -> {
+                    mensajeErrorEquipo?.let { msg ->
+                        FeedbackBanner(msg, esError = true) { equipoVm.limpiarMensajeError() }
+                    }
+                    TabEquipos(
+                        equipos       = equipos,
+                        nuevoEquipo   = nuevoEquipoFs,
+                        onNuevoChange = { nuevoEquipoFs = it },
+                        onAñadir      = {
+                            if (nuevoEquipoFs.tipo.isNotBlank()) {
+                                equipoVm.crearEquipo(
+                                    EquipoAplicacion(
+                                        explotacionId         = explotacionIdActual,
+                                        tipo                  = nuevoEquipoFs.tipo,
+                                        marca                 = nuevoEquipoFs.marca.ifBlank { null },
+                                        modelo                = nuevoEquipoFs.modelo.ifBlank { null },
+                                        numeroRoma            = nuevoEquipoFs.numeroRoma.ifBlank { null },
+                                        anyoFabricacion       = nuevoEquipoFs.anyo.toIntOrNull(),
+                                        fechaUltimaInspeccion = nuevoEquipoFs.fechaInspeccion.ifBlank { null },
+                                    )
                                 )
-                            )
-                            nuevoEquipoFs = NuevoEquipoFs()
-                        }
-                    },
-                )
+                                nuevoEquipoFs = NuevoEquipoFs()
+                            }
+                        },
+                        onEliminar    = { equipoAEliminar = it },
+                    )
+                }
                 3 -> {
                     mensajeErrorAplicador?.let { msg ->
                         FeedbackBanner(msg, esError = true) { mensajeErrorAplicador = null }
@@ -350,6 +432,7 @@ fun ConfiguracionInicialSc(
                                 nuevoAplicadorFs = NuevoAplicadorFs()
                             }
                         },
+                        onEliminar    = { aplicadorAEliminar = it },
                     )
                 }
             }
@@ -512,6 +595,7 @@ private fun TabEquipos(
     nuevoEquipo: NuevoEquipoFs,
     onNuevoChange: (NuevoEquipoFs) -> Unit,
     onAñadir: () -> Unit,
+    onEliminar: (Int) -> Unit,
 ) {
     SectionEyebrow("Equipos de aplicación registrados")
     DesktopTableHeader(COLS_EQUIPOS)
@@ -549,6 +633,19 @@ private fun TabEquipos(
                         text  = eq.fechaUltimaInspeccion?.let { formatearFecha(it) } ?: "—",
                         style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
                     )
+                },
+                {
+                    IconButton(
+                        onClick  = { onEliminar(eq.id) },
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Default.Delete,
+                            contentDescription = "Eliminar equipo",
+                            tint               = RojoEliminar,
+                            modifier           = Modifier.size(16.dp),
+                        )
+                    }
                 },
             ),
         )
@@ -614,6 +711,7 @@ private fun TabAplicadores(
     nuevoAplicador: NuevoAplicadorFs,
     onNuevoChange: (NuevoAplicadorFs) -> Unit,
     onCrear: () -> Unit,
+    onEliminar: (Int) -> Unit,
 ) {
     var ropoExpandido by remember { mutableStateOf(false) }
 
@@ -641,6 +739,19 @@ private fun TabAplicadores(
                         text  = u.tipoCarnetRopo ?: "—",
                         style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
                     )
+                },
+                {
+                    IconButton(
+                        onClick  = { onEliminar(u.id) },
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Default.Delete,
+                            contentDescription = "Eliminar aplicador",
+                            tint               = RojoEliminar,
+                            modifier           = Modifier.size(16.dp),
+                        )
+                    }
                 },
             ),
         )
