@@ -7,6 +7,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Actividades
+import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.Usuarios
 import org.mindrot.jbcrypt.BCrypt
 import org.dferna14.project.backend.mapper.toUsuarioResponse
@@ -141,7 +142,19 @@ fun Route.usuarioRoutes() {
             if (tieneActividades) {
                 return@delete call.respond(
                     HttpStatusCode.Conflict,
-                    mapOf("message" to "No se puede eliminar el aplicador porque está asignado a actividades")
+                    mapOf("message" to "No se puede eliminar el usuario porque está asignado a actividades")
+                )
+            }
+
+            val tieneParcelas = transaction {
+                !Parcelas.selectAll()
+                    .where { Parcelas.creadorId eq id }
+                    .empty()
+            }
+            if (tieneParcelas) {
+                return@delete call.respond(
+                    HttpStatusCode.Conflict,
+                    mapOf("message" to "No se puede eliminar el agricultor porque tiene parcelas asociadas")
                 )
             }
 

@@ -93,6 +93,22 @@ class UsuarioVm(
         }
     }
 
+    fun eliminarAgricultor(id: Int) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.eliminarUsuario(id)
+                if (resultado is Result.Success) {
+                    cargarUsuarios(ultimoFiltroRol)
+                } else if (resultado is Result.Error) {
+                    _mensajeError.tryEmit(resultado.message)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.tryEmit("Error al eliminar agricultor: ${e.message}")
+            }
+        }
+    }
 
     fun cambiarRolUsuario(usuarioId: Int, nuevoRol: String) {
         viewModelScope.launch {
