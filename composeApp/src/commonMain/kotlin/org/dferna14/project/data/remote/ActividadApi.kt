@@ -149,8 +149,9 @@ data class FertilizacionDto(
     @SerialName("numeroAlbaran")     val numeroAlbaran     : String? = null,
     @SerialName("riquezaNpk")        val riquezaNpk        : String? = null,
     @SerialName("dosis")             val dosis             : Double? = null,
-    @SerialName("tipoFertilizacion") val tipoFertilizacion : String? = null,
-    @SerialName("observaciones")     val observaciones     : String? = null
+    @SerialName("tipoFertilizacion")       val tipoFertilizacion       : String? = null,
+    @SerialName("observaciones")           val observaciones           : String? = null,
+    @SerialName("productoNombreComercial") val productoNombreComercial : String? = null
 )
 
 @Serializable

@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.dferna14.project.domain.model.Actividad
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.BadgeTipo
 import org.dferna14.project.ui.components.EstadoBadge
 import org.dferna14.project.ui.components.desktop.DesktopStatCard
 import org.dferna14.project.ui.components.desktop.DesktopTableColumn
@@ -54,6 +55,7 @@ private val COLS_RECIENTES = listOf(
     DesktopTableColumn("Parcela",   weight = 1.2f),
     DesktopTableColumn("Problema",  weight = 2.2f),
     DesktopTableColumn("Fecha",     weight = 1.0f),
+    DesktopTableColumn("Tipo",      weight = 1.2f),
     DesktopTableColumn("Estado",    weight = 1.8f),
 )
 
@@ -148,7 +150,6 @@ fun DesktopMainSc(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 28.dp, vertical = 24.dp),
         ) {
-            // ── Stat cards ──────────────────────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -181,7 +182,6 @@ fun DesktopMainSc(
 
             Spacer(Modifier.height(32.dp))
 
-            // ── Tabla: actividades recientes ─────────────────────────────
             SectionTitle("Actividades recientes")
             Spacer(Modifier.height(10.dp))
             DesktopTableHeader(COLS_RECIENTES)
@@ -208,6 +208,7 @@ fun DesktopMainSc(
                                 style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
                             )
                         },
+                        { BadgeTipo(act.tipoActividad) },
                         { EstadoBadge(act.estado) },
                     ),
                 )
@@ -218,7 +219,6 @@ fun DesktopMainSc(
 
             Spacer(Modifier.height(32.dp))
 
-            // ── Tabla: pendientes de validar ─────────────────────────────
             SectionTitle("Pendientes de validar")
             Spacer(Modifier.height(10.dp))
             DesktopTableHeader(COLS_PENDIENTES)

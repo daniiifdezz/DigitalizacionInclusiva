@@ -6,6 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.dferna14.project.backend.db.Actividades
 import org.dferna14.project.backend.db.Fertilizaciones
+import org.dferna14.project.backend.db.Productos
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.mapper.toFertilizacionResponse
 import org.dferna14.project.backend.model.FertilizacionRequest
@@ -131,7 +132,8 @@ fun Route.fertilizacionRoutes() {
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val fertilizacion = transaction {
-                Fertilizaciones.selectAll()
+                (Fertilizaciones leftJoin Productos)
+                    .selectAll()
                     .where { Fertilizaciones.actividadId eq actId }
                     .orderBy(Fertilizaciones.id to SortOrder.DESC)
                     .firstOrNull()

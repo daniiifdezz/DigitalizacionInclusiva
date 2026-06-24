@@ -365,7 +365,8 @@ fun Route.actividadRoutes() {
                     ?: return@get call.respond(HttpStatusCode.BadRequest)
 
                 val semilla = transaction {
-                    SemillasTratadas.selectAll()
+                    (SemillasTratadas leftJoin Productos)
+                        .selectAll()
                         .where { SemillasTratadas.actividadId eq actividadId }
                         .orderBy(SemillasTratadas.id to SortOrder.DESC)
                         .firstOrNull()

@@ -500,16 +500,17 @@ class ActividadRepository(
             } else {
                 Result.Success(
                     SemillaTratada(
-                        id                = dto.id,
-                        actividadId       = dto.actividadId,
-                        parcelaId         = dto.parcelaId,
-                        aplica            = dto.aplica,
-                        fechaSiembra      = dto.fechaSiembra,
-                        superficieHa      = dto.superficieHa,
-                        cantidadSemillaKg = dto.cantidadSemillaKg,
-                        productoId        = dto.productoId,
-                        variedadSemilla   = dto.variedadSemilla,
-                        cultivoId         = dto.cultivoId
+                        id                      = dto.id,
+                        actividadId             = dto.actividadId,
+                        parcelaId               = dto.parcelaId,
+                        aplica                  = dto.aplica,
+                        fechaSiembra            = dto.fechaSiembra,
+                        superficieHa            = dto.superficieHa,
+                        cantidadSemillaKg       = dto.cantidadSemillaKg,
+                        productoId              = dto.productoId,
+                        variedadSemilla         = dto.variedadSemilla,
+                        cultivoId               = dto.cultivoId,
+                        productoNombreComercial = dto.productoNombreComercial
                     )
                 )
             }
@@ -604,19 +605,20 @@ class ActividadRepository(
     }
 
     private fun org.dferna14.project.data.remote.FertilizacionDto.toDomain() = Fertilizacion(
-        id                = id,
-        actividadId       = actividadId,
-        productoId        = productoId,
-        cultivoId         = cultivoId,
-        aplica            = aplica,
-        fechaInicio       = fechaInicio,
-        fechaFin          = fechaFin,
-        tipoProducto      = tipoProducto,
-        numeroAlbaran     = numeroAlbaran,
-        riquezaNpk        = riquezaNpk,
-        dosis             = dosis,
-        tipoFertilizacion = tipoFertilizacion,
-        observaciones     = observaciones
+        id                      = id,
+        actividadId             = actividadId,
+        productoId              = productoId,
+        cultivoId               = cultivoId,
+        aplica                  = aplica,
+        fechaInicio             = fechaInicio,
+        fechaFin                = fechaFin,
+        tipoProducto            = tipoProducto,
+        numeroAlbaran           = numeroAlbaran,
+        riquezaNpk              = riquezaNpk,
+        dosis                   = dosis,
+        tipoFertilizacion       = tipoFertilizacion,
+        observaciones           = observaciones,
+        productoNombreComercial = productoNombreComercial
     )
 
     // Equipos de aplicación

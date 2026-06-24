@@ -23,12 +23,6 @@ import org.dferna14.project.ui.theme.CremaPrincipal
 import org.dferna14.project.ui.theme.OlivaPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 
-// ════════════════════════════════════════════════════════════════════════
-//  DesktopTabBar — TabRow + Tab (M3)
-//  Barra de pestañas con indicador inferior de 3dp en oliva.
-//  El indicador activo se superpone visualmente al borde del contenedor.
-// ════════════════════════════════════════════════════════════════════════
-
 @Composable
 fun DesktopTabBar(
     tabs: List<String>,
@@ -41,7 +35,7 @@ fun DesktopTabBar(
             .fillMaxWidth()
             .background(CremaPrincipal)
             .drawBehind {
-                // Borde inferior del contenedor — queda debajo del indicador activo
+                // Borde inferior del contenedor queda debajo del indicador activo
                 drawLine(
                     color       = BordeNormal,
                     start       = Offset(0f, size.height),
@@ -65,7 +59,6 @@ fun DesktopTabBar(
                     color      = if (isActive) OlivaPrimario else TextoSecundario,
                     modifier   = Modifier.padding(start = 16.dp, end = 16.dp, top = 11.dp, bottom = 9.dp),
                 )
-                // Indicador 3dp — Color.Transparent en tabs inactivas
                 Box(
                     modifier = Modifier
                         .height(3.dp)

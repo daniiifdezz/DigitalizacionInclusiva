@@ -6,6 +6,7 @@ import org.dferna14.project.backend.db.DatosAgronomicos
 import org.dferna14.project.backend.db.EquiposAplicacion
 import org.dferna14.project.backend.db.Explotaciones
 import org.dferna14.project.backend.db.Fertilizaciones
+import org.dferna14.project.backend.db.Productos
 import org.dferna14.project.backend.db.Parcelas
 import org.dferna14.project.backend.db.ReferenciaSigpac
 import org.dferna14.project.backend.db.SemillasTratadas
@@ -127,32 +128,36 @@ fun ResultRow.toActividadProductoResponse(): ActividadProductoResponse = Activid
 )
 
 fun ResultRow.toSemillaTratadaResponse(): SemillaTratadaResponse = SemillaTratadaResponse(
-    id                = this[SemillasTratadas.id].value,
-    actividadId       = this[SemillasTratadas.actividadId],
-    parcelaId         = this[SemillasTratadas.parcelaId],
-    aplica            = this[SemillasTratadas.aplica],
-    fechaSiembra      = this[SemillasTratadas.fechaSiembra]?.toString(),
-    superficieHa      = this[SemillasTratadas.superficieHa],
-    cantidadSemillaKg = this[SemillasTratadas.cantidadSemillaKg],
-    productoId        = this[SemillasTratadas.productoId],
-    variedadSemilla   = this[SemillasTratadas.variedadSemilla],
-    cultivoId         = this[SemillasTratadas.cultivoId]
+    id                      = this[SemillasTratadas.id].value,
+    actividadId             = this[SemillasTratadas.actividadId],
+    parcelaId               = this[SemillasTratadas.parcelaId],
+    aplica                  = this[SemillasTratadas.aplica],
+    fechaSiembra            = this[SemillasTratadas.fechaSiembra]?.toString(),
+    superficieHa            = this[SemillasTratadas.superficieHa],
+    cantidadSemillaKg       = this[SemillasTratadas.cantidadSemillaKg],
+    productoId              = this[SemillasTratadas.productoId],
+    variedadSemilla         = this[SemillasTratadas.variedadSemilla],
+    cultivoId               = this[SemillasTratadas.cultivoId],
+    productoNombreComercial = runCatching { this[Productos.nombreComercial] }.getOrNull(),
+    productoNumeroRegistro  = runCatching { this[Productos.numeroRegistro] }.getOrNull(),
+    productoMateriaActiva   = runCatching { this[Productos.materiaActiva] }.getOrNull()
 )
 
 fun ResultRow.toFertilizacionResponse(): FertilizacionResponse = FertilizacionResponse(
-    id               = this[Fertilizaciones.id].value,
-    actividadId      = this[Fertilizaciones.actividadId],
-    productoId       = this[Fertilizaciones.productoId],
-    cultivoId        = this[Fertilizaciones.cultivoId],
-    aplica           = this[Fertilizaciones.aplica],
-    fechaInicio      = this[Fertilizaciones.fechaInicio]?.toString(),
-    fechaFin         = this[Fertilizaciones.fechaFin]?.toString(),
-    tipoProducto     = this[Fertilizaciones.tipoProducto],
-    numeroAlbaran    = this[Fertilizaciones.numeroAlbaran],
-    riquezaNpk       = this[Fertilizaciones.riquezaNpk],
-    dosis            = this[Fertilizaciones.dosis],
-    tipoFertilizacion= this[Fertilizaciones.tipoFertilizacion],
-    observaciones    = this[Fertilizaciones.observaciones]
+    id                      = this[Fertilizaciones.id].value,
+    actividadId             = this[Fertilizaciones.actividadId],
+    productoId              = this[Fertilizaciones.productoId],
+    cultivoId               = this[Fertilizaciones.cultivoId],
+    aplica                  = this[Fertilizaciones.aplica],
+    fechaInicio             = this[Fertilizaciones.fechaInicio]?.toString(),
+    fechaFin                = this[Fertilizaciones.fechaFin]?.toString(),
+    tipoProducto            = this[Fertilizaciones.tipoProducto],
+    numeroAlbaran           = this[Fertilizaciones.numeroAlbaran],
+    riquezaNpk              = this[Fertilizaciones.riquezaNpk],
+    dosis                   = this[Fertilizaciones.dosis],
+    tipoFertilizacion       = this[Fertilizaciones.tipoFertilizacion],
+    observaciones           = this[Fertilizaciones.observaciones],
+    productoNombreComercial = runCatching { this[Productos.nombreComercial] }.getOrNull()
 )
 
 fun ResultRow.toEquipoResponse(): EquipoResponse = EquipoResponse(

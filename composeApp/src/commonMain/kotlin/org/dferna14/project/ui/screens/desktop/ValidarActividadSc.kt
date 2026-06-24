@@ -525,7 +525,7 @@ private fun TabSiembra(
             }
             DesktopFormField(
                 label     = "Producto utilizado",
-                value     = semilla.productoId?.let { "Producto $it" } ?: "—",
+                value     = semilla.productoNombreComercial ?: semilla.productoId?.let { "Producto $it" } ?: "—",
                 onValueChange = {},
                 readOnly  = true,
                 modifier  = Modifier.fillMaxWidth(),
@@ -562,7 +562,7 @@ private fun TabFertilizacion(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                DesktopFormField("Fertilizante (id)",  fert.productoId?.let { "Producto $it" } ?: "—", {}, readOnly = true, modifier = Modifier.weight(1f))
+                DesktopFormField("Fertilizante",  fert.productoNombreComercial ?: fert.productoId?.let { "Producto $it" } ?: "—", {}, readOnly = true, modifier = Modifier.weight(1f))
                 DesktopFormField("Tipo fertilización", fert.tipoFertilizacion ?: "—",                  {}, readOnly = true, modifier = Modifier.weight(1f))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {

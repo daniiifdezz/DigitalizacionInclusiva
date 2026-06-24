@@ -122,19 +122,20 @@ data class FertilizacionRequest(
 
 @Serializable
 data class FertilizacionResponse(
-    val id               : Int,
-    val actividadId      : Int?    = null,
-    val productoId       : Int?    = null,
-    val cultivoId        : Int?    = null,
-    val aplica           : Boolean,
-    val fechaInicio      : String? = null,
-    val fechaFin         : String? = null,
-    val tipoProducto     : String? = null,
-    val numeroAlbaran    : String? = null,
-    val riquezaNpk       : String? = null,
-    val dosis            : Double? = null,
-    val tipoFertilizacion: String? = null,
-    val observaciones    : String? = null
+    val id                      : Int,
+    val actividadId             : Int?    = null,
+    val productoId              : Int?    = null,
+    val cultivoId               : Int?    = null,
+    val aplica                  : Boolean,
+    val fechaInicio             : String? = null,
+    val fechaFin                : String? = null,
+    val tipoProducto            : String? = null,
+    val numeroAlbaran           : String? = null,
+    val riquezaNpk              : String? = null,
+    val dosis                   : Double? = null,
+    val tipoFertilizacion       : String? = null,
+    val observaciones           : String? = null,
+    val productoNombreComercial : String? = null
 )
 
 // Parcela
