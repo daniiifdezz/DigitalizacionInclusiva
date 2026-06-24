@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.dferna14.project.data.repository.ActividadRepository
 import org.dferna14.project.domain.model.Actividad
+import org.dferna14.project.domain.model.ParcelaCompleta
 import org.dferna14.project.domain.model.Result
 
 class ActividadListaVm(
@@ -119,6 +120,11 @@ class ActividadListaVm(
     // Pre-relleno de superficie en formularios al elegir parcela.
     suspend fun getSuperficieParcela(parcelaId: Int): Double? =
         repository.getSuperficieParcela(parcelaId)
+
+    // Parcela + datos satélite (SIGPAC, agronómicos) en una sola llamada.
+    // Lo usan los formularios para pre-rellenar superficie y variedad al elegir parcela.
+    suspend fun getParcelaCompleta(parcelaId: Int): ParcelaCompleta? =
+        (repository.getParcelaCompleta(parcelaId) as? Result.Success)?.data
 
     // actividad minima (sin productos ni problema fitosanitario) y devuelve su id,
     // o null si hay error. Punto de entrada para los flujos de semilla y fertilización.

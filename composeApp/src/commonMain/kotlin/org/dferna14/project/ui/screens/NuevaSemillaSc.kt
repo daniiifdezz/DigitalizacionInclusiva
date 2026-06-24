@@ -52,17 +52,27 @@ fun NuevaSemillaSc(
     var cantidadSemillaKg    by remember { mutableStateOf("") }
     var productoSeleccionado by remember { mutableStateOf<Producto?>(null) }
     var variedadSemilla      by remember { mutableStateOf("") }
+    // Marca si la variedad actual viene del pre-relleno agronómico (para el aviso).
+    var variedadDeAgronomico by remember { mutableStateOf(false) }
     var guardando            by remember { mutableStateOf(false) }
 
     LaunchedEffect(parcelaSeleccionada) {
         val parcela = parcelaSeleccionada
         if (parcela != null) {
-            val sup = actividadVm.getSuperficieParcela(parcela.id)
+            // Una sola llamada trae SIGPAC (superficie) y datos agronómicos (variedad).
+            val completa = actividadVm.getParcelaCompleta(parcela.id)
+            val sup = completa?.referenciaSigpac?.superficieHa
             superficieSigpac = sup
             // Pre-rellena la superficie con la SIGPAC solo si el campo está vacío.
             if (sup != null && sup > 0.0 && superficieHa.isBlank()) {
                 superficieHa       = sup.toString()
                 superficieDeSigpac = true
+            }
+            // Pre-rellena la variedad desde datos agronómicos solo si el campo está vacío.
+            val especie = completa?.datosAgronomicos?.especieVariedad
+            if (!especie.isNullOrBlank() && variedadSemilla.isBlank()) {
+                variedadSemilla      = especie
+                variedadDeAgronomico = true
             }
         } else {
             superficieSigpac = null
@@ -142,9 +152,11 @@ fun NuevaSemillaSc(
                     items        = parcelas,
                     itemLabel    = { it.alias ?: "Parcela ${it.orden ?: it.id}" },
                     onSelect     = {
-                        parcelaSeleccionada = it
-                        superficieHa        = ""
-                        superficieDeSigpac  = false
+                        parcelaSeleccionada  = it
+                        superficieHa         = ""
+                        superficieDeSigpac   = false
+                        variedadSemilla      = ""
+                        variedadDeAgronomico = false
                     },
                     placeholder  = "Selecciona una parcela"
                 )
@@ -205,9 +217,18 @@ fun NuevaSemillaSc(
                     CampoTextField(
                         label         = "Variedad de semilla",
                         value         = variedadSemilla,
-                        onValueChange = { variedadSemilla = it },
+                        onValueChange = {
+                            variedadSemilla      = it
+                            variedadDeAgronomico = false
+                        },
                         placeholder   = "p. ej. Trigo R01"
                     )
+
+                    if (variedadDeAgronomico && variedadSemilla.isNotBlank()) {
+                        CampoAvisoInfo(
+                            mensaje = "Variedad pre-rellenada desde datos agronómicos de la parcela. Puedes editarla si no coincide."
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(4.dp))
