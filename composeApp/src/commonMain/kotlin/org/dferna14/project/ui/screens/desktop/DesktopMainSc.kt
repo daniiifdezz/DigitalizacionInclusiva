@@ -63,6 +63,7 @@ private val COLS_PENDIENTES = listOf(
     DesktopTableColumn("Parcela",   weight = 1.2f),
     DesktopTableColumn("Problema",  weight = 2.2f),
     DesktopTableColumn("Fecha",     weight = 1.0f),
+    DesktopTableColumn("Tipo",      weight = 1.2f),
     DesktopTableColumn("",          fixedWidth = 100.dp),
 )
 
@@ -246,6 +247,7 @@ fun DesktopMainSc(
                                 style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
                             )
                         },
+                        { BadgeTipo(act.tipoActividad) },
                         {
                             Text(
                                 text       = "Validar →",
