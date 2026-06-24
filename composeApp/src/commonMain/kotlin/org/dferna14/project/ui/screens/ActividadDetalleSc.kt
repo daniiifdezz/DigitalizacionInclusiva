@@ -35,6 +35,7 @@ fun ActividadDetalleSc(
     val parcelasState by parcelaVm.parcelas.collectAsState()
     val operacionExitosa by viewModel.operacionExitosa.collectAsState()
     var mostrarDialogoEliminar by remember { mutableStateOf(false) }
+    var eliminando by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(actividadId) {
@@ -42,8 +43,13 @@ fun ActividadDetalleSc(
     }
     LaunchedEffect(operacionExitosa) {
         if (operacionExitosa) {
-            snackbarHostState.showSnackbar("Operación realizada con éxito")
+
             viewModel.resetOperacionExitosa()
+            if (eliminando) {
+                onVolver()
+            } else {
+                snackbarHostState.showSnackbar("Operación realizada con éxito")
+            }
         }
     }
 
@@ -197,9 +203,9 @@ fun ActividadDetalleSc(
             text = { Text("Esta acción no se puede deshacer. ¿Seguro que quieres eliminar esta actividad?") },
             confirmButton = {
                 TextButton(onClick = {
+                    eliminando = true
                     viewModel.eliminarActividad(actividadId)
                     mostrarDialogoEliminar = false
-                    onVolver()
                 }) {
                     Text("Eliminar", color = RojoEliminar, fontWeight = FontWeight.Medium)
                 }

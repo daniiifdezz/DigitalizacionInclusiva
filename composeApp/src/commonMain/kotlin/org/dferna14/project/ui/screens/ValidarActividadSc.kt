@@ -95,6 +95,8 @@ fun ValidarActividadSc(
     }
 
     LaunchedEffect(actividadId) {
+        // Reset defensivo del flag compartido al entrar (ver ActividadDetalleVm).
+        viewModel.resetOperacionExitosa()
         viewModel.cargarActividad(actividadId)
         viewModel.cargarProductosActividad(actividadId)
     }
@@ -136,6 +138,7 @@ fun ValidarActividadSc(
 
     LaunchedEffect(operacionExitosa) {
         if (operacionExitosa) {
+            viewModel.resetOperacionExitosa()
             onVolver()
         }
     }
@@ -270,9 +273,11 @@ fun ValidarActividadSc(
                                     observaciones = observaciones.ifBlank { null },
                                     estado = EstadoActividad.VALIDADA
                                 )
+                                // La vuelta la dispara LaunchedEffect(operacionExitosa)
+                                // cuando el backend confirma. No resetear ni navegar de
+                                // forma síncrona aquí (desmontaría la pantalla antes de
+                                // que termine la operación y dejaría el flag atascado).
                                 viewModel.actualizarActividad(actActualizada)
-                                viewModel.resetOperacionExitosa()
-                                onVolver()
                             },
                             onDevolver = {
                                 viewModel.devolverActividad(actividadId)

@@ -124,13 +124,13 @@ fun ValidarActividadSc(
     var datosCargados     by remember { mutableStateOf(false) }
 
     LaunchedEffect(actividadId) {
+        detalleVm.resetOperacionExitosa()
         detalleVm.cargarActividad(actividadId)
         detalleVm.cargarProductosActividad(actividadId)
         equipoVm.cargarEquipos()
         usuarioVm.cargarUsuarios(rol = "APLICADOR")
     }
 
-    // Sync form fields the first time the activity loads and load type-specific sub-data
     LaunchedEffect(actividadResult) {
         val act = (actividadResult as? Result.Success)?.data ?: return@LaunchedEffect
         if (act.parcelaId > 0) parcelaVm.cargarParcelaCompleta(act.parcelaId)
@@ -214,7 +214,6 @@ fun ValidarActividadSc(
         )
 
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            // ── Columna izquierda: contenido del tab ──────────────────────
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -232,6 +231,7 @@ fun ValidarActividadSc(
                         actividad    = actividad,
                         onValidar    = {
                             val act = actividad ?: return@TabDatos
+
                             detalleVm.actualizarActividad(
                                 act.copy(
                                     fechaFin      = fs.fechaFin.ifBlank { null },
@@ -242,7 +242,6 @@ fun ValidarActividadSc(
                                     estado        = EstadoActividad.VALIDADA,
                                 )
                             )
-                            onVolver()
                         },
                         onDevolver   = { detalleVm.devolverActividad(actividadId) },
                     )
@@ -272,7 +271,6 @@ fun ValidarActividadSc(
     }
 }
 
-// ── Tab 0: Datos ──────────────────────────────────────────────────────────────
 
 @Composable
 private fun TabDatos(
@@ -453,7 +451,6 @@ private fun TabDatos(
     }
 }
 
-// ── Tab 1: Productos ──────────────────────────────────────────────────────────
 
 @Composable
 private fun TabProductos(
@@ -641,7 +638,6 @@ private fun TabParcela(
     }
 }
 
-// ── Panel derecho: resumen de la actividad ────────────────────────────────────
 
 @Composable
 private fun PanelResumen(actividad: org.dferna14.project.domain.model.Actividad?) {
