@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -19,6 +20,7 @@ import org.dferna14.project.domain.model.SemillaTratada
 import org.dferna14.project.ui.components.*
 import org.dferna14.project.ui.theme.BordeSuave
 import org.dferna14.project.ui.theme.CremaPrincipal
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.dferna14.project.ui.viewmodel.ProductoVm
@@ -45,6 +47,8 @@ fun NuevaSemillaSc(
     var parcelaSeleccionada  by remember { mutableStateOf<Parcela?>(null) }
     var superficieHa         by remember { mutableStateOf("") }
     var superficieDeSigpac   by remember { mutableStateOf(false) }
+    // Superficie SIGPAC de la parcela seleccionada (referencia + tope de validación).
+    var superficieSigpac     by remember { mutableStateOf<Double?>(null) }
     var cantidadSemillaKg    by remember { mutableStateOf("") }
     var productoSeleccionado by remember { mutableStateOf<Producto?>(null) }
     var variedadSemilla      by remember { mutableStateOf("") }
@@ -52,12 +56,16 @@ fun NuevaSemillaSc(
 
     LaunchedEffect(parcelaSeleccionada) {
         val parcela = parcelaSeleccionada
-        if (parcela != null && superficieHa.isBlank()) {
+        if (parcela != null) {
             val sup = actividadVm.getSuperficieParcela(parcela.id)
-            if (sup != null && sup > 0.0) {
+            superficieSigpac = sup
+            // Pre-rellena la superficie con la SIGPAC solo si el campo está vacío.
+            if (sup != null && sup > 0.0 && superficieHa.isBlank()) {
                 superficieHa       = sup.toString()
                 superficieDeSigpac = true
             }
+        } else {
+            superficieSigpac = null
         }
     }
 
@@ -141,7 +149,16 @@ fun NuevaSemillaSc(
                     placeholder  = "Selecciona una parcela"
                 )
 
+                superficieSigpac?.takeIf { it > 0.0 }?.let {
+                    CampoAvisoInfo(mensaje = "Superficie SIGPAC de la parcela: ${formatHa(it)} ha")
+                }
+
                 SectionHeader("Datos de siembra")
+
+                // La superficie introducida no puede superar la SIGPAC de la parcela.
+                val superficieExcede = superficieSigpac?.let { sig ->
+                    superficieHa.replace(",", ".").toDoubleOrNull()?.let { it > sig }
+                } == true
 
                 CampoCard {
                     CampoTextField(
@@ -153,6 +170,15 @@ fun NuevaSemillaSc(
                         },
                         keyboardType  = KeyboardType.Decimal
                     )
+
+                    if (superficieExcede) {
+                        Text(
+                            text     = "La superficie no puede ser mayor que ${formatHa(superficieSigpac!!)} ha (SIGPAC de la parcela)",
+                            color    = RojoEliminar,
+                            fontSize = 11.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
                     if (superficieDeSigpac && superficieHa.isNotBlank()) {
                         CampoAvisoInfo(
@@ -193,7 +219,7 @@ fun NuevaSemillaSc(
                 CampoPrimaryButton(
                     text    = if (guardando) "Guardando…" else "Guardar siembra",
                     onClick = { guardar() },
-                    enabled = parcelaSeleccionada != null && !guardando
+                    enabled = parcelaSeleccionada != null && !guardando && !superficieExcede
                 )
             }
         }

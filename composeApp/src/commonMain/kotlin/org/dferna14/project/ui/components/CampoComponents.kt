@@ -469,7 +469,7 @@ fun EquipoDropdown(
         ) {
             DropdownMenuItem(
                 text = { Text("Sin asignar") },
-                onClick = { onSeleccionar(null) }
+                    onClick = { onSeleccionar(null) }
             )
             when (val s = equiposState) {
                 is Result.Success -> s.data.forEach { eq ->
@@ -567,6 +567,13 @@ fun formatearFecha(fechaIso: String): String {
     } catch (e: Exception) {
         fechaIso
     }
+}
+
+fun formatHa(valor: Double): String {
+    val cents = kotlin.math.round(valor * 100).toLong()
+    val entero = cents / 100
+    val dec = (cents % 100).let { if (it < 0) -it else it }
+    return "$entero.${dec.toString().padStart(2, '0')}"
 }
 
 

@@ -29,10 +29,12 @@ import org.dferna14.project.ui.components.CampoSecondaryButton
 import org.dferna14.project.ui.components.CampoTextField
 import org.dferna14.project.ui.components.CampoTextoMultilinea
 import org.dferna14.project.ui.components.SectionHeader
+import org.dferna14.project.ui.components.formatHa
 import org.dferna14.project.ui.components.formatearFecha
 import org.dferna14.project.ui.theme.BordeSuave
 import org.dferna14.project.ui.theme.CremaPrincipal
 import org.dferna14.project.ui.theme.OlivaPrimario
+import org.dferna14.project.ui.theme.RojoEliminar
 import org.dferna14.project.ui.theme.SuperficieSepia
 import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoTerciario
@@ -70,6 +72,8 @@ fun NuevaActividadSc(
     // (para mostrar el aviso). Se reinicia si el usuario edita el campo o
     // si se ha rellenado a mano antes de elegir parcela.
     var superficieDeSigpac by remember { mutableStateOf(false) }
+    // Superficie SIGPAC de la parcela seleccionada (referencia + tope de validación).
+    var superficieSigpac by remember { mutableStateOf<Double?>(null) }
     var problemaFitosanitario by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
 
@@ -77,12 +81,15 @@ fun NuevaActividadSc(
     // campo está vacío. El campo sigue siendo editable después.
     LaunchedEffect(parcelaSeleccionada) {
         val parcela = parcelaSeleccionada
-        if (parcela != null && superficieTratada.isBlank()) {
+        if (parcela != null) {
             val sup = viewModel.getSuperficieParcela(parcela.id)
-            if (sup != null && sup > 0.0) {
+            superficieSigpac = sup
+            if (sup != null && sup > 0.0 && superficieTratada.isBlank()) {
                 superficieTratada = sup.toString()
                 superficieDeSigpac = true
             }
+        } else {
+            superficieSigpac = null
         }
     }
 
@@ -126,6 +133,14 @@ fun NuevaActividadSc(
                     placeholder = "Selecciona una parcela"
                 )
 
+                superficieSigpac?.takeIf { it > 0.0 }?.let {
+                    CampoAvisoInfo(mensaje = "Superficie SIGPAC de la parcela: ${formatHa(it)} ha")
+                }
+
+                val superficieExcede = superficieSigpac?.let { sig ->
+                    superficieTratada.replace(",", ".").toDoubleOrNull()?.let { it > sig }
+                } == true
+
                 CampoTextField(
                     label = "Superficie tratada (ha)",
                     value = superficieTratada,
@@ -135,6 +150,15 @@ fun NuevaActividadSc(
                     },
                     keyboardType = KeyboardType.Decimal
                 )
+
+                if (superficieExcede) {
+                    Text(
+                        text = "La superficie no puede ser mayor que ${formatHa(superficieSigpac!!)} ha (SIGPAC de la parcela)",
+                        color = RojoEliminar,
+                        fontSize = 11.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 if (superficieDeSigpac && superficieTratada.isNotBlank()) {
                     CampoAvisoInfo(
@@ -254,7 +278,7 @@ fun NuevaActividadSc(
                             )
                         }
                     },
-                    enabled = camposFaltantes.isEmpty()
+                    enabled = camposFaltantes.isEmpty() && !superficieExcede
                 )
             }
         }
