@@ -1,8 +1,6 @@
 package org.dferna14.project.backend.routes
 
 import io.ktor.http.*
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.principal
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -55,19 +53,14 @@ fun Route.parcelaRoutes() {
         get("{id}") {
             val tenantId = call.tenantId()
                 ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
-            val userId = call.currentUserId()
-            val rol = call.principal<JWTPrincipal>()?.payload?.getClaim("rol")?.asString()
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val parcela = transaction {
-                val condicion = if (rol == "TECNICO") {
-                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId)
-                } else {
-                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) and (Parcelas.creadorId eq userId)
-                }
+                // Todos los roles del tenant pueden leer cualquier parcela de su
+                // explotación (coherente con GET /api/parcelas del listado).
                 Parcelas.selectAll()
-                    .where(condicion)
+                    .where { (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?.let {
                         ParcelaResponse(
@@ -94,19 +87,16 @@ fun Route.parcelaRoutes() {
         get("{id}/completa") {
             val tenantId = call.tenantId()
                 ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
-            val userId = call.currentUserId()
-            val rol = call.principal<JWTPrincipal>()?.payload?.getClaim("rol")?.asString()
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val parcelaCompleta = transaction {
-                val condicion = if (rol == "TECNICO") {
-                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId)
-                } else {
-                    (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) and (Parcelas.creadorId eq userId)
-                }
+                // Todos los roles del tenant pueden leer cualquier parcela de su
+                // explotación (coherente con GET /api/parcelas del listado). No se
+                // filtra por creadorId: las parcelas las crea el técnico y el
+                // agricultor también necesita sus datos satélite (SIGPAC, agronómicos).
                 val parcela = Parcelas.selectAll()
-                    .where(condicion)
+                    .where { (Parcelas.id eq id) and (Parcelas.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?: return@transaction null
 
