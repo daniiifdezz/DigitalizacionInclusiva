@@ -75,7 +75,7 @@ fun App(isDesktop: Boolean = false) {
         when (val sesion = estadoSesion) {
             is EstadoSesion.Comprobando -> PantallaCargandoSesion()
 
-            is EstadoSesion.NoAutenticado -> AuthFlow(authVm = authVm)
+            is EstadoSesion.NoAutenticado -> AuthFlow(isDesktop = isDesktop, authVm = authVm)
 
             is EstadoSesion.Autenticado -> {
                 if (isDesktop && sesion.usuario.rol == "AGRICULTOR") {
@@ -99,9 +99,12 @@ private fun PantallaCargandoSesion() {
 }
 
 @Composable
-private fun AuthFlow(authVm: AuthVm) {
+private fun AuthFlow(isDesktop: Boolean, authVm: AuthVm) {
+    // El registro de cuentas solo está disponible en la versión de escritorio.
+    // En Android el usuario únicamente puede iniciar sesión; sus credenciales las
+    // crea el técnico desde Desktop (alta de agricultores).
     var enRegistro by remember { mutableStateOf(false) }
-    if (enRegistro) {
+    if (isDesktop && enRegistro) {
         RegisterScreen(
             onRegistroExitoso = {},
             onIrALogin = { enRegistro = false },
@@ -110,7 +113,7 @@ private fun AuthFlow(authVm: AuthVm) {
     } else {
         LoginScreen(
             onLoginExitoso = {},
-            onIrARegistro = { enRegistro = true },
+            onIrARegistro = if (isDesktop) ({ enRegistro = true }) else null,
             viewModel = authVm
         )
     }

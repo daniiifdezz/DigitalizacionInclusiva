@@ -45,21 +45,21 @@ fun NuevoTipoActividadSc(
 
                 TipoActividadBoton(
                     titulo    = "Tratamiento fitosanitario",
-                    subtitulo = "Sección 3.1 — Aplicación de productos fitosanitarios",
+                    subtitulo = "Aplicación de productos fitosanitarios",
                     icono     = Icons.Outlined.Science,
                     onClick   = onTratamiento
                 )
 
                 TipoActividadBoton(
                     titulo    = "Siembra de semilla tratada",
-                    subtitulo = "Sección 3.2 — Registro de siembra con semilla tratada",
+                    subtitulo = "Registro de siembra con semilla tratada",
                     icono     = Icons.Outlined.Grass,
                     onClick   = onSemilla
                 )
 
                 TipoActividadBoton(
                     titulo    = "Fertilización",
-                    subtitulo = "Sección 6 — Aplicación de fertilizantes",
+                    subtitulo = "Aplicación de fertilizantes",
                     icono     = Icons.Outlined.WaterDrop,
                     onClick   = onFertilizacion
                 )

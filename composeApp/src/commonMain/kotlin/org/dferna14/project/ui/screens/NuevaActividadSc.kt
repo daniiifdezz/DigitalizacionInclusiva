@@ -107,7 +107,7 @@ fun NuevaActividadSc(
 
     Scaffold(containerColor = CremaPrincipal) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            NavBarFormulario(titulo = "Nueva actividad", onVolver = onVolver)
+            NavBarFormulario(titulo = "Problema Fitosanitario", onVolver = onVolver)
             HorizontalDivider(color = BordeSuave, thickness = 0.5.dp)
 
             Column(

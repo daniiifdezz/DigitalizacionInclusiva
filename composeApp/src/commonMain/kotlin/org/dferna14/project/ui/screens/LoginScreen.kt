@@ -34,7 +34,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun LoginScreen(
     onLoginExitoso: (UsuarioDto) -> Unit,
-    onIrARegistro: () -> Unit,
+    onIrARegistro: (() -> Unit)? = null,
     viewModel: AuthVm = koinViewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -138,10 +138,12 @@ fun LoginScreen(
                     onClick = { viewModel.login(email.trim(), password) }
                 )
 
-                CampoSecondaryButton(
-                    text = "Crear una cuenta",
-                    onClick = onIrARegistro
-                )
+                if (onIrARegistro != null) {
+                    CampoSecondaryButton(
+                        text = "Crear una cuenta",
+                        onClick = onIrARegistro
+                    )
+                }
             }
         }
     }
