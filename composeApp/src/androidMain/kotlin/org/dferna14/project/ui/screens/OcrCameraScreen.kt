@@ -101,12 +101,25 @@ fun OcrCameraScreen(
                                     recognizer.process(image).addOnSuccessListener { resultado ->
                                             val textoCompleto = resultado.text.trim()
 
-                                            val patronesValidos = listOf(
-                                                """\b\d{5}\b""".toRegex(),                     // 5 dígitos (Registro)
-                                                """\b\d{1,2}-\d{1,2}-\d{1,2}\b""".toRegex(),   // NPK (15-15-15)
-                                                """\b[A-Z]{2,4}-\d{4,8}\b""".toRegex(),        // Albarán Mixto (ALB-1234)
-                                                """\b\d{6,10}\b""".toRegex()                   // Albarán Largo (448291)
-                                            )
+                                        val patronesValidos = listOf(
+                                            // ALB-2026-0042, FERT-2025-001
+                                            """\b[A-Z]{2,5}(?:-[A-Z0-9]+){1,3}\b""".toRegex(),
+
+                                            // ES-00352, ES-12345
+                                            """\bES-\d{4,6}\b""".toRegex(),
+
+                                            // 25.123, 10.546
+                                            """\b\d{2,3}\.\d{3,4}\b""".toRegex(),
+
+                                            // 15-15-15, 8-15-15, 10-20-10
+                                            """\b\d{1,2}-\d{1,2}-\d{1,2}\b""".toRegex(),
+
+                                            // 448291, 12345678
+                                            """\b\d{6,10}\b""".toRegex(),
+
+                                            // 12345
+                                            """\b\d{5}\b""".toRegex()
+                                        )
 
                                             var codigoEncontrado: String? = null
                                             for (patron in patronesValidos) {
