@@ -50,6 +50,7 @@ import org.dferna14.project.domain.model.DatosAgronomicos
 import org.dferna14.project.domain.model.Parcela
 import org.dferna14.project.domain.model.ReferenciaSigpac
 import org.dferna14.project.domain.model.Result
+import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.desktop.DesktopFormField
 import org.dferna14.project.ui.components.desktop.DesktopSelectField
 import org.dferna14.project.ui.components.desktop.DesktopTopBar
@@ -79,6 +80,24 @@ private val AIRE_LIBRE_OPCIONES = mapOf(
     "M"   to "Malla",
     "BP"  to "Bajo plástico",
     "INV" to "Invernadero",
+)
+private val USO_SIGPAC_OPCIONES = mapOf(
+    "TA" to "Tierra arable",
+    "TH" to "Huerta",
+    "PR" to "Pasto arbustivo",
+    "PS" to "Pastizal",
+    "PA" to "Pasto con arbolado",
+    "FY" to "Frutos secos",
+    "OV" to "Olivar",
+    "OF" to "Otros frutales",
+    "VI" to "Viñedo",
+    "CI" to "Cítricos",
+    "IM" to "Improductivo agrícola",
+    "FO" to "Forestal",
+    "ED" to "Edificaciones",
+    "AG" to "Agua",
+    "CA" to "Caminos",
+    "OC" to "Otros usos no agrarios",
 )
 
 
@@ -428,6 +447,17 @@ private fun ParcelaDetail(
 ) {
     var ecoExpanded  by remember { mutableStateOf(false) }
     var aireExpanded by remember { mutableStateOf(false) }
+    var usoExpanded  by remember { mutableStateOf(false) }
+
+
+    val usoOpciones: List<Pair<String, String>> = run {
+        val oficiales = USO_SIGPAC_OPCIONES.entries.map { it.key to it.value }
+        val valor = sigpacFs.usoSigpac
+        if (valor.isNotBlank() && valor !in USO_SIGPAC_OPCIONES)
+            listOf(valor to valor) + oficiales
+        else
+            oficiales
+    }
 
     // basicos
     SectionHeader(title = "Datos básicos", onGuardar = onGuardarParcela)
@@ -503,8 +533,33 @@ private fun ParcelaDetail(
             DesktopFormField("Parcela",  sigpacFs.numeroParcela,  { onSigpacChange(sigpacFs.copy(numeroParcela = it)) },  modifier = Modifier.weight(1f))
             DesktopFormField("Recinto",  sigpacFs.numeroRecinto,  { onSigpacChange(sigpacFs.copy(numeroRecinto = it)) },  modifier = Modifier.weight(1f))
         }
+        CampoAvisoInfo(
+            mensaje = "Selecciona el uso oficial de la parcela según la clasificación SIGPAC del Ministerio."
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            DesktopFormField("Uso SIGPAC",      sigpacFs.usoSigpac,    { onSigpacChange(sigpacFs.copy(usoSigpac = it)) },    modifier = Modifier.weight(1.5f))
+            Box(modifier = Modifier.weight(1.5f)) {
+                DesktopSelectField(
+                    label  = "Uso SIGPAC",
+                    value  = sigpacFs.usoSigpac.let { code ->
+                        if (code.isBlank()) "" else USO_SIGPAC_OPCIONES[code]?.let { "$code — $it" } ?: code
+                    },
+                    onClick = { usoExpanded = true },
+                )
+                DropdownMenu(
+                    expanded         = usoExpanded,
+                    onDismissRequest = { usoExpanded = false },
+                ) {
+                    usoOpciones.forEach { (code, label) ->
+                        DropdownMenuItem(
+                            text    = { Text(if (code == label) code else "$code — $label") },
+                            onClick = {
+                                onSigpacChange(sigpacFs.copy(usoSigpac = code))
+                                usoExpanded = false
+                            },
+                        )
+                    }
+                }
+            }
             DesktopFormField("Superficie (ha)", sigpacFs.superficieHa, { onSigpacChange(sigpacFs.copy(superficieHa = it)) }, modifier = Modifier.weight(1f))
             DesktopFormField("Zona (cód.)",     sigpacFs.zona,         { onSigpacChange(sigpacFs.copy(zona = it)) },         modifier = Modifier.weight(1f))
         }
