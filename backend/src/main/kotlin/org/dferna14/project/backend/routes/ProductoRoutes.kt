@@ -11,6 +11,7 @@ import org.dferna14.project.backend.db.SemillasTratadas
 import org.dferna14.project.backend.model.DependenciasProductoDto
 import org.dferna14.project.backend.model.ProductoRequest
 import org.dferna14.project.backend.model.ProductoResponse
+import org.dferna14.project.backend.plugins.tenantId
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -20,15 +21,16 @@ fun Route.productoRoutes() {
     route("/api/productos") {
 
         // GET /api/productos[?tipo=FITOSANITARIO|FERTILIZANTE]
-        // Catálogo unificado: el query param permite a las pantallas de fertilización
-        // pedir solo fertilizantes y a las de tratamiento solo fitosanitarios.
         get {
+            val tenantId = call.tenantId() ?: return@get call.respond(HttpStatusCode.Unauthorized)
             val tipoFiltro = call.request.queryParameters["tipo"]
             val productos = transaction {
                 val query = if (tipoFiltro != null) {
-                    Productos.selectAll().where { Productos.tipo eq tipoFiltro }
+                    Productos.selectAll().where {
+                        (Productos.explotacionId eq tenantId) and (Productos.tipo eq tipoFiltro)
+                    }
                 } else {
-                    Productos.selectAll()
+                    Productos.selectAll().where { Productos.explotacionId eq tenantId }
                 }
                 query.map { it.toProductoResponse() }
             }
@@ -37,12 +39,13 @@ fun Route.productoRoutes() {
 
         // GET /api/productos/{id}
         get("{id}") {
+            val tenantId = call.tenantId() ?: return@get call.respond(HttpStatusCode.Unauthorized)
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
 
             val producto = transaction {
                 Productos.selectAll()
-                    .where { Productos.id eq id }
+                    .where { (Productos.id eq id) and (Productos.explotacionId eq tenantId) }
                     .singleOrNull()
                     ?.toProductoResponse()
             }
@@ -53,10 +56,12 @@ fun Route.productoRoutes() {
 
         // POST /api/productos
         post {
+            val tenantId = call.tenantId() ?: return@post call.respond(HttpStatusCode.Unauthorized)
             val request = call.receive<ProductoRequest>()
 
             val creado = transaction {
                 val nuevoId = Productos.insertAndGetId {
+                    it[explotacionId]    = tenantId
                     it[nombreComercial]  = request.nombreComercial
                     it[materiaActiva]    = request.materiaActiva
                     it[numeroRegistro]   = request.numeroRegistro
@@ -76,13 +81,14 @@ fun Route.productoRoutes() {
 
         // PUT /api/productos/{id}
         put("{id}") {
+            val tenantId = call.tenantId() ?: return@put call.respond(HttpStatusCode.Unauthorized)
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest)
 
             val request = call.receive<ProductoRequest>()
 
             val filasActualizadas = transaction {
-                Productos.update({ Productos.id eq id }) {
+                Productos.update({ (Productos.id eq id) and (Productos.explotacionId eq tenantId) }) {
                     it[nombreComercial]  = request.nombreComercial
                     it[materiaActiva]    = request.materiaActiva
                     it[numeroRegistro]   = request.numeroRegistro
@@ -97,11 +103,19 @@ fun Route.productoRoutes() {
         }
 
         // DELETE /api/productos/{id}
-        // Devolvemos 409 para que la UI muestre un mensaje claro cuando el producto
-        // esté siendo usado en actividades o semillas.
+        // Primero verifica ownership (404 si no es del tenant), luego comprueba
+        // referencias (409 si está en uso) y finalmente elimina.
         delete("{id}") {
+            val tenantId = call.tenantId() ?: return@delete call.respond(HttpStatusCode.Unauthorized)
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            val existe = transaction {
+                !Productos.selectAll()
+                    .where { (Productos.id eq id) and (Productos.explotacionId eq tenantId) }
+                    .empty()
+            }
+            if (!existe) return@delete call.respond(HttpStatusCode.NotFound)
 
             val refs = transaction {
                 Triple(
@@ -126,17 +140,25 @@ fun Route.productoRoutes() {
             }
 
             val filasEliminadas = transaction {
-                Productos.deleteWhere { Productos.id eq id }
+                Productos.deleteWhere { (Productos.id eq id) and (Productos.explotacionId eq tenantId) }
             }
 
             if (filasEliminadas == 0) call.respond(HttpStatusCode.NotFound)
             else call.respond(HttpStatusCode.NoContent)
         }
 
-        // GET /api/productos/{id}/dependencias - Conteo de registros hijos (Desktop)
+        // GET /api/productos/{id}/dependencias
         get("{id}/dependencias") {
+            val tenantId = call.tenantId() ?: return@get call.respond(HttpStatusCode.Unauthorized)
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+            val existe = transaction {
+                !Productos.selectAll()
+                    .where { (Productos.id eq id) and (Productos.explotacionId eq tenantId) }
+                    .empty()
+            }
+            if (!existe) return@get call.respond(HttpStatusCode.NotFound)
 
             val dependencias = transaction {
                 DependenciasProductoDto(
@@ -151,15 +173,21 @@ fun Route.productoRoutes() {
             call.respond(dependencias)
         }
 
-        // DELETE /api/productos/{id}/cascada - Borrado mixto (solo Desktop/técnico)
-        // Estrategia mixta:
-        //  - actividad_producto: se BORRA la fila (sin producto no tiene sentido la línea).
-        //  - semillatratada / fertilizacion: se pone productoId a NULL, porque esos
-        //    registros conservan su valor aunque pierdan la referencia al catálogo
-        //    (ambas columnas producto_id son nullable en Tables.kt).
+        // DELETE /api/productos/{id}/cascada
+        // Estrategia mixta: borra actividad_producto, pone null en semillatratada
+        // y fertilizacion, luego elimina el producto. Solo opera sobre productos
+        // del tenant autenticado.
         delete("{id}/cascada") {
+            val tenantId = call.tenantId() ?: return@delete call.respond(HttpStatusCode.Unauthorized)
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+            val existe = transaction {
+                !Productos.selectAll()
+                    .where { (Productos.id eq id) and (Productos.explotacionId eq tenantId) }
+                    .empty()
+            }
+            if (!existe) return@delete call.respond(HttpStatusCode.NotFound)
 
             transaction {
                 ActividadProductos.deleteWhere { ActividadProductos.productoId eq id }
@@ -169,7 +197,7 @@ fun Route.productoRoutes() {
                 Fertilizaciones.update({ Fertilizaciones.productoId eq id }) {
                     it[Fertilizaciones.productoId] = null
                 }
-                Productos.deleteWhere { Productos.id eq id }
+                Productos.deleteWhere { (Productos.id eq id) and (Productos.explotacionId eq tenantId) }
             }
 
             call.respond(HttpStatusCode.NoContent)

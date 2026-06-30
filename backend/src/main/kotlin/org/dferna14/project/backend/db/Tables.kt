@@ -27,9 +27,10 @@ object Titulares : IntIdTable("titular") {
 }
 
 object Productos : IntIdTable("producto") {
-    val nombreComercial = varchar("nombre_comercial", 100).nullable()
-    val materiaActiva   = varchar("materia_activa", 100).nullable()
-    val numeroRegistro  = varchar("numero_registro", 50).nullable()
+    val explotacionId    = integer("explotacion_id")
+    val nombreComercial  = varchar("nombre_comercial", 100).nullable()
+    val materiaActiva    = varchar("materia_activa", 100).nullable()
+    val numeroRegistro   = varchar("numero_registro", 50).nullable()
     // Catálogo unificado: FITOSANITARIO | FERTILIZANTE. Default mantiene
     // compatibilidad con los registros previos (todos eran fitosanitarios).
     val tipo             = varchar("tipo", 20).default("FITOSANITARIO")
