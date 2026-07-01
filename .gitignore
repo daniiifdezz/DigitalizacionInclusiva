@@ -1,3 +1,4 @@
+u
 *.iml
 .kotlin
 .gradle
@@ -20,3 +21,6 @@ captures
 node_modules/
 .env
 .claude
+keystore.properties
+*.jks
+*.keystore

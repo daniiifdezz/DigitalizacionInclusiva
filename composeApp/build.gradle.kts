@@ -1,5 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -9,6 +10,7 @@ plugins {
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinSerialization)  // nuevo
     alias(libs.plugins.sqldelight)           // nuevo
+
 }
 
 kotlin {
@@ -116,6 +118,14 @@ kotlin {
     }
 }
 
+// ── Firma Android (release) ────────────────────────────────────────────────────
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
+}
+
 // ── Configuración Android ──────────────────────────────────────────────────────
 android {
     namespace  = "org.dferna14.project"
@@ -135,9 +145,21 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias      = keystoreProperties["keyAlias"]      as String
+                keyPassword   = keystoreProperties["keyPassword"]   as String
+                storeFile     = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig   = signingConfigs.getByName("release")
         }
     }
 
@@ -165,10 +187,36 @@ compose.desktop {
     application {
         mainClass = "org.dferna14.project.MainKt"
 
+        buildTypes {
+            release {
+                proguard {
+                    isEnabled.set(false)
+                }
+            }
+        }
+
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi, TargetFormat.Deb)
             packageName    = "DigitalizacionInclusiva"
             packageVersion = "1.0.0"
+            description    = "Cuaderno de Campo Digital"
+            vendor         = "Daniel Fernández"
+
+            modules(
+                "java.net.http",    // Ktor JVM HTTP client
+                "java.sql",         // SQLDelight JDBC driver
+                "java.naming",      // required by some logging/crypto libs
+                "jdk.unsupported",  // sun.misc.Unsafe (needed by Netty / coroutines internals)
+            )
+
+            windows {
+                iconFile.set(project.file("src/jvmMain/resources/imgico.ico"))
+                menuGroup   = "DigitalizacionInclusiva"
+                upgradeUuid = "3F2A1B4C-5D6E-7F8A-9B0C-1D2E3F4A5B6C"
+            }
+            linux {
+                iconFile.set(project.file("src/jvmMain/resources/imgpng.png"))
+            }
         }
     }
 }
