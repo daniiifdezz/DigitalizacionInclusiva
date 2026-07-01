@@ -47,6 +47,7 @@ import org.dferna14.project.domain.model.Explotacion
 import org.dferna14.project.domain.model.Result
 import org.dferna14.project.domain.model.Titular
 import org.dferna14.project.domain.model.Usuario
+import org.dferna14.project.ui.components.CampoAvisoInfo
 import org.dferna14.project.ui.components.desktop.DesktopFormField
 import org.dferna14.project.ui.components.desktop.DesktopSelectField
 import org.dferna14.project.ui.components.desktop.DesktopTableColumn
@@ -797,6 +798,11 @@ private fun TabAplicadores(
                 onValueChange = { onNuevoChange(nuevoAplicador.copy(password = it)) },
                 modifier      = Modifier.weight(1f),
             )
+        }
+        CampoAvisoInfo(
+            mensaje = "El carnet ROPO es obligatorio para aplicar tratamientos fitosanitarios. Selecciona el nivel correspondiente al aplicador."
+        )
+        FormRow {
             Box(modifier = Modifier.weight(1f)) {
                 DesktopSelectField(
                     label       = "Tipo de carné ROPO",
