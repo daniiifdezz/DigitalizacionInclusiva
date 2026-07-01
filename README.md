@@ -8,7 +8,7 @@ Este es un proyecto **Kotlin Multiplatform (KMP)** desarrollado como Trabajo de 
 
 | Versión Android (Tablet/Dispositivo móvil) | Versión Escritorio (Windows) |
 | :---: | :---: |
-| <img src="docs/capturas/movil.png" width="400" alt="Login Android"/> <br> *Pantalla de Inicio de Sesión* | <img src="docs/capturas/desktop.png" width="400" alt="Panel Desktop"/> <br> *Panel Principal del Técnico* |
+| <img src="docs/capturas/movil.png" width="400" alt="Login Android"/> | <img src="docs/capturas/desktop.png" width="400" alt="Panel Desktop"/> |
 
 
 > **¿Quieres ver el funcionamiento detallado?** Puedes consultar nuestro [manual de instrucciones de la aplicación](docs/MANUAL_USUARIO.md) para ver paso a paso todas las funcionalidades de la interfaz.
