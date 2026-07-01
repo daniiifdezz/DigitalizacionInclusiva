@@ -81,6 +81,21 @@ private val AIRE_LIBRE_OPCIONES = mapOf(
     "BP"  to "Bajo plástico",
     "INV" to "Invernadero",
 )
+private val ESPECIE_VARIEDAD_OPCIONES = listOf(
+    "Trigo", "Cebada", "Centeno", "Avena", "Triticale",
+    "Maíz", "Girasol", "Colza", "Veza", "Yero",
+    "Garbanzo", "Lenteja", "Alfalfa", "Remolacha", "Patata",
+    "Vid", "Olivo",
+)
+
+private val SISTEMA_ASESORAMIENTO_OPCIONES = listOf(
+    "Asesoramiento individual",
+    "Asesoramiento de cooperativa",
+    "Servicio técnico de la administración",
+    "Sistema integrado de gestión (ATRIA)",
+    "No aplica",
+)
+
 private val USO_SIGPAC_OPCIONES = mapOf(
     "TA" to "Tierra arable",
     "TH" to "Huerta",
@@ -445,9 +460,32 @@ private fun ParcelaDetail(
     onGuardarSigpac    : () -> Unit,
     onGuardarAgronomico: () -> Unit,
 ) {
-    var ecoExpanded  by remember { mutableStateOf(false) }
-    var aireExpanded by remember { mutableStateOf(false) }
-    var usoExpanded  by remember { mutableStateOf(false) }
+    var sistemaExpanded by remember { mutableStateOf(false) }
+    var ecoExpanded     by remember { mutableStateOf(false) }
+    var aireExpanded    by remember { mutableStateOf(false) }
+    var usoExpanded     by remember { mutableStateOf(false) }
+    var especieExpanded by remember { mutableStateOf(false) }
+
+    // Estado local para el dropdown especie/variedad.
+    // Se resetea con remember(parcela.id) al cambiar de parcela.
+    // Si el valor cargado no está en la lista oficial → "Otro" preseleccionado
+    // con el texto antiguo en el campo libre.
+    var especieDropdownSel by remember(parcela.id) {
+        val v = agronomicaFs.especieVariedad
+        mutableStateOf(if (v.isBlank() || v in ESPECIE_VARIEDAD_OPCIONES) v else "Otro")
+    }
+    var especieTextoLibre by remember(parcela.id) {
+        val v = agronomicaFs.especieVariedad
+        mutableStateOf(if (v.isNotBlank() && v !in ESPECIE_VARIEDAD_OPCIONES) v else "")
+    }
+
+    val sistemaOpciones: List<String> = run {
+        val valor = parcelaFs.sistemaAsesoramiento
+        if (valor.isNotBlank() && valor !in SISTEMA_ASESORAMIENTO_OPCIONES)
+            listOf(valor) + SISTEMA_ASESORAMIENTO_OPCIONES
+        else
+            SISTEMA_ASESORAMIENTO_OPCIONES
+    }
 
 
     val usoOpciones: List<Pair<String, String>> = run {
@@ -484,12 +522,27 @@ private fun ParcelaDetail(
                 modifier = Modifier.weight(1f),
             )
         }
-        DesktopFormField(
-            label         = "Sistema de asesoramiento GIP",
-            value         = parcelaFs.sistemaAsesoramiento,
-            onValueChange = { onParcelaFsChange(parcelaFs.copy(sistemaAsesoramiento = it)) },
-            placeholder   = "Oficial, privado, ADF…",
-        )
+        Box {
+            DesktopSelectField(
+                label  = "Sistema de asesoramiento GIP",
+                value  = parcelaFs.sistemaAsesoramiento,
+                onClick = { sistemaExpanded = true },
+            )
+            DropdownMenu(
+                expanded         = sistemaExpanded,
+                onDismissRequest = { sistemaExpanded = false },
+            ) {
+                sistemaOpciones.forEach { opcion ->
+                    DropdownMenuItem(
+                        text    = { Text(opcion) },
+                        onClick = {
+                            onParcelaFsChange(parcelaFs.copy(sistemaAsesoramiento = opcion))
+                            sistemaExpanded = false
+                        },
+                    )
+                }
+            }
+        }
         Row(
             modifier              = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -576,17 +629,49 @@ private fun ParcelaDetail(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            DesktopFormField(
-                label         = "Especie / variedad",
-                value         = agronomicaFs.especieVariedad,
-                onValueChange = { onAgronomicaChange(agronomicaFs.copy(especieVariedad = it)) },
-                modifier      = Modifier.weight(1.5f),
-            )
+            Box(modifier = Modifier.weight(1.5f)) {
+                DesktopSelectField(
+                    label  = "Especie / variedad",
+                    value  = if (especieDropdownSel == "Otro") "Otro" else especieDropdownSel,
+                    onClick = { especieExpanded = true },
+                )
+                DropdownMenu(
+                    expanded         = especieExpanded,
+                    onDismissRequest = { especieExpanded = false },
+                ) {
+                    (ESPECIE_VARIEDAD_OPCIONES + "Otro").forEach { opcion ->
+                        DropdownMenuItem(
+                            text    = { Text(opcion) },
+                            onClick = {
+                                especieDropdownSel = opcion
+                                if (opcion != "Otro") {
+                                    especieTextoLibre = ""
+                                    onAgronomicaChange(agronomicaFs.copy(especieVariedad = opcion))
+                                } else {
+                                    onAgronomicaChange(agronomicaFs.copy(especieVariedad = especieTextoLibre))
+                                }
+                                especieExpanded = false
+                            },
+                        )
+                    }
+                }
+            }
             DesktopFormField(
                 label         = "Régimen hídrico",
                 value         = agronomicaFs.secanoRegadio,
                 onValueChange = { onAgronomicaChange(agronomicaFs.copy(secanoRegadio = it)) },
                 modifier      = Modifier.weight(1f),
+            )
+        }
+        if (especieDropdownSel == "Otro") {
+            DesktopFormField(
+                label         = "Especie / variedad (personalizada)",
+                value         = especieTextoLibre,
+                onValueChange = {
+                    especieTextoLibre = it
+                    onAgronomicaChange(agronomicaFs.copy(especieVariedad = it))
+                },
+                placeholder   = "Escribe la especie o variedad",
             )
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
