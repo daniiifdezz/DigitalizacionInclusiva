@@ -543,6 +543,9 @@ private fun ParcelaDetail(
                 }
             }
         }
+        CampoAvisoInfo(
+            mensaje = "Marca esta parcela como zona vulnerable a nitratos si está dentro de una zona declarada según el Real Decreto 261/1996."
+        )
         Row(
             modifier              = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -616,6 +619,9 @@ private fun ParcelaDetail(
             DesktopFormField("Superficie (ha)", sigpacFs.superficieHa, { onSigpacChange(sigpacFs.copy(superficieHa = it)) }, modifier = Modifier.weight(1f))
             DesktopFormField("Zona (cód.)",     sigpacFs.zona,         { onSigpacChange(sigpacFs.copy(zona = it)) },         modifier = Modifier.weight(1f))
         }
+        CampoAvisoInfo(
+            mensaje = "La superficie SIGPAC es el valor oficial del catastro. El sistema la utiliza como tope para validar las actividades registradas por el agricultor."
+        )
     }
 
     //agronomicos
@@ -628,6 +634,9 @@ private fun ParcelaDetail(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        CampoAvisoInfo(
+            mensaje = "La especie y variedad declarada aquí pre-rellenará el campo correspondiente en los formularios de siembra del agricultor."
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(modifier = Modifier.weight(1.5f)) {
                 DesktopSelectField(
