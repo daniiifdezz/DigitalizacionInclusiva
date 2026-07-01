@@ -60,8 +60,7 @@ sealed class Screen {
     object CuadernoPdf : Screen()
     object DesktopAjustes : Screen()
     object Configuracion : Screen()
-    data class EditarParcela(val parcelaId: Int) : Screen()
-    data class Pendientes(val actividadId: Int) : Screen()
+
 }
 
 @Composable
