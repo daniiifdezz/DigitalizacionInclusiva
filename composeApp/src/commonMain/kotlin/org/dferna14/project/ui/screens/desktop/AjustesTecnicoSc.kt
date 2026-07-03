@@ -64,7 +64,6 @@ import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.extraTypography
 import org.dferna14.project.ui.theme.RojoEliminar
-import org.dferna14.project.ui.viewmodel.AjustesVm
 import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
 import org.dferna14.project.util.isEmailValido
@@ -100,10 +99,12 @@ fun AjustesTecnicoSc(
     onVerConfiguracion: () -> Unit,
     onCerrarSesion: () -> Unit,
     usuarioVm: UsuarioVm = koinViewModel(),
-    ajustesVm: AjustesVm = koinViewModel(),
     authVm: AuthVm = koinViewModel(),
 ) {
     val usuariosResult  by usuarioVm.usuarios.collectAsState()
+    val usuario         by authVm.usuarioActual.collectAsState()
+    val nombreMostrado  = usuario?.nombre?.takeIf { it.isNotBlank() }
+        ?: usuario?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: ""
     val tecnicosResult  by usuarioVm.tecnicos.collectAsState()
     var mensajeError    by remember { mutableStateOf<String?>(null) }
     val mensajeRol      by usuarioVm.mensajeRol.collectAsState()
@@ -242,8 +243,8 @@ fun AjustesTecnicoSc(
                 else -> {}
             }
         },
-        nombreUsuario = ajustesVm.nombreMostrado,
-        rolUsuario    = ajustesVm.rolUsuario,
+        nombreUsuario = nombreMostrado,
+        rolUsuario    = usuario?.rol ?: "",
     ) {
         DesktopTopBar(
             title    = "Ajustes",
@@ -286,7 +287,7 @@ fun AjustesTecnicoSc(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text       = initials(ajustesVm.nombreMostrado),
+                                text       = initials(nombreMostrado),
                                 style      = MaterialTheme.extraTypography.display.copy(fontSize = 22.sp),
                                 color      = OlivaPrimario,
                                 fontWeight = FontWeight.Bold,
@@ -294,21 +295,21 @@ fun AjustesTecnicoSc(
                         }
                         Spacer(Modifier.height(10.dp))
                         Text(
-                            text       = ajustesVm.nombreMostrado,
+                            text       = nombreMostrado,
                             style      = MaterialTheme.extraTypography.display.copy(fontSize = 18.sp),
                             color      = TextoPrimario,
                         )
                         Text(
-                            text     = ajustesVm.rolUsuario,
+                            text     = usuario?.rol ?: "",
                             fontSize = 12.sp,
                             color    = TextoTerciario,
                             modifier = Modifier.padding(top = 2.dp),
                         )
                     }
                     Spacer(Modifier.height(4.dp))
-                    DesktopFormField(label = "Correo",      value = ajustesVm.emailUsuario,            readOnly = true)
-                    DesktopFormField(label = "Rol",         value = ajustesVm.rolUsuario,              readOnly = true)
-                    DesktopFormField(label = "Explotación", value = ajustesVm.explotacionNombre ?: "—", readOnly = true)
+                    DesktopFormField(label = "Correo",      value = usuario?.email ?: "",              readOnly = true)
+                    DesktopFormField(label = "Rol",         value = usuario?.rol ?: "",                readOnly = true)
+                    DesktopFormField(label = "Explotación", value = usuario?.explotacionNombre ?: "—", readOnly = true)
                 }
                 Spacer(Modifier.height(16.dp))
                 // Botón cerrar sesión

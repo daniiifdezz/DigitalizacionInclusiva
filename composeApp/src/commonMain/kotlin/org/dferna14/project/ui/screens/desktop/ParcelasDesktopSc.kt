@@ -69,7 +69,7 @@ import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.extraTypography
-import org.dferna14.project.ui.viewmodel.AjustesVm
+import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -154,9 +154,10 @@ fun ParcelasDesktopSc(
     onVerAjustes: () -> Unit,
     onVerConfiguracion: () -> Unit,
     parcelaVm: ParcelaVm = koinViewModel(),
-    ajustesVm: AjustesVm = koinViewModel(),
+    authVm: AuthVm = koinViewModel(),
 ) {
     val parcelasResult       by parcelaVm.parcelas.collectAsState()
+    val usuario              by authVm.usuarioActual.collectAsState()
     val parcelaCompletaResult by parcelaVm.parcelaCompleta.collectAsState()
 
     var selectedId      by remember { mutableStateOf<Int?>(null) }
@@ -263,12 +264,13 @@ fun ParcelasDesktopSc(
                 else -> {}
             }
         },
-        nombreUsuario = ajustesVm.nombreMostrado,
-        rolUsuario    = ajustesVm.rolUsuario,
+        nombreUsuario = usuario?.nombre?.takeIf { it.isNotBlank() }
+            ?: usuario?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: "",
+        rolUsuario    = usuario?.rol ?: "",
     ) {
         DesktopTopBar(
             title    = "Gestión de parcelas",
-            subtitle = "Edición de datos SIGPAC · ${ajustesVm.explotacionNombre ?: ""}",
+            subtitle = "Edición de datos SIGPAC · ${usuario?.explotacionNombre ?: ""}",
             actions  = listOf(
                 DesktopTopBarAction(
                     label   = "Nueva parcela",
@@ -399,7 +401,7 @@ fun ParcelasDesktopSc(
                                 )
                             )
                         },
-                        explotacionNombre  = ajustesVm.explotacionNombre,
+                        explotacionNombre  = usuario?.explotacionNombre,
                         sigpacFs           = sigpacFs,
                         agronomicaFs       = agronomicaFs,
                         onSigpacChange     = { sigpacFs = it },

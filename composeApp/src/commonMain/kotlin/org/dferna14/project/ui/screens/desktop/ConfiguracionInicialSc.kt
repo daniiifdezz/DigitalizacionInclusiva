@@ -72,7 +72,7 @@ import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.extraTypography
-import org.dferna14.project.ui.viewmodel.AjustesVm
+import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.ConfiguracionVm
 import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
@@ -155,12 +155,13 @@ fun ConfiguracionInicialSc(
     configuracionVm: ConfiguracionVm = koinViewModel(),
     equipoVm: EquipoVm = koinViewModel(),
     usuarioVm: UsuarioVm = koinViewModel(),
-    ajustesVm: AjustesVm = koinViewModel(),
+    authVm: AuthVm = koinViewModel(),
 ) {
     val titularResult     by configuracionVm.titular.collectAsState()
     val explotacionResult by configuracionVm.explotacion.collectAsState()
     val equiposResult     by equipoVm.equipos.collectAsState()
     val usuariosResult    by usuarioVm.usuarios.collectAsState()
+    val usuario           by authVm.usuarioActual.collectAsState()
 
     var activeTab         by remember { mutableStateOf(0) }
     val scrollState       = rememberScrollState()
@@ -359,8 +360,9 @@ fun ConfiguracionInicialSc(
                 else -> {}
             }
         },
-        nombreUsuario = ajustesVm.nombreMostrado,
-        rolUsuario    = ajustesVm.rolUsuario,
+        nombreUsuario = usuario?.nombre?.takeIf { it.isNotBlank() }
+            ?: usuario?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: "",
+        rolUsuario    = usuario?.rol ?: "",
     ) {
         DesktopTopBar(
             title    = "Configuración de la explotación",

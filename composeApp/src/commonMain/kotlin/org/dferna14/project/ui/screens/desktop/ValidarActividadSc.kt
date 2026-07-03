@@ -69,7 +69,7 @@ import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.theme.extraTypography
 import org.dferna14.project.ui.viewmodel.ActividadDetalleVm
-import org.dferna14.project.ui.viewmodel.AjustesVm
+import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.EquipoVm
 import org.dferna14.project.ui.viewmodel.ParcelaVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
@@ -108,9 +108,10 @@ fun ValidarActividadSc(
     equipoVm: EquipoVm = koinViewModel(),
     usuarioVm: UsuarioVm = koinViewModel(),
     parcelaVm: ParcelaVm = koinViewModel(),
-    ajustesVm: AjustesVm = koinViewModel(),
+    authVm: AuthVm = koinViewModel(),
 ) {
     val actividadResult   by detalleVm.actividadActual.collectAsState()
+    val usuario           by authVm.usuarioActual.collectAsState()
     val productosResult   by detalleVm.productosActividad.collectAsState()
     val semillaResult     by detalleVm.semillaTratada.collectAsState()
     val fertilizResult    by detalleVm.fertilizacion.collectAsState()
@@ -200,8 +201,9 @@ fun ValidarActividadSc(
                 else -> {}
             }
         },
-        nombreUsuario = ajustesVm.nombreMostrado,
-        rolUsuario    = ajustesVm.rolUsuario,
+        nombreUsuario = usuario?.nombre?.takeIf { it.isNotBlank() }
+            ?: usuario?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: "",
+        rolUsuario    = usuario?.rol ?: "",
     ) {
         DesktopTopBar(
             title    = "Validar actividad",

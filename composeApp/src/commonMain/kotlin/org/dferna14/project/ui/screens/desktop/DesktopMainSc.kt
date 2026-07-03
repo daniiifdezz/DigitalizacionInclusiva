@@ -47,7 +47,7 @@ import org.dferna14.project.ui.theme.TextoPrimario
 import org.dferna14.project.ui.theme.TextoSecundario
 import org.dferna14.project.ui.theme.TextoTerciario
 import org.dferna14.project.ui.viewmodel.ActividadListaVm
-import org.dferna14.project.ui.viewmodel.AjustesVm
+import org.dferna14.project.ui.viewmodel.AuthVm
 import org.dferna14.project.ui.viewmodel.UsuarioVm
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -79,11 +79,16 @@ fun DesktopMainSc(
     onExportarPdf: () -> Unit = {},
     actividadListaVm: ActividadListaVm = koinViewModel(),
     usuarioVm: UsuarioVm = koinViewModel(),
-    ajustesVm: AjustesVm = koinViewModel(),
+    authVm: AuthVm = koinViewModel(),
 ) {
     val actividadesResult by actividadListaVm.actividades.collectAsState()
     val pendientesResult  by actividadListaVm.actividadesPendientes.collectAsState()
     val usuariosResult    by usuarioVm.usuarios.collectAsState()
+    val usuario           by authVm.usuarioActual.collectAsState()
+
+    val nombreMostrado    = usuario?.nombre?.takeIf { it.isNotBlank() }
+        ?: usuario?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: ""
+    val explotacionNombre = usuario?.explotacionNombre
 
     LaunchedEffect(Unit) {
         actividadListaVm.cargarActividades()
@@ -105,9 +110,9 @@ fun DesktopMainSc(
     }
 
     val subtitleBar = buildString {
-        ajustesVm.explotacionNombre?.let { append(it) }
-        if (ajustesVm.explotacionNombre != null) append(" · ")
-        append(ajustesVm.nombreMostrado)
+        explotacionNombre?.let { append(it) }
+        if (explotacionNombre != null) append(" · ")
+        append(nombreMostrado)
     }
 
     DesktopWrapper(
@@ -122,8 +127,8 @@ fun DesktopMainSc(
                 else -> {}
             }
         },
-        nombreUsuario = ajustesVm.nombreMostrado,
-        rolUsuario    = ajustesVm.rolUsuario,
+        nombreUsuario = nombreMostrado,
+        rolUsuario    = usuario?.rol ?: "",
         badges        = if (pendientes.isNotEmpty()) mapOf(1 to pendientes.size) else emptyMap(),
     ) {
         DesktopTopBar(
