@@ -101,6 +101,7 @@ fun Route.usuarioRoutes() {
                     it[explotacionId]  = tenantId
                     it[fechaAlta]      = LocalDate.now()
                     it[tipoCarnetRopo] = request.tipoCarnetRopo
+                    it[numeroRopo]     = request.numeroRopo?.trim()?.takeIf { v -> v.isNotBlank() }
                 }.value
 
                 Usuarios.selectAll()
@@ -161,6 +162,55 @@ fun Route.usuarioRoutes() {
             val filas = transaction { Usuarios.deleteWhere { Usuarios.id eq id } }
             if (filas == 0) call.respond(HttpStatusCode.NotFound)
             else call.respond(HttpStatusCode.NoContent)
+        }
+
+        // PUT /api/usuarios/{id} — edición de datos de un usuario ya dado de alta
+        // (solo TECNICO). Pensado para completar el número ROPO de un aplicador
+        // después del alta inicial, cuando aún no se disponía del dato.
+        put("{id}") {
+            val principal = call.principal<JWTPrincipal>()!!
+            val rolSolicitante = principal.payload.getClaim("rol").asString()
+            val tenantId = call.tenantId()
+                ?: return@put call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token sin explotación"))
+
+            if (rolSolicitante != "TECNICO") {
+                return@put call.respond(
+                    HttpStatusCode.Forbidden,
+                    mapOf("message" to "Solo los tecnicos pueden editar usuarios")
+                )
+            }
+
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@put call.respond(HttpStatusCode.BadRequest, mapOf("message" to "ID de usuario invalido"))
+
+            val request = call.receive<UsuarioRequest>()
+            if (request.tipoCarnetRopo != null && request.tipoCarnetRopo !in VALORES_VALIDOS_CARNET) {
+                return@put call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("message" to "Tipo de carné inválido. Valores permitidos: BASICO, CUALIFICADO, FUMIGADOR, PILOTO")
+                )
+            }
+
+            val resultado = transaction {
+                val esDelTenant = Usuarios.selectAll()
+                    .where { (Usuarios.id eq id) and (Usuarios.explotacionId eq tenantId) }
+                    .any()
+                if (!esDelTenant) return@transaction null
+
+                Usuarios.update({ Usuarios.id eq id }) {
+                    it[apellidos]      = request.apellidos?.trim()
+                    it[tipoCarnetRopo] = request.tipoCarnetRopo
+                    it[numeroRopo]     = request.numeroRopo?.trim()?.takeIf { v -> v.isNotBlank() }
+                }
+
+                Usuarios.selectAll()
+                    .where { Usuarios.id eq id }
+                    .single()
+                    .toUsuarioResponse()
+            }
+
+            if (resultado == null) call.respond(HttpStatusCode.NotFound, mapOf("message" to "Usuario no encontrado"))
+            else call.respond(HttpStatusCode.OK, resultado)
         }
 
         // PUT /api/usuarios/{id}/rol — promoción/degradación de roles (solo TECNICO).

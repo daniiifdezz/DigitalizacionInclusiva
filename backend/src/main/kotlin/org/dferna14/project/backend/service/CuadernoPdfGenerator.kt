@@ -320,7 +320,7 @@ object CuadernoPdfGenerator {
             textoEnCelda(cs, (idx + 1).toString(), xNum,    y - altoFila, anchoNum,    altoFila, FUENTE_CUERPO_NORMAL, 7.5f, centrar = true)
             textoEnCelda(cs, nombreCompleto,       xNombre, y - altoFila, anchoNombre, altoFila, FUENTE_CUERPO_NORMAL, 7.5f, centrar = false)
             // NIF: el modelo de dominio no tiene NIF por usuario, queda en blanco
-            textoEnCelda(cs, u.email,              xRopo,   y - altoFila, anchoRopo,   altoFila, FUENTE_CUERPO_NORMAL, 6.5f, centrar = false)
+            textoEnCelda(cs, u.numeroRopo ?: "",   xRopo,   y - altoFila, anchoRopo,   altoFila, FUENTE_CUERPO_NORMAL, 6.5f, centrar = false)
             // Marca X en la columna del carné que tenga
             val carnetIdx = when (u.tipoCarnetRopo) {
                 "BASICO"      -> 0

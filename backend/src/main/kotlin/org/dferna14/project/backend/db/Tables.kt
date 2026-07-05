@@ -91,6 +91,7 @@ object Usuarios : IntIdTable("usuario") {
     val explotacionId  = integer("explotacion_id").references(Explotaciones.id).nullable()
     val fechaAlta      = date("fecha_alta").nullable()
     val tipoCarnetRopo = varchar("tipo_carnet_ropo", 20).nullable()
+    val numeroRopo     = varchar("numero_ropo", 20).nullable()
 }
 
 // ── Operativa de actividades ──────────────────────────────────────────────────

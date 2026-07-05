@@ -379,7 +379,8 @@ data class UsuarioRequest(
     val contrasena     : String? = null,
     val rol            : String? = null,
     val explotacionId  : Int?    = null,
-    val tipoCarnetRopo : String? = null
+    val tipoCarnetRopo : String? = null,
+    val numeroRopo     : String? = null
 )
 
 @Serializable
@@ -392,7 +393,8 @@ data class UsuarioResponse(
     val explotacionId     : Int?    = null,
     val explotacionNombre : String? = null,
     val fechaAlta         : String? = null,
-    val tipoCarnetRopo    : String? = null
+    val tipoCarnetRopo    : String? = null,
+    val numeroRopo        : String? = null
 )
 
 // Auth — registro y login

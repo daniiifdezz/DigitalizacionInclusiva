@@ -179,5 +179,6 @@ fun ResultRow.toUsuarioResponse(): UsuarioResponse = UsuarioResponse(
     rol            = this[Usuarios.rol],
     explotacionId  = this[Usuarios.explotacionId],
     fechaAlta      = this[Usuarios.fechaAlta]?.toString(),
-    tipoCarnetRopo = this[Usuarios.tipoCarnetRopo]
+    tipoCarnetRopo = this[Usuarios.tipoCarnetRopo],
+    numeroRopo     = this[Usuarios.numeroRopo]
 )
