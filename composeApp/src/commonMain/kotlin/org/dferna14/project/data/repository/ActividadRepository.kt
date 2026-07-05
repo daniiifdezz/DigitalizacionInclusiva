@@ -701,7 +701,8 @@ class ActividadRepository(
                     contrasena     = contrasena,
                     rol            = usuario.rol,
                     explotacionId  = usuario.explotacionId,
-                    tipoCarnetRopo = usuario.tipoCarnetRopo
+                    tipoCarnetRopo = usuario.tipoCarnetRopo,
+                    numeroRopo     = usuario.numeroRopo
                 )
             )
             Result.Success(dto.toDomain())
@@ -711,6 +712,29 @@ class ActividadRepository(
             Result.Error(e.message ?: "Ya existe un usuario con ese email")
         } catch (e: Exception) {
             Result.Error("Error al crear usuario: ${e.message}")
+        }
+    }
+
+    suspend fun actualizarUsuario(
+        id: Int,
+        apellidos: String?,
+        tipoCarnetRopo: String?,
+        numeroRopo: String?
+    ): Result<Usuario> {
+        return try {
+            val dto = api.actualizarUsuario(
+                id,
+                org.dferna14.project.data.remote.UsuarioUpdateDto(
+                    apellidos      = apellidos,
+                    tipoCarnetRopo = tipoCarnetRopo,
+                    numeroRopo     = numeroRopo
+                )
+            )
+            Result.Success(dto.toDomain())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.Error("Error al actualizar usuario: ${e.message}")
         }
     }
 
@@ -736,7 +760,8 @@ class ActividadRepository(
         rol            = rol,
         explotacionId  = explotacionId,
         fechaAlta      = fechaAlta,
-        tipoCarnetRopo = tipoCarnetRopo
+        tipoCarnetRopo = tipoCarnetRopo,
+        numeroRopo     = numeroRopo
     )
 
     // Parcela completa (parcela + sigpac + agronómicos) y sus operaciones

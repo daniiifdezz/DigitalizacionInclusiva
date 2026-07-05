@@ -220,7 +220,8 @@ data class UsuarioDto(
     @SerialName("explotacionId")     val explotacionId     : Int?    = null,
     @SerialName("explotacionNombre") val explotacionNombre : String? = null,
     @SerialName("fechaAlta")         val fechaAlta         : String? = null,
-    @SerialName("tipoCarnetRopo")    val tipoCarnetRopo    : String? = null
+    @SerialName("tipoCarnetRopo")    val tipoCarnetRopo    : String? = null,
+    @SerialName("numeroRopo")        val numeroRopo        : String? = null
 )
 
 @Serializable
@@ -231,7 +232,15 @@ data class UsuarioCreateDto(
     @SerialName("contrasena")     val contrasena     : String? = null,
     @SerialName("rol")            val rol            : String? = null,
     @SerialName("explotacionId")  val explotacionId  : Int?    = null,
-    @SerialName("tipoCarnetRopo") val tipoCarnetRopo : String? = null
+    @SerialName("tipoCarnetRopo") val tipoCarnetRopo : String? = null,
+    @SerialName("numeroRopo")     val numeroRopo     : String? = null
+)
+
+@Serializable
+data class UsuarioUpdateDto(
+    @SerialName("apellidos")      val apellidos      : String? = null,
+    @SerialName("tipoCarnetRopo") val tipoCarnetRopo : String? = null,
+    @SerialName("numeroRopo")     val numeroRopo     : String? = null
 )
 
 @Serializable
@@ -518,6 +527,14 @@ class ActividadApi(private val client: HttpClient, private val sessionStorage: S
             val msg = runCatching { response.body<ErrorMessage>().message }.getOrNull()
                 ?: "Ya existe un usuario con ese email"
             throw ConflictException(msg)
+        }
+        return response.body<UsuarioDto>()
+    }
+
+    suspend fun actualizarUsuario(id: Int, usuario: UsuarioUpdateDto): UsuarioDto {
+        val response = client.put("${baseUrl(sessionStorage)}/api/usuarios/$id") {
+            contentType(ContentType.Application.Json)
+            setBody(usuario)
         }
         return response.body<UsuarioDto>()
     }

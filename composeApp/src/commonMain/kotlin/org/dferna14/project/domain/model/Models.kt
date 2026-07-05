@@ -139,7 +139,8 @@ data class Usuario(
     val rol            : String  = "AGRICULTOR",
     val explotacionId  : Int?    = null,
     val fechaAlta      : String? = null,
-    val tipoCarnetRopo : String? = null
+    val tipoCarnetRopo : String? = null,
+    val numeroRopo     : String? = null
 )
 
 data class Cultivo(

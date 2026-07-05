@@ -76,6 +76,23 @@ class UsuarioVm(
         }
     }
 
+    fun editarAplicador(id: Int, apellidos: String?, tipoCarnetRopo: String?, numeroRopo: String?) {
+        viewModelScope.launch {
+            try {
+                val resultado = repository.actualizarUsuario(id, apellidos, tipoCarnetRopo, numeroRopo)
+                if (resultado is Result.Success) {
+                    cargarUsuarios(ultimoFiltroRol)
+                } else if (resultado is Result.Error) {
+                    _mensajeError.tryEmit(resultado.message)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _mensajeError.tryEmit("Error al editar aplicador: ${e.message}")
+            }
+        }
+    }
+
     fun eliminarAplicador(id: Int) {
         viewModelScope.launch {
             try {

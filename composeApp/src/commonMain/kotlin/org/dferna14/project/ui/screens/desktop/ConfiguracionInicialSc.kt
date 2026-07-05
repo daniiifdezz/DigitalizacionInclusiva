@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Group
@@ -93,7 +94,9 @@ private val COLS_EQUIPOS = listOf(
 private val COLS_APLICADORES = listOf(
     DesktopTableColumn("Nombre",      weight = 1.5f),
     DesktopTableColumn("Email",       weight = 2.0f),
-    DesktopTableColumn("Carnet ROPO", weight = 1.5f),
+    DesktopTableColumn("Carnet ROPO", weight = 1.2f),
+    DesktopTableColumn("Nº ROPO",     weight = 1.2f),
+    DesktopTableColumn("",            fixedWidth = 48.dp),
     DesktopTableColumn("",            fixedWidth = 48.dp),
 )
 
@@ -142,6 +145,7 @@ private data class NuevoAplicadorFs(
     val email: String = "",
     val password: String = "",
     val tipoCarnetRopo: String = "",
+    val numeroRopo: String = "",
 )
 
 //pantalla
@@ -429,6 +433,7 @@ fun ConfiguracionInicialSc(
                                         email          = nuevoAplicadorFs.email,
                                         rol            = "APLICADOR",
                                         tipoCarnetRopo = nuevoAplicadorFs.tipoCarnetRopo.ifBlank { null },
+                                        numeroRopo     = nuevoAplicadorFs.numeroRopo.ifBlank { null },
                                     ),
                                     contrasena = nuevoAplicadorFs.password.ifBlank { null },
                                 )
@@ -436,6 +441,9 @@ fun ConfiguracionInicialSc(
                             }
                         },
                         onEliminar    = { aplicadorAEliminar = it },
+                        onEditar      = { id, apellidos, tipoCarnetRopo, numeroRopo ->
+                            usuarioVm.editarAplicador(id, apellidos, tipoCarnetRopo, numeroRopo)
+                        },
                     )
                 }
             }
@@ -715,8 +723,10 @@ private fun TabAplicadores(
     onNuevoChange: (NuevoAplicadorFs) -> Unit,
     onCrear: () -> Unit,
     onEliminar: (Int) -> Unit,
+    onEditar: (Int, String?, String?, String?) -> Unit,
 ) {
     var ropoExpandido by remember { mutableStateOf(false) }
+    var aplicadorAEditar by remember { mutableStateOf<Usuario?>(null) }
 
     SectionEyebrow("Aplicadores habilitados")
     DesktopTableHeader(COLS_APLICADORES)
@@ -744,6 +754,25 @@ private fun TabAplicadores(
                     )
                 },
                 {
+                    Text(
+                        text  = u.numeroRopo ?: "—",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = TextoSecundario),
+                    )
+                },
+                {
+                    IconButton(
+                        onClick  = { aplicadorAEditar = u },
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Default.Edit,
+                            contentDescription = "Editar aplicador",
+                            tint               = TextoSecundario,
+                            modifier           = Modifier.size(16.dp),
+                        )
+                    }
+                },
+                {
                     IconButton(
                         onClick  = { onEliminar(u.id) },
                         modifier = Modifier.size(32.dp),
@@ -761,6 +790,17 @@ private fun TabAplicadores(
     }
     if (aplicadores.isEmpty()) {
         EmptyTableRow("Sin aplicadores registrados")
+    }
+
+    aplicadorAEditar?.let { u ->
+        EditarAplicadorDialog(
+            usuario     = u,
+            onDismiss   = { aplicadorAEditar = null },
+            onConfirmar = { apellidos, tipoCarnetRopo, numeroRopo ->
+                onEditar(u.id, apellidos, tipoCarnetRopo, numeroRopo)
+                aplicadorAEditar = null
+            },
+        )
     }
 
     Spacer(Modifier.height(8.dp))
@@ -827,10 +867,81 @@ private fun TabAplicadores(
                     }
                 }
             }
+            DesktopFormField(
+                label         = "Número ROPO",
+                value         = nuevoAplicador.numeroRopo,
+                onValueChange = { onNuevoChange(nuevoAplicador.copy(numeroRopo = it)) },
+                modifier      = Modifier.weight(1f),
+            )
         }
         Spacer(Modifier.height(4.dp))
         ActionButton(label = "Crear aplicador", icon = Icons.Outlined.Group, onClick = onCrear)
     }
+}
+
+@Composable
+private fun EditarAplicadorDialog(
+    usuario: Usuario,
+    onDismiss: () -> Unit,
+    onConfirmar: (apellidos: String?, tipoCarnetRopo: String?, numeroRopo: String?) -> Unit,
+) {
+    var apellidos by remember(usuario.id) { mutableStateOf(usuario.apellidos ?: "") }
+    var tipoCarnetRopo by remember(usuario.id) { mutableStateOf(usuario.tipoCarnetRopo ?: "") }
+    var numeroRopo by remember(usuario.id) { mutableStateOf(usuario.numeroRopo ?: "") }
+    var ropoExpandido by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar aplicador") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                DesktopFormField(
+                    label         = "Apellidos",
+                    value         = apellidos,
+                    onValueChange = { apellidos = it },
+                )
+                Box {
+                    DesktopSelectField(
+                        label       = "Tipo de carné ROPO",
+                        value       = tipoCarnetRopo,
+                        placeholder = "Sin carnet ROPO asignado",
+                        onClick     = { ropoExpandido = true },
+                    )
+                    DropdownMenu(
+                        expanded         = ropoExpandido,
+                        onDismissRequest = { ropoExpandido = false },
+                    ) {
+                        listOf("BASICO", "CUALIFICADO", "FUMIGADOR", "PILOTO").forEach { opcion ->
+                            DropdownMenuItem(
+                                text    = { Text(opcion) },
+                                onClick = {
+                                    tipoCarnetRopo = opcion
+                                    ropoExpandido = false
+                                },
+                            )
+                        }
+                    }
+                }
+                DesktopFormField(
+                    label         = "Número ROPO",
+                    value         = numeroRopo,
+                    onValueChange = { numeroRopo = it },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onConfirmar(
+                    apellidos.ifBlank { null },
+                    tipoCarnetRopo.ifBlank { null },
+                    numeroRopo.ifBlank { null },
+                )
+            }) { Text("Guardar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        },
+    )
 }
 
 //helpers
