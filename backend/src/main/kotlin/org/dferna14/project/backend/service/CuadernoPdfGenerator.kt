@@ -587,7 +587,7 @@ object CuadernoPdfGenerator {
             "Problema fitosanitario",
             "Aplic. [3]",
             "Equipo [4]",
-            "Producto - Nombre comercial",
+            "Producto - Mat. activa / Nombre comercial",
             "Nº Registro",
             "Dosis",
             "Efic. [5]",
@@ -619,8 +619,10 @@ object CuadernoPdfGenerator {
             val ordenParcela = ordenes.ordenParcela[f.act.actividad.parcelaId]?.toString() ?: ""
             val ordenAplicador = f.act.aplicador?.id?.let { ordenes.ordenAplicador[it]?.toString() } ?: ""
             val ordenEquipo = f.act.equipoUsado?.id?.let { ordenes.ordenEquipo[it]?.toString() } ?: ""
-            val nombreProducto = f.producto.productoNombreComercial?.takeIf { it.isNotBlank() }
-                ?: "Producto #${f.producto.productoId}"
+            val nombreProducto = listOfNotNull(
+                f.producto.productoMateriaActiva?.takeIf { it.isNotBlank() },
+                f.producto.productoNombreComercial?.takeIf { it.isNotBlank() }
+            ).joinToString(" / ").ifBlank { "Producto #${f.producto.productoId}" }
             val numeroRegistro = f.producto.productoNumeroRegistro ?: ""
             val dosis = "%.2f".format(f.producto.dosis)
 
@@ -659,7 +661,7 @@ object CuadernoPdfGenerator {
             "Cultivo (Esp./Var.)",
             "Sup. sembrada (ha)",
             "Cantidad semilla (kg)",
-            "Producto - Mat. activa / Nombre comercial",
+            "Producto - Mat. activa / Nombre comercial / Variedad",
             "Nº Registro"
         )
         var y = dibujarFilaTablaOficial(cs, cabeceras, anchos, yInicial, cabecera = true)
@@ -680,7 +682,8 @@ object CuadernoPdfGenerator {
             val ordenParcela = ordenes.ordenParcela[act.actividad.parcelaId]?.toString() ?: ""
             val producto = listOfNotNull(
                 s.productoMateriaActiva?.takeIf { it.isNotBlank() },
-                s.productoNombreComercial?.takeIf { it.isNotBlank() }
+                s.productoNombreComercial?.takeIf { it.isNotBlank() },
+                s.variedadSemilla?.takeIf { it.isNotBlank() }?.let { "Var. $it" }
             ).joinToString(" / ").ifBlank { s.productoId?.let { "Producto #$it" } ?: "" }
 
             y = dibujarFilaTablaOficial(
