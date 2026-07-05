@@ -191,7 +191,7 @@ object CuadernoService {
                         )
                     }
 
-                val fertilizacion = Fertilizaciones
+                val fertilizacion = (Fertilizaciones leftJoin Productos)
                     .selectAll()
                     .where { Fertilizaciones.actividadId eq actId }
                     .firstOrNull()

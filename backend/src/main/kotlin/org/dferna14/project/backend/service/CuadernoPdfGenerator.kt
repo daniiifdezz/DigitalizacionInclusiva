@@ -764,6 +764,10 @@ object CuadernoPdfGenerator {
             val parcelaCompleta = ordenes.parcelaPorId[act.actividad.parcelaId]
             val cultivo = parcelaCompleta?.datosAgronomicos?.especieVariedad ?: ""
             val ordenParcela = ordenes.ordenParcela[act.actividad.parcelaId]?.toString() ?: ""
+            val tipoProducto = listOfNotNull(
+                f.tipoProducto?.takeIf { it.isNotBlank() },
+                f.productoNombreComercial?.takeIf { it.isNotBlank() }
+            ).joinToString(" / ")
 
             y = dibujarFilaTablaOficial(
                 cs,
@@ -771,7 +775,7 @@ object CuadernoPdfGenerator {
                     f.fechaInicio ?: act.actividad.fechaInicio,
                     ordenParcela,
                     cultivo,
-                    f.tipoProducto ?: "",
+                    tipoProducto,
                     f.numeroAlbaran ?: "",
                     f.riquezaNpk ?: "",
                     f.dosis?.let { "%.2f".format(it) } ?: "",
