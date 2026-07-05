@@ -397,6 +397,13 @@ data class UsuarioResponse(
     val numeroRopo        : String? = null
 )
 
+@Serializable
+data class UsuarioUpdateRequest(
+    val apellidos      : String? = null,
+    val tipoCarnetRopo : String? = null,
+    val numeroRopo     : String? = null
+)
+
 // Auth — registro y login
 
 @Serializable

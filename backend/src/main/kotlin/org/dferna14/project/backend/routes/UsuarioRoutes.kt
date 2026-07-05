@@ -13,6 +13,7 @@ import org.mindrot.jbcrypt.BCrypt
 import org.dferna14.project.backend.mapper.toUsuarioResponse
 import org.dferna14.project.backend.model.CambioRolRequest
 import org.dferna14.project.backend.model.UsuarioRequest
+import org.dferna14.project.backend.model.UsuarioUpdateRequest
 import org.dferna14.project.backend.plugins.tenantId
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -183,7 +184,7 @@ fun Route.usuarioRoutes() {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest, mapOf("message" to "ID de usuario invalido"))
 
-            val request = call.receive<UsuarioRequest>()
+            val request = call.receive<UsuarioUpdateRequest>()
             if (request.tipoCarnetRopo != null && request.tipoCarnetRopo !in VALORES_VALIDOS_CARNET) {
                 return@put call.respond(
                     HttpStatusCode.BadRequest,
